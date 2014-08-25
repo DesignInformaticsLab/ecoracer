@@ -1,0 +1,16 @@
+extends layout
+block content
+  #wrapper
+    #data
+      #runner
+      #vehicle_speed
+      #energyconsumption
+      #timer
+      #position
+      #commnd
+    canvas(id='canvasbg')
+    canvas(id='canvas1')
+    #rank
+  script(type='text/javascript').
+    $("#wrapper").width($(window).width());
+  script(type='text/javascript',src='/javascripts/main.js')

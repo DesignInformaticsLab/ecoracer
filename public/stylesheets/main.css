@@ -1,0 +1,57 @@
+@CHARSET "ISO-8859-1";
+
+	body {
+	    margin: 40px;
+	    overflow: hidden;
+	    font-family: 'Comfortaa', cursive;
+	    background: rgba(0,0,0,1);
+	}
+	#canvas1 {
+		transition: all 2s;
+	}
+	#canvasbg {
+		transition: all 2s;
+	}
+	#wrapper {
+		position: relative;
+		height: 400px;
+/* 		border: 1px dashed #CCCCCC; */
+	}
+	
+	.data {
+		position: absolute;
+		top: 10px;
+		left: 10px;
+		background: rgba(255,255,255,0.9);
+		z-index: 9;
+	}
+	#rank {
+		position: absolute;
+		top: 410px;
+		left: 10px;
+		color: rgba(255,255,255,0.9);
+		z-index: 9;
+	}
+	#runner {
+		display:none;
+	}
+	#vehicle_speed, #energyconsumption, #timer, #position, #commnd{
+		float:left;
+		margin: 10px;
+		width: 120px;
+	}
+	#submit {
+		position: absolute;
+		top: 40%;
+		left: 600px;
+		display: none;
+	}
+	#thanks {
+		position: absolute;
+		top: 60%;
+		left: 600px;
+		width: 300px;
+		transition: all 1s;
+		font-size: 300%;
+		color: #ffffff;
+	}
