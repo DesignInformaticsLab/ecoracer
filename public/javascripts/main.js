@@ -233,6 +233,7 @@ scene.prototype.update = function (dt) {
     	else{
     		$("#thanks").html("<a>Nice try! Try HARDER!!!!!</a>");
     	}*/
+    	submitResult();
     }
     else if (chassis.p.x<10){
     	this.stop();
@@ -290,6 +291,7 @@ scene.prototype.update = function (dt) {
     if (car_pos>=309 || (($('#runner').text()-5)>timeout)){
     	this.stop();
     	$('#runner').runner('stop');
+    	submitResult();
     }
 	
     motor1speed = -1*wheel1.w/t2t*fr/2/Math.PI*60; //RPM;

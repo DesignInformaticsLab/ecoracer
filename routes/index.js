@@ -18,7 +18,7 @@ var connection = process.env.DATABASE_URL || "postgres://postgres:KVTWN78mpostgr
 
 router.get('/db', function (req, res) {
   pg.connect(connection, function(err, client, done) {
-    client.query('SELECT * FROM test_table', function(err, result) {
+    client.query('SELECT * FROM ecoracer_table', function(err, result) {
       done();
       if (err)
        { console.error(err); res.send("Error " + err); }
@@ -28,15 +28,11 @@ router.get('/db', function (req, res) {
   });
 })
 
-router.get('/newdata', function(req, res) {
-  res.render('newdata', { title: 'Express' });
-});
-
 router.post('/adddata', function(req, res) {
     pg.connect(connection, function(err, client, done) {
         if(err) res.send("Could not connect to DB: " + err);
-        client.query('INSERT INTO test_table (id, name) VALUES ($1, $2)',
-            [req.body.id, req.body.name], 
+        client.query('INSERT INTO ecoracer_table (id, name, info) VALUES ($1, $2, $3)',
+            [req.body.id, req.body.name, req.body.info], 
             function(err, result) {
                 done();
                 if(err) return res.send(err);
