@@ -13,17 +13,30 @@ router.get('/ecoracer', function(req, res) {
 
 var pg = require('pg');
 
-router.get('/db', function (request, response) {
+router.get('/db', function (req, res) {
   pg.connect(process.env.DATABASE_URL, function(err, client, done) {
     client.query('SELECT * FROM test_table', function(err, result) {
       done();
       if (err)
-       { console.error(err); response.send("Error " + err); }
+       { console.error(err); res.send("Error " + err); }
       else
-       { response.send(result.rows); }
+       { res.render('db',{data: result}); }
     });
   });
 })
+
+//router.post('/newdata', function(request, response) {
+//    pg.connect(process.env.DATABASE_URL, function(err, client, done) {
+//        if(err) response.send("Could not connect to DB: " + err);
+//        client.query('INSERT INTO test_table (id, name) VALUES ($1, $2)',
+//            [request.query.id, request.query.name], 
+//            function(err, result) {
+//                done();
+//                if(err) return response.send(err);
+//                response.send('OK');
+//        });
+//    });
+//});
 
 ///* GET Userlist page. */
 //router.get('/userlist', function(req, res) {
