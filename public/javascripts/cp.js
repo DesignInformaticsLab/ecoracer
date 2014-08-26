@@ -1266,7 +1266,7 @@ PolyShape.prototype.setVerts = function(verts, offset)
 			'Polygon verticies should be specified in a flattened list (eg [x1,y1,x2,y2,x3,y3,...])');
 
 	// Fail if the user attempts to pass a concave poly, or a bad winding.
-	assert(polyValidate(verts), "Polygon is concave or has a reversed winding. Consider using cpConvexHull()");
+	//assert(polyValidate(verts), "Polygon is concave or has a reversed winding. Consider using cpConvexHull()");
 	
 	var len = verts.length;
 	var numVerts = len >> 1;
@@ -1299,10 +1299,10 @@ PolyShape.prototype.setVerts = function(verts, offset)
 /// Initialize a box shaped polygon shape.
 var BoxShape = cp.BoxShape = function(body, width, height)
 {
-	var hw = width/2;
-	var hh = height/2;
+	var hw = width;
+	var hh = height;
 	
-	return BoxShape2(body, new BB(-hw, -hh, hw, hh));
+	return BoxShape3(body, new BB(-hw/2, -hh/2, hw/2, hh/2));
 };
 
 /// Initialize an offset box shaped polygon shape.
@@ -1316,6 +1316,56 @@ var BoxShape2 = cp.BoxShape2 = function(body, box)
 	];
 	
 	return new PolyShape(body, verts, vzero);
+};
+
+var BoxShape3 = cp.BoxShape3 = function(body, box)
+{
+	var lq = box.l;
+	var tq = box.t;
+	var rq = box.r;
+	var bq = box.b;
+	/*var verts = [
+		0.990*rq, 0.936*bq,
+		1.000*rq, 0.613*bq,
+		0.917*rq, 0.290*bq,
+		0.854*rq, 0.129*bq,
+		0.729*rq, 0.032*tq,
+		0.521*rq, 0.097*tq,
+		0.438*rq, 0.355*tq,
+		0.354*rq, 0.516*tq,
+		0.208*rq, 0.742*tq,
+		0.000000, 0.871*tq,
+		0.208*lq, 0.871*tq,
+		0.333*lq, 0.807*tq,
+		0.438*lq, 0.677*tq,
+		0.625*lq, 0.355*tq,
+		0.833*lq, 0.129*bq,
+		0.990*lq, 0.613*bq,
+		0.938*lq, 0.936*bq,
+	];*/
+	
+	var verts = [
+	     		1.188*rq, 0.936*bq,
+	     		1.200*rq, 0.613*bq,
+	     		1.100*rq, 0.290*bq,
+	     		1.025*rq, 0.129*bq,
+	     		0.875*rq, 0.032*tq,
+	     		0.625*rq, 0.097*tq,
+	     		0.525*rq, 0.355*tq,
+	     		0.425*rq, 0.516*tq,
+	     		0.250*rq, 0.742*tq,
+	     		0.000000, 0.871*tq,
+	     		0.250*lq, 0.871*tq,
+	     		0.400*lq, 0.807*tq,
+	     		0.525*lq, 0.677*tq,
+	     		0.750*lq, 0.355*tq,
+	     		1.000*lq, 0.129*bq,
+	     		1.188*lq, 0.613*bq,
+	     		1.125*lq, 0.936*bq,
+	     	];
+	
+	var vzerow = new Vect(0,tq*0.5);
+	return new PolyShape(body, verts, vzerow);
 };
 
 PolyShape.prototype.transformVerts = function(p, rot)

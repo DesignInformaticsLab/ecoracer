@@ -11,7 +11,17 @@ var scene_height = 550;
 var started = false;
 var spdLookup = new Float64Array([0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000, 6500, 7000, 7500, 8000, 8500, 9000]);
 var trqLookup = new Float64Array([200,200,200,200,200,194,186,161,142,122,103,90,77.5,70,63.5,58,52,49,45]);
-var tstep = 42;
+var tstep = 48;
+var start_race = 0;
+var wheel_speed;
+
+var buttonR = 40;
+var brakeX = 200;
+var brakeY = 480;
+var accX = scene_width-brakeX;
+var accY = brakeY;
+var accelerate_motor = false;
+var brake = false;
 
 //************************************************///
 var chart1;
@@ -55,83 +65,13 @@ var t2t = 1; // 1 time step == 1/120 second
 var consumption = 0;
 var fr = 10; // final drive ratio
 var fric = 2.8;
-//var distance = 5000; // 250m
-var timeout = 30; // 30s
+var timeout = 45; // 30s
+var tstart = 5; // game starts after 5 sec
 var indx = 0;
 var data = [0,0,0,0,10,20,30,40,50,60,70,80,90,45,0,0,0,0,0,0,10,20,30,40,50,60,70,80,90,45,0,0,0,0,0,0];
 var xstep = 200;
 var ground = [];
 var gndShape = [];
-//google.load('visualization', '1', {packages:['gauge']});
-//google.setOnLoadCallback(drawChart);
-
-function drawChart() {
-  gaugeData1 = google.visualization.arrayToDataTable([
-    ['Label', 'Value'],
-    ['mph', 0]
-  ]);
-  gaugeData2 = google.visualization.arrayToDataTable([
-    ['Label', 'Value'],
-    ['kWh', 0]
-  ]);
-  gaugeData3 = google.visualization.arrayToDataTable([
-    ['Label', 'Value'],
-    ['sec', 0]
-  ]);
-  gaugeOptions1 = {
-    min: 0, max: 100,
-    width: 400, height: 120,
-    redFrom: 90, redTo: 100,
-    animation:{
-      duration: 100,
-      easing: 'out',
-    },
-    yellowFrom:75, yellowTo: 90,
-    minorTicks: 5
-  };
-  gaugeOptions2 = {
-    min: 0, max: 1,
-    width: 400, height: 120,
-    redFrom: 0.9, redTo: 1,
-    animation:{
-      duration: 100,
-      easing: 'out',
-    },
-    yellowFrom:.75, yellowTo: .9,
-    minorTicks: 5
-  };
-  
-  gaugeOptions3 = {
-    min: 0, max: 30,
-    width: 400, height: 120,
-    redFrom: 25, redTo: 30,
-    animation:{
-      duration: 100,
-      easing: 'out',
-    },
-    yellowFrom:20, yellowTo: 25,
-    minorTicks: 5
-  };
-  
-  chart1 = new google.visualization.Gauge(document.getElementById('vehicle_speed'));
-  chart2 = new google.visualization.Gauge(document.getElementById('energyconsumption'));
-  chart3 = new google.visualization.Gauge(document.getElementById('timer'));
-  chart1.draw(gaugeData1, gaugeOptions1);
-  chart2.draw(gaugeData2, gaugeOptions2);
-  chart3.draw(gaugeData3, gaugeOptions3);
-}
-
-function changeTemp(val1, val2, val3) {
-
-	gaugeData1.setValue(0, 1, val1);
-    gaugeData2.setValue(0, 1, val2);
-    gaugeData3.setValue(0, 1, val3);
-
-    chart1.draw(gaugeData1, gaugeOptions1);
-    chart2.draw(gaugeData2, gaugeOptions2);
-    chart3.draw(gaugeData3, gaugeOptions3);
-}
-//***************************************************************************************************************************///
 
 var __ENVIRONMENT__ = defineSpace("canvas1", scene_width, scene_heightx);
 
@@ -154,7 +94,7 @@ var scene = function(){
 	cv.fillStyle = '#ffffff';
 	cv.rect(0,0,scene_width,scene_height);
 	cv.fill();
-
+	
 	
 	var addBar = function(pos)
 	{
@@ -190,8 +130,8 @@ var scene = function(){
 	var addChassis = function(pos)
 	{
 		var mass = 1500/m2m; // 1500 kg 
-		var width = 3.5/px2m; // --> 3.5m length
-		var height = 1.0/px2m; // --> 1.0m height
+		var width = 4/px2m; // --> 3.5m length
+		var height = 1.8/px2m; // --> 1.0m height
 		
 		var body = space.addBody(new cp.Body(mass, cp.momentForBox(mass, width, height)));
 		body.setPos(v.add(pos, boxOffset));
@@ -232,6 +172,7 @@ var scene = function(){
 	motor2 = new cp.SimpleMotor(motorbar2, wheel2, 0);
 	space.addConstraint(motor1);
 	space.addConstraint(motor2);
+	
 	$('#runner').runner();
 	$('#runner').runner('start');
 	
@@ -273,7 +214,6 @@ function updateGround(space, data){
 	}
 }
 
-
 scene.prototype = Object.create(__ENVIRONMENT__.prototype);
 
 scene.prototype.update = function (dt) {
@@ -300,8 +240,8 @@ scene.prototype.update = function (dt) {
     }
     
     car_pos = Math.round(chassis.p.x*px2m); //-9.03
-    /**********************************************************************************************************************/
-    if($('#runner').text()>=5){
+    /////////////////////////////DP simulation //////////////////////////////////////////
+    /*if($('#runner').text()>=5){
 	    if (car_pos<=DP_x[indx+1]){
 	    	if (DP_comm[indx]==1){
 		    	motor1.rate += acc_rate;
@@ -323,7 +263,7 @@ scene.prototype.update = function (dt) {
 				if (wheel1.w<-1 && wheel2.w<-1){
 				/*	var con1 = Math.abs(motor1.jAcc*wheel1.w);
 				    var con2 = Math.abs(motor2.jAcc*wheel2.w);
-				    consumption -= (con1 + con2)*m2m*px2m*px2m/t2t/t2t; // T *dt * rad/s mass*distance^2/time^2	*/			
+				    consumption -= (con1 + con2)*m2m*px2m*px2m/t2t/t2t; // T *dt * rad/s mass*distance^2/time^2			
 				}
 				else{
 					wheel1.setMoment(7e1);
@@ -334,23 +274,30 @@ scene.prototype.update = function (dt) {
 	    else{
 			indx = indx+1;
 	    }
-    }
+    }*/
+    if($('#runner').text()>=tstart){
     
-    if (car_pos>=309){
+    	if(!start_race){
+    		cv = $('#canvasbg')[0].getContext('2d');
+    		cv.beginPath();
+    		cv.fillStyle = "#ffffff";
+    		cv.rect(scene_width/2-2*buttonR,scene_height/2-2*buttonR,4.5*buttonR, 4*buttonR);
+    		cv.fill();
+    	}
+    drawButtons(0.3, 0.3);
+    drawTimer(timeout, $('#runner').text(), tstart);
+    start_race = 1;
+    if (car_pos>=309 || (($('#runner').text()-5)>timeout)){
     	this.stop();
     	$('#runner').runner('stop');
     }
-    /************************************************************************************************************************/
 	
     motor1speed = -1*wheel1.w/t2t*fr/2/Math.PI*60; //RPM;
-    maxTrq1 = 200;
-    maxTrq2 = 200;
-    //maxTrq1 = maxTrqlerp(motor1speed)/m2m/px2m/px2m*t2t*t2t; //Nm
+    maxTrq1 = maxTrqlerp(motor1speed)/m2m/px2m/px2m*t2t*t2t; //Nm
     motor2speed = -1*wheel2.w/t2t*fr/2/Math.PI*60; //RPM;
-    //maxTrq2 = maxTrqlerp(motor2speed)/m2m/px2m/px2m*t2t*t2t; //Nm
+    maxTrq2 = maxTrqlerp(motor2speed)/m2m/px2m/px2m*t2t*t2t; //Nm
 	motor2.maxForce = maxTrq2*fr;
 	motor1.maxForce = maxTrq1*fr;
-	//Math.min(motor1.jAcc*tstep/fr,maxTrq1)
 	motor1torque = -1*Math.min(motor1.jAcc*tstep/fr,maxTrq1)*m2m*px2m*px2m/t2t/t2t;
 	motor2torque = -1*Math.min(motor2.jAcc*tstep/fr,maxTrq2)*m2m*px2m*px2m/t2t/t2t;
 	motor1eff = 1;
@@ -358,42 +305,68 @@ scene.prototype.update = function (dt) {
 	//motor1eff = efflerp(motor1speed,motor1torque);
 	//motor2eff = efflerp(motor2speed,motor2torque);
 	con1 = motor1torque/tstep*motor1speed*Math.PI/30*motor1eff;
-	con2 = motor2torque/tstep*motor2speed*Math.PI/30*motor2eff;
+	//con2 = motor2torque/tstep*motor2speed*Math.PI/30*motor2eff;
+	con2 = 0;
 	vehSpeed = motor1speed/fr*Math.PI/30*wheel1.shapeList[0].r*px2m*2.23694;
 	consumption += (con1 + con2);
 	fricImpl = -1*fric*(chassis.m + wheel1.m + wheel2.m + motorbar1.m + motorbar2.m)*wheel1.shapeList[0].r/tstep*wheel1.w/(Math.abs(wheel1.w)+0.0001);
 	wheel1.w += fricImpl*wheel1.i_inv;
 	wheel2.w += fricImpl*wheel2.i_inv;
-	//motorbar1.w -= fricImpl*motorbar1.i_inv;
-	//motorbar2.w -= fricImpl*motorbar2.i_inv;
 	
-	$('#position').html(Math.round($(window).width()/3));
+	/////////////////////Motor Control/////////////////////////////////
+	if (brake) {
+	 	drawButtons(1, 0.3);
+	 	motor1.rate = 0;
+	 	motor2.rate = 0;
+		wheel_speed = Math.abs(wheel1.w);
+		//$('#position').html(sign(wheel1.w));
+		if(wheel1.w<-1){
+			motor1.rate = 1*Math.max(wheel1.w,-3)*max_rate1;
+			motor2.rate = 1*Math.max(wheel1.w,-3)*max_rate1;
+		}
+		else if (wheel1.w>1){
+			motor1.rate = 2*Math.min(wheel1.w,3)*max_rate1;
+			motor2.rate = 2*Math.min(wheel1.w,3)*max_rate1;
+		}
+		else{motor1.rate=0; motor2.rate = 0; wheel1.setAngVel(0); wheel2.setAngVel(0);}
+		if (wheel_speed>1){
+		}
+		else{
+			wheel1.setMoment(5e1);
+			wheel2.setMoment(5e1);
+		}
+	}
+	else if (accelerate_motor) {
+	    drawButtons(0.3, 1);
+		motor1.rate += acc_rate;
+		if(motor1.rate>max_rate1){motor1.rate=max_rate1;}
+	}
+	////////////////////////////////////////////////////////////////////////////
+	
 	//$('#position').html(Math.round(consumption/3600/1000*10000)/10000);
 	//$('#commnd').html(DP_comm[indx]);
-	
-	/////////////////#################################//////////////////////////////
-	var current_canvas_loc = -parseFloat(demo.canvas.style.left.slice(0,demo.canvas.style.left.length-2));
-	$('#commnd').html(Math.round(car_pos));
-	if ((chassis.p.x - current_canvas_loc)>$(window).width()/3){
-		redraw();
-	}
-	/////////////////#################################//////////////////////////////
-	//**************************************************************************************************************************************//
-	if (gaugeData1 !== undefined){
-	if (Math.abs(vehSpeed-vehSpeedOld)>1){
-	//changeTemp(Math.round(chassis.vx*px2m*2.23694), Math.round((consumption/3600/1000)*100)/100, Math.round($('#runner').text())-5);
-	vehSpeedOld = vehSpeed;}
-	}
+	//$('#commnd').html(Math.round(motor1.rate));
+	lockScroll();
+    }
+    else {
+    	cv = $('#canvasbg')[0].getContext('2d');
+    	cv.beginPath();
+    	cv.fillStyle = "#ffffff";
+    	cv.rect(scene_width/2-2*buttonR,scene_height/2-2*buttonR,4*buttonR, 4*buttonR);
+    	cv.fill();
+    	cv.font = "60px Arial";
+    	cv.globalAlpha=1;
+    	cv.lineWidth = "3";
+    	cv.strokeStyle = "blue";
+    	if ($('#runner').text()<=tstart-0.6){
+    		cv.strokeText(String(Math.round(tstart-($('#runner').text()))),scene_width/2-buttonR/3, scene_height/2+buttonR/3);
+    	}
+    	else{
+    		cv.strokeText("Go!",scene_width/2-buttonR/3, scene_height/2+buttonR/3);
+    	}
+    };
 	//***************************************************************************************************************************************//
 
-};
-var redraw = function() {
-//	demo.canvas.style.left = (-chassis.p.x+175)+"px";
-//	demo.space.staticBody.shapeList.forEach(function (shape){
-//		shape.bb_l -= chassis.p.x;
-//		shape.bb_r -= chassis.p.x;
-//	});
-//	demo.draw();
 };
 /*function getscore(){
 	data = "action=get";
@@ -439,59 +412,28 @@ function uploadscore(){
 //Run
 var demo = new scene();
 demo.run();
-
-
 var keys = [];
-var brake_key = 32;
-var accelerate_motor1_key = 70;
-var accelerate_motor2_key = 74;
 
-$(document.body).keydown(function (e) {
-	keys[e.keyCode] = e.keyCode;
-//	var keysArray = getNumberArray(keys);
-	var accelerate_motor1 = keys[accelerate_motor1_key] === 70;
-	var	accelerate_motor2 = keys[accelerate_motor2_key] === 74;
-	var	brake = keys[brake_key] === 32;
 
-	if (brake) {
-		motor1.rate=0;
-		motor2.rate=0;
-		if(wheel1.w<-1){motor1.rate = 1*Math.max(wheel1.w,-3)*max_rate1;}
-		else{motor1.rate=0; wheel1.setAngVel(0);}
-		if(wheel2.w<-1){motor2.rate = 1*Math.max(wheel2.w,-3)*max_rate2;}
-		else{motor2.rate = 0; wheel2.setAngVel(0);}
-		if (wheel1.w<-1 && wheel2.w<-1){
-		/*	var con1 = Math.abs(motor1.jAcc*wheel1.w);
-		    var con2 = Math.abs(motor2.jAcc*wheel2.w);
-		    consumption -= (con1 + con2)*m2m*px2m*px2m/t2t/t2t; // T *dt * rad/s mass*distance^2/time^2	*/			
-		}
-		else{
-			wheel1.setMoment(5e1);
-			wheel2.setMoment(5e1);
-		}
-	}
-	if (accelerate_motor1 && !brake) {
+document.body.addEventListener('touchstart', function(e){
+	var touchobj = e.changedTouches[0]; // reference first touch point (ie: first finger)
+	 startx = parseInt(touchobj.clientX); // get x position of touch point relative to left edge of browser
+	 starty = parseInt(touchobj.clientY); // get y position of touch point relative to left edge of browser
+	 e.preventDefault();
+	 var distB = Math.max(Math.abs(startx-brakeX), Math.abs(starty-brakeY));
+	 var distA = Math.max(Math.abs(startx-accX), Math.abs(starty-accY));
+	 
+	//$('#position').html(Math.round(startx));
+	//$('#commnd').html(Math.round(starty));
+	 
+	 //var accelerate_motor = (startx>2*scene_width/3) && ($('#runner').text()>=5);
+	 //var brake = (startx<=scene_width/3) && ($('#runner').text()>=5);
+	 accelerate_motor = (distA<=3*buttonR) && ($('#runner').text()>=5);
+	 brake = (distB<=3*buttonR) && ($('#runner').text()>=5);
+	 }, false);
 
-		motor1.rate += acc_rate;
-		if(motor1.rate>max_rate1){motor1.rate=max_rate1;}
-	}
-	if (accelerate_motor2 && !brake) {
-		motor2.rate += acc_rate;
-		if(motor2.rate>max_rate2*fr){motor2.rate=max_rate2*fr;}
-		//motorbar2.w_limit += w_limit_rate;
-		//if(motorbar2.w_limit>Math.min(700,Math.abs(wheel2.w)*fr)*t2t){motorbar2.w_limit=Math.min(700,Math.abs(wheel2.w)*fr)*t2t;}
-		
-	}
-});
-
-$(document.body).keyup(function (e) {
-	keys[e.keyCode] = e.keyCode;
-//	var keysArray = getNumberArray(keys);
-	var accelerate_motor1_release = keys[accelerate_motor1_key] === 70;
-	var	accelerate_motor2_release = keys[accelerate_motor2_key] === 74;
-	var	brake_release = keys[brake_key] === 32;
-	
-	if (brake_release){
+document.body.addEventListener('touchend', function(e){
+	    drawButtons(0.3, 0.3);
 		motor1.rate = 0;
 		motor2.rate = 0;
 		wheel1.setAngVel(0);
@@ -503,17 +445,68 @@ $(document.body).keyup(function (e) {
 		//motor1.maxForce = maxTrq1*fr;
 		//motor2.maxForce = maxTrq2*fr;
 		brake = false;
-	}
-	if (accelerate_motor1_release) {
-		if (keys[brake_key]!=brake_key){motor1.rate = 0;}
-	}
-	if (accelerate_motor2_release) {
-		if (keys[brake_key]!=brake_key){motor2.rate = 0;}
-	}
-	keys[e.keyCode] = false;
-//	motor3.maxForce = 0;
-//	motor4.maxForce = 0;
-});
+		accelerate_motor = false;
+	 }, false);
+
+function drawTimer(maxTime, now, delay){
+	var timerX = scene_width/2;
+	var timerY = buttonR*3;
+	var time = maxTime-Math.floor(now-delay);
+	cv = $('#canvasbg')[0].getContext('2d');
+	cv.globalAlpha=1;
+	//cv.clearRect(timerX-2*buttonR,0,4*buttonR, 5*buttonR);
+	//cv.fillStyle = "#ffffff";
+	cv.beginPath();
+	cv.rect(timerX-2*buttonR,0,4*buttonR, 5*buttonR);
+	cv.fillStyle = "#ffffff";
+	cv.fill();
+	cv.beginPath(); 
+	cv.strokeStyle = "blue";
+	cv.lineWidth = "8";
+	cv.arc(timerX, timerY, buttonR, 0, Math.PI*2*((now-delay))/maxTime, true);
+	cv.stroke();
+	cv.font = "40px Arial";
+	cv.fillStyle = "blue";
+	cv.fillText(("0" + time).slice(-2),timerX-buttonR/1.8,timerY+buttonR/5);
+	cv.font = "20px Arial";
+	cv.fillText("sec",timerX-buttonR/2.7,timerY+buttonR/1.7);
+};
+
+function drawButtons(brakeTrans, accTrans){
+	cv = $('#canvasbg')[0].getContext('2d');
+	cv.fillStyle = "#ffffff";
+	cv.beginPath();
+	cv.rect(0,brakeY-buttonR*1.5,scene_width, 3*buttonR);
+	cv.fill();
+	cv.beginPath(); 
+	cv.strokeStyle = "red";
+	cv.globalAlpha=brakeTrans;
+	cv.lineWidth = "6";
+	cv.arc(brakeX, brakeY, buttonR, 0, Math.PI*2, true);
+	cv.stroke();
+	cv.font = "40px Arial";
+	cv.fillStyle = "red";
+	cv.fillText("B",brakeX-buttonR/3,brakeY+buttonR/3);
+	cv.globalAlpha=Math.round(brakeTrans);
+	cv.arc(brakeX, brakeY, 1.2*buttonR, 0, Math.PI*2, true);
+	cv.stroke();
+	cv.arc(brakeX, brakeY, 1.4*buttonR, 0, Math.PI*2, true);
+	cv.stroke();
+
+	cv.beginPath(); 
+	cv.strokeStyle = "green";
+	cv.globalAlpha=accTrans;
+	cv.lineWidth = "6";
+	cv.arc(accX, accY, buttonR, 0, Math.PI*2, true); 
+	cv.stroke();
+	cv.fillStyle = "green";
+	cv.fillText("A",accX-buttonR/3,accY+buttonR/3);
+
+	cv.globalAlpha=Math.round(accTrans);
+	cv.arc(accX, accY, 1.2*buttonR, 0, Math.PI*2, true);
+	cv.arc(accX, accY, 1.4*buttonR, 0, Math.PI*2, true);
+	cv.stroke();
+};
 
 function getNumberArray(arr){
     var newArr = new Array();
@@ -527,12 +520,12 @@ function getNumberArray(arr){
 
 function maxTrqlerp(spd){
 	var maxTrq = 8000;
-	var spdRan = 8000;
+	//var spdRan = 8000;
 	if (spd>0){
 		for (var i=0; i<(spdLookup.length-1); i++){
 			if(spdLookup[i]<=spd && spdLookup[i+1]>spd){
 				maxTrq = (spd - spdLookup[i])/500*(trqLookup[i+1]-trqLookup[i])+trqLookup[i];
-				spdRan = spdLookup[i];
+				//spdRan = spdLookup[i];
 			}			
 		}
 	}
@@ -561,12 +554,11 @@ function efflerp(spd, trq){
 	if (spd*trq > 0){
 		efflerp = 1/efflerp;
 	}
-	/*if (spd>1500){
-		var a =1;
-	}*/
 	
 	return efflerp;
 }
+
+function sign(x) { return x ? x < 0 ? -1 : 1 : 0; }
 
 demo.canvas.style.position = "absolute";
 demo.canvas.style.left = "0px";
@@ -827,14 +819,15 @@ function defineSpace(canvas_id, width, height) {
             var p = point2canvas(new cp.Vect(verts[i], verts[i + 1]));
             ctx.lineTo(p.x - DISPLACEMENT, p.y);
         }
+        ctx.fillStyle = "aqua";
         ctx.fill();
         ctx.stroke();
     };
 
     cp.SegmentShape.prototype.draw = function (ctx, scale, point2canvas) {
         var oldLineWidth = ctx.lineWidth;
-        ctx.lineWidth = Math.max(1, this.r * scale * 2);
-
+        //ctx.lineWidth = Math.max(1, this.r * scale * 2);
+        ctx.lineWidth = 10;
         var a = this.ta;
         var b = this.tb;
         a = point2canvas(a);
@@ -851,6 +844,7 @@ function defineSpace(canvas_id, width, height) {
         var c = point2canvas(this.tc);
         ctx.beginPath();
         ctx.arc(c.x - DISPLACEMENT, c.y, scale * this.r, 0, 2*Math.PI, false);
+        ctx.fillStyle = "grey"
         ctx.fill();
         ctx.stroke();
         
@@ -868,7 +862,7 @@ function defineSpace(canvas_id, width, height) {
     	var c = this.b.local2World(this.anchr2);
     	
     	ctx.strokeStyle = "grey";
-    	drawLine(ctx, point2canvas, a, b);
+    	//drawLine(ctx, point2canvas, a, b);
     	drawCircle(ctx, scale, point2canvas, c, 3);
     };
 

@@ -1,5 +1,9 @@
 extends layout
 block content
+  #landscape 
+    p. 
+      b.
+        Rotate Device to Landscape
   #wrapper
     #data
       #runner
@@ -13,4 +17,36 @@ block content
     #rank
   script(type='text/javascript').
     $("#wrapper").width($(window).width());
+    function changeOrientation(){
+    switch(window.orientation) {
+    case 0: // portrait, home bottom
+    window.scrollTo(1,1);
+    $('#landscape').show();
+    lockScroll();
+    break;
+    case 180: // portrait, home bottom
+    window.scrollTo(1,1);
+    $('#landscape').show();
+    lockScroll();
+    break;
+    case -90: // landscape, home left
+    $('#landscape').hide();
+    lockScroll();
+    break;
+    case 90: // landscape, home right
+    $('#landscape').hide();
+    lockScroll();
+    break;
+    }
+    }
+    window.onorientationchange = function() { 
+    //Need at least 800 milliseconds
+    setTimeout(changeOrientation, 100);
+    }
+    function lockScroll()
+    {
+    $(document).bind("touchmove",function(event){
+    event.preventDefault();
+    });
+    }
   script(type='text/javascript',src='/javascripts/main.js')
