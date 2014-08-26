@@ -6,7 +6,7 @@
     "start": "node ./bin/www"
   },
   "dependencies": {
-	"pg": "2.x",
+	"pg": "3.x",
     "express": "~4.2.0",
     "static-favicon": "~1.0.0",
     "morgan": "~1.0.0",
