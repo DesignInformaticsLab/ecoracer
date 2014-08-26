@@ -13,7 +13,7 @@ router.get('/ecoracer', function(req, res) {
 
 
 var pg = require('pg');
-var connection = process.env.DATABASE_URL;
+var connection = process.env.DATABASE_URL || "postgres://postgres:KVTWN78mpostgres@localhost:5432/postgres";;
 //var connection = "postgres://postgres:KVTWN78mpostgres@localhost:5432/YourDatabase";
 
 router.get('/db', function (req, res) {
@@ -28,18 +28,18 @@ router.get('/db', function (req, res) {
   });
 })
 
-//router.post('/newdata', function(request, response) {
-//    pg.connect(process.env.DATABASE_URL, function(err, client, done) {
-//        if(err) response.send("Could not connect to DB: " + err);
-//        client.query('INSERT INTO test_table (id, name) VALUES ($1, $2)',
-//            [request.query.id, request.query.name], 
-//            function(err, result) {
-//                done();
-//                if(err) return response.send(err);
-//                response.send('OK');
-//        });
-//    });
-//});
+router.post('/newdata', function(req, res) {
+    pg.connect(connection, function(err, client, done) {
+        if(err) res.send("Could not connect to DB: " + err);
+        client.query('INSERT INTO test_table (id, name) VALUES ($1, $2)',
+            [req.query.id, req.query.name], 
+            function(err, result) {
+                done();
+                if(err) return res.send(err);
+                res.send('OK');
+        });
+    });
+});
 
 ///* GET Userlist page. */
 //router.get('/userlist', function(req, res) {
