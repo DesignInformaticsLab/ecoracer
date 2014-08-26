@@ -23,7 +23,7 @@ router.get('/db', function (req, res) {
       if (err)
        { console.error(err); res.send("Error " + err); }
       else
-       { res.render('db',{ data: result }); }
+       { res.render('db',{ data: JSON.stringify(result) }); }
     });
   });
 })

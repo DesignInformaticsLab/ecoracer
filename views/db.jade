@@ -1,5 +1,7 @@
 extends layout
 
 block content
-  - var x = data;
+  - var x = JSON.parse(data);
+  - var y = data;
   p= x
+  p= y
