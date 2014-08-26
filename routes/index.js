@@ -11,10 +11,13 @@ router.get('/ecoracer', function(req, res) {
     res.render('ecoracer', { title: 'Hello, World!' })
 });
 
+
 var pg = require('pg');
+var connection = process.env.DATABASE_URL;
+//var connection = "postgres://postgres:KVTWN78mpostgres@localhost:5432/YourDatabase";
 
 router.get('/db', function (req, res) {
-  pg.connect(process.env.DATABASE_URL, function(err, client, done) {
+  pg.connect(connection, function(err, client, done) {
     client.query('SELECT * FROM test_table', function(err, result) {
       done();
       if (err)
