@@ -1,0 +1,10 @@
+extends layout
+
+block content
+  script(type='text/javascript').
+    $.ajax( {
+      url: '/adddata',
+      data: {'id':'3', 'name':'baobao'},
+      type: 'POST',
+    });
+  

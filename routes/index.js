@@ -28,11 +28,15 @@ router.get('/db', function (req, res) {
   });
 })
 
-router.post('/newdata', function(req, res) {
+router.get('/newdata', function(req, res) {
+  res.render('newdata', { title: 'Express' });
+});
+
+router.post('/adddata', function(req, res) {
     pg.connect(connection, function(err, client, done) {
         if(err) res.send("Could not connect to DB: " + err);
         client.query('INSERT INTO test_table (id, name) VALUES ($1, $2)',
-            [req.query.id, req.query.name], 
+            ['3', 'baobao'], 
             function(err, result) {
                 done();
                 if(err) return res.send(err);
