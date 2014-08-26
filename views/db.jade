@@ -1,8 +1,9 @@
 extends layout
 
 block content
-  p #{data}
+  -var ob = JSON.parse(data)
   ul
-    each d, i in data
+    each d, i in ob
       li
-        a #{d.id} , a #{d.name}
+        a #{d.id}
+        a #{d.name}
