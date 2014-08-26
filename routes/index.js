@@ -36,7 +36,7 @@ router.post('/adddata', function(req, res) {
     pg.connect(connection, function(err, client, done) {
         if(err) res.send("Could not connect to DB: " + err);
         client.query('INSERT INTO test_table (id, name) VALUES ($1, $2)',
-            ['3', 'baobao'], 
+            [req.body.id, req.body.name], 
             function(err, result) {
                 done();
                 if(err) return res.send(err);
