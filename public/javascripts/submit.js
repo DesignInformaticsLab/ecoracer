@@ -5,5 +5,7 @@ function submitResult(){
 						   					  'solution':[],
 						   					  'date':[],
 						   					  'interaction':[]}),
+	}, function(data){
+		$("#rank").html(data);
 	});
 }

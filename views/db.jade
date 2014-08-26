@@ -4,10 +4,5 @@ block content
   script(type='text/javascript').
     $.getJSON('/db', function(response) {
       a = response;
-      $.ajax( {
-        url: '/newdata',
-        data: {'id':'2', 'name':'yiren'},
-        type: 'POST',
-      });
     });
   
