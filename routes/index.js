@@ -25,15 +25,18 @@ router.get('/db', function (req, res) {
 router.post('/adddata', function(req, res) {
     pg.connect(connection, function(err, client, done) {
         if(err) res.send("Could not connect to DB: " + err);
-        client.query('INSERT INTO ecoracer_table (id, name, info) VALUES ($1, $2, $3)',
-            [req.body.id, req.body.name, req.body.info], 
+        client.query('INSERT INTO ecoracer_table (name, score, info) VALUES ($1, $2, $3)',
+            [req.body.name, req.body.score, req.body.info], 
             function(err, result) {
                 done();
-                if(err) 
-                 { console.error(err); res.send("Error " + err); }
-                else
-                 { res.send(req.body.info); }
-        });
+                if(err) { 
+                	console.error(err); res.send("Error " + err); }
+                else { 
+                	client.query('SELECT id, name, score FROM ecoracer_table ORDER BY score ASC'),function(err, result) {
+                		res.send(result.rows); 
+                	}
+                }
+        	});
     });
 });
 

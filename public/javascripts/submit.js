@@ -1,11 +1,11 @@
 function submitResult(){
 	$.post('/adddata',{'id':[],
 					   'name':[],
-					   'info':JSON.stringify({'score':consumption,
-						   					  'solution':[],
+					   'score':consumption,
+					   'info':JSON.stringify({'solution':[],
 						   					  'date':[],
 						   					  'interaction':[]}),
 	}, function(data){
-		$("#rank").html(data);
+		$("#rank").html(JSON.parse(data).score);
 	});
 }
