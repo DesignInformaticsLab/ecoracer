@@ -9,3 +9,9 @@ function submitResult(){
 		$("#rank").html(JSON.parse(data).score);
 	});
 }
+
+function getBestScore(){
+	$.get('/bestscore',{}, function(data){
+		$("#rank").html(JSON.parse(data));
+	});	
+}
