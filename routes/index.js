@@ -49,12 +49,12 @@ router.post('/adddata', function(req, res) {
                 	var current_score = req.body.score;
                 	var queryText = 'SELECT id FROM ecoracer_table HAVING score > ' + current_score;
                 	client.query(queryText, function(err, result) {
-                		var worse = result.rows.length;
+//                		var worse = result.rows.length;
 //                		client.query('SELECT id FROM ecoracer_table', function(err, result) {
 //                			var betterthan = worse/result.rows.length;
 //                			res.send( betterthan );
 //                		}
-                		res.send(worse);
+                		res.send(result);
                 	});
                 }
         	});
