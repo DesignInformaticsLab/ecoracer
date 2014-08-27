@@ -12,6 +12,6 @@ function submitResult(){
 
 function getBestScore(){
 	$.get('/bestscore',{}, function(data){
-		$("#rank").html(data.score);
+		$("#rank").html(data);
 	});	
 }

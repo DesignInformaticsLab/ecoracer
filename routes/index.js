@@ -45,9 +45,15 @@ router.post('/adddata', function(req, res) {
                 done();
                 if(err) { 
                 	console.error(err); res.send("Error " + err); }
-                else { 
-                	client.query('SELECT * FROM ecoracer_table ORDER BY score ASC'),function(err, result) {
-                		res.send( result.rows ); 
+                else {
+                	var current_score = req.body.score;
+                	var queryText = 'SELECT id FROM ecoracer_table HAVING score > ' + current_score;
+                	client.query(queryText, function(err, result) {
+                		var worse = result.rows.length;
+                		client.query('SELECT id FROM ecoracer_table', function(err, result) {
+                			var betterthan = worse/result.rows.length;
+                			res.send( betterthan );
+                		}
                 	}
                 }
         	});
