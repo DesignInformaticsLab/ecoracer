@@ -16,7 +16,7 @@ router.get('/bestscore', function(req, res) {
 	      if (err)
 	       { console.error(err); res.send("Error " + err); }
 	      else
-	       { res.send( result.rows ); }
+	       { res.send( result.rows[0] ); }
 	    });
 	  });	
   
