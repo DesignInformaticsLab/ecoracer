@@ -46,7 +46,7 @@ router.post('/adddata', function(req, res) {
                 if(err) { 
                 	console.error(err); res.send("Error " + err); }
                 else {
-                	var current_score = req.body.score;
+                	var current_score = 0;
                 	var queryText = 'SELECT id FROM ecoracer_table HAVING score > ' + current_score;
                 	client.query(queryText, function(err, result) {
 //                		var worse = result.rows.length;
