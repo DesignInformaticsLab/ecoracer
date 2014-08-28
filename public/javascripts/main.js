@@ -65,7 +65,7 @@ var t2t = 1; // 1 time step == 1/120 second
 var consumption = 0;
 var fr = 10; // final drive ratio
 var fric = 2.8;
-var timeout = 45; // 30s
+var timeout = 3; // 30s
 var tstart = 5; // game starts after 5 sec
 var indx = 0;
 var data = [0,0,0,0,10,20,30,40,50,60,70,80,90,45,0,0,0,0,0,0,10,20,30,40,50,60,70,80,90,45,0,0,0,0,0,0];
