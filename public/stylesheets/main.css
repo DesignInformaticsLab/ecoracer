@@ -1,72 +1,103 @@
 @CHARSET "ISO-8859-1";
+@-webkit-keyframes spin {
+    0%  {-webkit-transform: rotate(0deg);}
+    100% {-webkit-transform: rotate(360deg);}   
+}
+@-webkit-keyframes spin-fast
+{
+    0%  {-webkit-transform: rotate(0deg);}
+    50% {-webkit-transform: rotate(360deg);} 
+    100% {-webkit-transform: rotate(720deg);} 
+}
+@-moz-keyframes spinnerRotate
+{
+    from{-moz-transform:rotate(0deg);}
+    to{-moz-transform:rotate(360deg);}
+}
+@-ms-keyframes spinnerRotate
+{
+    from{-ms-transform:rotate(0deg);}
+    to{-ms-transform:rotate(360deg);}
+}
 
-	body {
-	    margin: 40px;
-	    overflow: hidden;
-	    font-family: 'Comfortaa', cursive;
-	    background: rgba(0,0,0,1);
-	}
-	#canvas1 {
-		transition: all 2s;
-	}
-	#canvasbg {
-		transition: all 2s;
-	}
-	#wrapper {
-		position: relative;
-		height: 400px;
-/* 		border: 1px dashed #CCCCCC; */
-	}
-	
-	.data {
-		position: absolute;
-		top: 10px;
-		left: 10px;
-		background: rgba(255,255,255,0.9);
-		z-index: 9;
-	}
-	#rank {
-		position: absolute;
-		top: 410px;
-		left: 10px;
-		color: rgba(255,255,255,0.9);
-		z-index: 9;
-	}
-	#runner {
-		display:none;
-	}
-	#vehicle_speed, #energyconsumption, #timer, #position, #commnd{
-		float:left;
-		margin: 10px;
-		width: 120px;
-	}
-	#submit {
-		position: absolute;
-		top: 40%;
-		left: 600px;
-		display: none;
-	}
-	#thanks {
-		position: absolute;
-		top: 60%;
-		left: 600px;
-		width: 300px;
-		transition: all 1s;
-		font-size: 300%;
-		color: #ffffff;
-	}
-	#landscape{
-	  position: absolute;
-	  top: 0px;
-	  left: 0px;
-	  background: #000000;
-	  width: 1350px;
-	  height: 600px;
-	 display: none;
-	 z-index: 20000;
-	 opacity: 0.9;
-	}
-	#landscape p{
+body {
+    margin: 40px;
+    overflow: hidden;
+    font-family: 'Comfortaa', cursive;
+    background: rgba(0,0,0,1);
+}
+
+#canvas1 {
+	transition: all 2s;
+	background: #e9e9e9;
+}
+
+#canvasbg {
+	transition: all 2s;
+	background: #e9e9e9;
+}
+
+#wrapper {
+	position: relative;
+	height: 400px;
+}
+
+.data {
+	position: absolute;
+	top: 10px;
+	left: 10px;
+	background: rgba(255,255,255,0.9);
+	z-index: 9;
+}
+
+#rank {
+	position: absolute;
+	top: 410px;
+	left: 10px;
+	color: rgba(255,255,255,0.9);
+	z-index: 9;
+}
+
+#runner {
+	display:none;
+}
+
+#car_progress {
+	position: absolute;
+	top: 0px;
+	left: 390px;
+}
+
+#submit {
+	position: absolute;
+	top: 40%;
+	left: 600px;
+	display: none;
+}
+
+#thanks {
+	position: absolute;
+	top: 60%;
+	left: 600px;
+	width: 300px;
+	transition: all 1s;
+	font-size: 300%;
+	color: #ffffff;
+}
+
+#landscape{
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	background: #000000;
+	width: 1350px;
+	height: 600px;
+	display: none;
+	z-index: 20000;
+	opacity: 0.9;
+}
+
+#landscape p{
     background: url("./images/landscape.png") no-repeat scroll 0 0 transparent;
     color: #FFFFFF;
     height: 121px;
@@ -76,11 +107,185 @@
     top: 20%;
     width: 116px;
     opacity: 1;
-	}
- 
-	#landscape p b{
+}
+
+#landscape p b{
      width: 100px;
      display: block;
      text-align: center;
      margin-left: 10px;
-	}
+}
+
+progress[value] {
+	-webkit-appearance: none;
+	appearance: none;
+	
+	width: 500px;
+	height: 20px;
+	
+}
+
+progress[value]::-webkit-progress-bar{
+	background-color:#eee;
+	border-radius: 2px;
+	box-shadow: 0 2px 5px rgba(0,0,0,0.25) inset; 
+}
+
+progress[value]::-webkit-progress-value{
+	background: #CC6600;
+	background-image:
+		-webkit-linear-gradient(top, 
+								rgba(255,255,255,0.25), rgba(0,0,0,0.25));
+	border-radius: 2px;						
+}
+
+.battshape{
+	position: absolute;
+    top: 120px;
+    left: 10px;
+	width: 30px;
+    height: 140px;
+}
+
+.outer {
+	position: absolute;
+	left: 0px;
+	top: 5px;
+    width: 30px;
+    height: 140px;
+    border: 2px solid #000;
+    overflow: hidden;
+    -moz-border-radius: 4px;
+    -webkit-border-radius: 4px;
+    border-radius: 4px;
+}
+
+.battcap {
+	position: absolute;
+	top: 0px;
+	left: 8px;
+	width: 20px;
+	height: 5px;
+	background-color: #000;
+}
+
+.inner {
+    width: 100%;
+    overflow: hidden;
+    left: -2px;
+    position: absolute;
+    border: 2px solid #000;
+    border-top-width: 0;
+    background-color: green;
+    bottom: 0;
+    height: 100%;
+}
+
+.battcons{
+	position: absolute;
+	height: 25px;
+	width: 30px;
+	left: 10px;
+	top: 270px;
+	text-align: center;
+	font-weight: bold;
+	font-family: Arial;
+	font-size: 15px;
+}
+
+.motor1T{
+	position: absolute;
+	height: 25px;
+	width: 30px;
+	left: 10px;
+	top: 300px;
+	text-align: center;
+	font-weight: bold;
+	font-family: Arial;
+	font-size: 15px;
+}
+
+.motor2T{
+	position: absolute;
+	height: 25px;
+	width: 30px;
+	left: 10px;
+	top: 330px;
+	text-align: center;
+	font-weight: bold;
+	font-family: Arial;
+	font-size: 15px;
+}
+
+.round-button {
+    display:block;
+    width:80px;
+    height:80px;
+/*     line-height:50px; */
+    border: 20px solid #222222;
+    border-radius: 50%;
+    text-align:center;
+    text-decoration:none;
+/*     box-shadow: 0 0 30px black; */
+    font-size:40px;
+    font-weight:bold;
+    transition: all 0.1s;
+    line-height:80px;
+   	position:absolute;
+	margin: auto;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	right: 0;
+}
+
+#timer{
+	position:absolute;
+	background: #464646;
+}
+
+#timer:hover{
+	background: #262626;
+}
+
+#brake{
+
+}
+#brake-container{
+	position: absolute;
+	top: 320px;
+	width: 200px;
+	height: 200px;
+}
+
+#brake.activated {
+/*     width:80px; */
+/*     height:80px; */
+	border: 40px double #222222;
+}
+
+#acc{
+/* 	background: #e2e760; */
+	border: 20px dashed #222222;
+	-webkit-animation-name: spin;
+    -webkit-animation-duration: 5s;
+    -webkit-animation-iteration-count: infinite;
+    -webkit-animation-timing-function: linear;
+}
+#acc-container{
+	position: absolute;
+	top: 320px;
+	width: 200px;
+	height: 200px;
+}
+
+#acc.activated {
+/* 	box-shadow: 0 0 200px 100px #e2e760; */
+/* 	border: 40px dashed #222222; */
+    width:120px;
+    height:120px;
+	-webkit-animation-name: spin-fast;
+    -webkit-animation-duration: 1s;
+    -webkit-animation-iteration-count: infinite;
+    -webkit-animation-timing-function: linear;
+}

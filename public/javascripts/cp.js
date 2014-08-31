@@ -1297,16 +1297,23 @@ PolyShape.prototype.setVerts = function(verts, offset)
 };
 
 /// Initialize a box shaped polygon shape.
-var BoxShape = cp.BoxShape = function(body, width, height)
+var BoxShape = cp.BoxShape = function(body, width, height, offset)
 {
 	var hw = width;
 	var hh = height;
+	var boxout;
+	if(body.isStatic()){
+		boxout = BoxShape2(body, new BB(-hw/2, -hh/2, hw/2, hh/2), offset);
+	}
+	else{
+		boxout = BoxShape3(body, new BB(-hw/2, -hh/2, hw/2, hh/2), offset);
+	}
 	
-	return BoxShape3(body, new BB(-hw/2, -hh/2, hw/2, hh/2));
+	return boxout;
 };
 
 /// Initialize an offset box shaped polygon shape.
-var BoxShape2 = cp.BoxShape2 = function(body, box)
+var BoxShape2 = cp.BoxShape2 = function(body, box, offset)
 {
 	var verts = [
 		box.l, box.b,
@@ -1315,10 +1322,10 @@ var BoxShape2 = cp.BoxShape2 = function(body, box)
 		box.r, box.b,
 	];
 	
-	return new PolyShape(body, verts, vzero);
+	return new PolyShape(body, verts, offset);
 };
 
-var BoxShape3 = cp.BoxShape3 = function(body, box)
+var BoxShape3 = cp.BoxShape3 = function(body, box, offset)
 {
 	var lq = box.l;
 	var tq = box.t;

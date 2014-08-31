@@ -5,49 +5,23 @@ block content
       b.
         Rotate Device to Landscape
   #wrapper
-    #data
-      #runner
-      #vehicle_speed
-      #energyconsumption
-      #timer
-      #position
-      #commnd
+    .data
+      #car_progress
+        progress(id='pbar',max='100',value='0')
+      .battshape
+        .battcap
+        .outer
+          #battvalue.inner
+      #batttext.battcons
+      #mot1.motor1T
+      #mot2.motor2T
+      #runner  	
     canvas(id='canvasbg')
     canvas(id='canvas1')
+    #brake-container
+      #brake.round-button
+    #acc-container
+      #acc.round-button
     #rank
-  script(type='text/javascript').
-    getBestScore();
-    $("#wrapper").width($(window).width());
-    function changeOrientation(){
-    switch(window.orientation) {
-    case 0: // portrait, home bottom
-    window.scrollTo(1,1);
-    $('#landscape').show();
-    lockScroll();
-    break;
-    case 180: // portrait, home bottom
-    window.scrollTo(1,1);
-    $('#landscape').show();
-    lockScroll();
-    break;
-    case -90: // landscape, home left
-    $('#landscape').hide();
-    lockScroll();
-    break;
-    case 90: // landscape, home right
-    $('#landscape').hide();
-    lockScroll();
-    break;
-    }
-    }
-    window.onorientationchange = function() { 
-    //Need at least 800 milliseconds
-    setTimeout(changeOrientation, 100);
-    }
-    function lockScroll()
-    {
-    $(document).bind("touchmove",function(event){
-    event.preventDefault();
-    });
-    }
+  script(type='text/javascript',src='/javascripts/extra.js')
   script(type='text/javascript',src='/javascripts/main.js')
