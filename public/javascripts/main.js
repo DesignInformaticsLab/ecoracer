@@ -313,19 +313,22 @@ var keys = [];
 $(document).on("pageinit",function(event){
 	$("#brake").addClass("enabled");
 	$("#acc").addClass("enabled");
-	$("#brake").on("touchstart",function(){
+	$("#brake").on("touchstart",function(event){
+		event.preventDefault();
 		if($("#brake").hasClass("enabled")){
 			brake_sig = true;
 			$('#brake').addClass('activated');			
 		}
 	});
-	$("#acc").on("touchstart",function(){
+	$("#acc").on("touchstart",function(event){
+		event.preventDefault();
 		if($("#acc").hasClass("enabled")){
 			acc_sig = true;
 			$('#acc').addClass('activated');
 		}
 	});
-	$("#brake").on("touchend",function(){
+	$("#brake").on("touchend",function(event){
+		event.preventDefault();
 		if($("#brake").hasClass("enabled")){
 			brake_sig = false;
 			$('#brake').removeClass('activated');
@@ -341,7 +344,8 @@ $(document).on("pageinit",function(event){
 			acc_sig = false;
 		}
 	});
-	$("#acc").on("touchend",function(){
+	$("#acc").on("touchend",function(event){
+		event.preventDefault();
 		if($("#acc").hasClass("enabled")){
 			acc_sig = false;
 			$('#acc').removeClass('activated');
@@ -357,11 +361,13 @@ $(document).on("pageinit",function(event){
 			acc_sig = false;
 		}
 	});
-	$("#ok").on("tap",function(){
+	$("#ok").on("tap",function(event){
+		event.preventDefault();
 		$("#messagebox").hide();
 		restart();
 	});
-	$("#restart").on("tap",function(){
+	$("#restart").on("tap",function(event){
+		event.preventDefault();
 		$("#messagebox").hide();
 		restart();
 	});
