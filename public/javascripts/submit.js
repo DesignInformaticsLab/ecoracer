@@ -7,7 +7,8 @@ function submitResult(){
 						   					  'interaction':[]}),
 	});
 	$.post('/getscore',{'score':consumption,}, function(data){
-		$("#rank").html(data.length/(total_num_user+1));
+		$("#textmessage").html("You spent "+ Math.round(consumption/1000/3600*1000)/1000 + 
+				" kWh of energy, that's better than "+ Math.round(data.length/(total_num_user+1)*100) + "% of players!");
 	});
 }
 

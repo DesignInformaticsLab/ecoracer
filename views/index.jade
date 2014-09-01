@@ -5,12 +5,12 @@ block content
       b.
         Rotate Device to Landscape
   #wrapper
-    .data
+    #data
       #car_progress
         progress(id='pbar',max='100',value='0')
-      .battshape
-        .battcap
-        .outer
+      #battshape
+        #battcap
+        #outer
           #battvalue.inner
       #batttext.battcons
       #mot1.motor1T
@@ -19,9 +19,18 @@ block content
     canvas(id='canvasbg')
     canvas(id='canvas1')
     #brake-container
-      #brake.round-button
+      #brake.round-button.
+        B
     #acc-container
-      #acc.round-button
+      #acc.round-button.
+        A
     #rank
-  script(type='text/javascript',src='/javascripts/extra.js')
-  script(type='text/javascript',src='/javascripts/main.js')
+    #messagebox
+      #textmessage
+      #ok-container
+        #ok.
+          OK
+      #restart-container
+        #restart.
+          TRY AGAIN
+    script(type='text/javascript',src='/javascripts/main.js')

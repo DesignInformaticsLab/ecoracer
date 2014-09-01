@@ -39,14 +39,17 @@ body {
 
 #wrapper {
 	position: relative;
-	height: 400px;
+	height: 440px;
 }
 
-.data {
+#data {
 	position: absolute;
-	top: 10px;
-	left: 10px;
-	background: rgba(255,255,255,0.9);
+	width: 100%;
+	height: 100%;
+/* 	margin-left: 10px; */
+/* 	margin-right: 10px; */
+	left: 0px;
+/* 	background: rgba(255,255,255,0.9); */
 	z-index: 9;
 }
 
@@ -63,9 +66,11 @@ body {
 }
 
 #car_progress {
-	position: absolute;
+	position: relative;
+	width: 100%;
+	height: 20px;
 	top: 0px;
-	left: 390px;
+	left: 0px;
 }
 
 #submit {
@@ -119,35 +124,35 @@ body {
 progress[value] {
 	-webkit-appearance: none;
 	appearance: none;
-	
-	width: 500px;
+	position: absolute;
+	top: 0px;
+	width: 100%;
 	height: 20px;
-	
 }
 
 progress[value]::-webkit-progress-bar{
-	background-color:#eee;
-	border-radius: 2px;
-	box-shadow: 0 2px 5px rgba(0,0,0,0.25) inset; 
+	background-color:#f9f9f9;
+	border-radius: 5px;
+/* 	box-shadow: 0 2px 5px rgba(0,0,0,0.25) inset;  */
 }
 
 progress[value]::-webkit-progress-value{
-	background: #CC6600;
-	background-image:
-		-webkit-linear-gradient(top, 
-								rgba(255,255,255,0.25), rgba(0,0,0,0.25));
+	background: #222222;
+/* 	background-image: */
+/* 		-webkit-linear-gradient(top,  */
+/* 								rgba(255,255,255,0.25), rgba(0,0,0,0.25)); */
 	border-radius: 2px;						
 }
 
-.battshape{
+#battshape{
 	position: absolute;
-    top: 120px;
+    top: 80px;
     left: 10px;
 	width: 30px;
     height: 140px;
 }
 
-.outer {
+#outer {
 	position: absolute;
 	left: 0px;
 	top: 5px;
@@ -160,7 +165,7 @@ progress[value]::-webkit-progress-value{
     border-radius: 4px;
 }
 
-.battcap {
+#battcap {
 	position: absolute;
 	top: 0px;
 	left: 8px;
@@ -176,7 +181,7 @@ progress[value]::-webkit-progress-value{
     position: absolute;
     border: 2px solid #000;
     border-top-width: 0;
-    background-color: green;
+    background-color: #222222;
     bottom: 0;
     height: 100%;
 }
@@ -186,7 +191,7 @@ progress[value]::-webkit-progress-value{
 	height: 25px;
 	width: 30px;
 	left: 10px;
-	top: 270px;
+	top: 230px;
 	text-align: center;
 	font-weight: bold;
 	font-family: Arial;
@@ -249,13 +254,14 @@ progress[value]::-webkit-progress-value{
 }
 
 #brake{
-
+	z-index: 9999;
 }
 #brake-container{
 	position: absolute;
-	top: 320px;
-	width: 200px;
-	height: 200px;
+	top: 280px;
+	width: 160px;
+	height: 160px;
+	left: 200px;
 }
 
 #brake.activated {
@@ -271,12 +277,14 @@ progress[value]::-webkit-progress-value{
     -webkit-animation-duration: 5s;
     -webkit-animation-iteration-count: infinite;
     -webkit-animation-timing-function: linear;
+    z-index: 9999;
 }
 #acc-container{
 	position: absolute;
-	top: 320px;
-	width: 200px;
-	height: 200px;
+	top: 280px;
+	width: 160px;
+	height: 160px;
+	right: 200px;
 }
 
 #acc.activated {
@@ -288,4 +296,82 @@ progress[value]::-webkit-progress-value{
     -webkit-animation-duration: 1s;
     -webkit-animation-iteration-count: infinite;
     -webkit-animation-timing-function: linear;
+}
+
+/* message box */
+#messagebox{
+	position: absolute;
+	margin: auto;
+	top: 30px;
+	left: 0;
+	right: 0;
+	width: 500px;
+	height: 135px;
+/* 	border: 10px solid #666666; */
+	border-radius: 0%;
+	transition: all 0.3s;
+	display: none;
+}
+
+#textmessage{
+	position: relative;
+	margin: auto;
+	top: 10px;
+	left: 0;
+	bottom: 0;
+	right: 0;
+	text-align:center;
+    text-decoration:none;
+    font-size:20px;
+    font-weight:bold;	
+}
+
+#ok-container{
+	position: relative;
+	top: 10px;
+	margin: auto;
+	width: 180px;
+	height: 40px;
+	display: none;
+}
+
+#restart-container{
+	position: relative;
+	top: 10px;
+	margin: auto;
+	width: 180px;
+	height: 40px;
+	display: none;
+}
+
+#ok{
+	position: relative;
+	width: 100%;
+	height: 100%;
+	text-align: center;
+	text-decoration: none;
+	font-size: 20px;
+	font-weight: bold;
+	border: 8px solid #222222;
+	z-index: 9999;
+}
+
+#ok.activated{
+	
+}
+
+#restart{
+	position: relative;
+	width: 100%;
+	height: 100%;
+	text-align: center;
+	text-decoration: none;
+	font-size: 20px;
+	font-weight: bold;
+	border: 8px solid #222222;
+	z-index: 9999;	
+}
+
+#restart.activated{
+	
 }

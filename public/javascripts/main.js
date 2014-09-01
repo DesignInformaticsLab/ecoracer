@@ -2,18 +2,7 @@
 var scene_width = $(window).width();
 var scene_height = 440;
 
-color_background = '#e9e9e9';
-color_timer = '#000000';
-var buttonR = 40;
-var brakeX = 200;
-var brakeY = 320;
-var accX = scene_width-brakeX;
-var accY = brakeY;
-$('#brake-container').css('left',brakeX+'px');
-$('#acc-container').css('right',brakeX+'px');
 //*********************** VISUAL *************************** //
-
-
 var DISPLACEMENT = 0;
 var MARGIN = 175;
 
@@ -21,18 +10,18 @@ var v = cp.v;
 var GRABABLE_MASK_BIT = 1 << 31;
 var NOT_GRABABLE_MASK = ~GRABABLE_MASK_BIT;
 var scene_widthx = 6800; // ???m
-var scene_heightx = 320;
+var scene_heightx = 280;
 var started = false;
 var spdLookup = new Float64Array([0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000, 6500, 7000, 7500, 8000, 8500, 9000]);
 var trqLookup = new Float64Array([200,200,200,200,200,194,186,161,142,122,103,90,77.5,70,63.5,58,52,49,45]);
 var tstep = 60;
-var start_race = 0;
+var start_race = 1;
 var wheel_speed;
 var max_batt = 0.4; // Change this value
 var battstatus = 100;
 
-var accelerate_motor = false;
-var brake = false;
+var acc_sig = false;
+var brake_sig = false;
 
 //************************************************///
 var vehSpeedOld = 0;
@@ -73,17 +62,11 @@ var scene = function(){
 	space.gravity = v(0, -400);
 	space.sleepTimeThreshold = 100;
 	
-	updateGround(space,data);
+	this.addFloor(data, scene_widthx, xstep);
+	this.addTerminal(scene_widthx-3*xstep);
 	
 	$('#canvasbg')[0].width = scene_width;
 	$('#canvasbg')[0].height = scene_height;
-//	$('#canvasbg')[0].style.position = "absolute";
-//	$('#canvasbg')[0].style.left = "0px";
-//	var cv = $('#canvasbg')[0].getContext('2d');
-//	cv.fillStyle = '#f9f9f9';
-//	cv.rect(0,0,scene_width,scene_height);
-//	cv.fill();
-	
 	
 	var addBar = function(pos)
 	{
@@ -139,13 +122,13 @@ var scene = function(){
 	var POS_A = function() { return v.add(boxOffset, posA); };
 	var POS_B = function() { return v.add(boxOffset, posB); };
 	
+	chassis = addChassis(v(80, 40));	
 	motorbar1 = addBar(posA);
 	motorbar2 = addBar(posB);
 	motorbar3 = addBar(posA);
 	motorbar4 = addBar(posB);
 	wheel1 = addWheel(posA);
 	wheel2 = addWheel(posB);
-	chassis = addChassis(v(80, 40));
 	
 	joint1 = new cp.GrooveJoint(chassis, wheel1, v(-30, -10), v(-30, -20), v(0,0));
 	joint2 = new cp.GrooveJoint(chassis, wheel2, v( 30, -10), v( 30, -20), v(0,0));
@@ -182,37 +165,6 @@ var scene = function(){
 	motorbar2.w_limit = 94*t2t;
 };
 
-function updateGround(space, data){
-	var staticBody = space.staticBody;
-	var finishHeight = 200;
-	
-	for (var i=0;i<scene_widthx/xstep-3;i++){
-		gndShape[i] = new cp.SegmentShape(staticBody, v(i*xstep,data[i]), v((i+1)*xstep,data[i+1]), 0);
-		ground[i] = space.addShape(gndShape[i]);
-		ground[i].setElasticity(0);
-		ground[i].setFriction(0.1);
-		ground[i].layers = NOT_GRABABLE_MASK;		
-	}
-	
-	finishShape[0] = new cp.SegmentShape(staticBody, v(i*xstep,0), v((i)*xstep,finishHeight), 0);
-	finishFlag[0] = space.addShape(finishShape[0]);
-	finishFlag[0].sensor = true;
-	finishShape[1] = new cp.SegmentShape(staticBody, v(i*xstep,finishHeight), v((i)*xstep+xstep/2,finishHeight), 0);
-	finishFlag[1] = space.addShape(finishShape[1]);
-	finishFlag[1].sensor = true;
-	finishShape[2] = new cp.SegmentShape(staticBody, v(i*xstep,finishHeight/2), v((i)*xstep+xstep/3.5,finishHeight/2), 0);
-	finishFlag[2] = space.addShape(finishShape[2]);
-	finishFlag[2].sensor = true;
-	
-	for (var j=i; j<i+6; j++){
-		gndShape[j] = new cp.SegmentShape(staticBody, v(j*xstep,data[i]), v((j+1)*xstep,data[i+1]), 0);
-		ground[j] = space.addShape(gndShape[j]);
-		ground[j].setElasticity(0);
-		ground[j].setFriction(0.1);
-		ground[j].layers = NOT_GRABABLE_MASK;		
-	}
-}
-
 scene.prototype = Object.create(__ENVIRONMENT__.prototype);
 
 
@@ -223,94 +175,70 @@ scene.prototype.update = function (dt) {
     for (var i = 0; i < steps; i++) {
         this.space.step(dt);
     }
-    /*if (chassis.p.x>scene_widthx){
-    	this.stop();
-    	$('#runner').runner('stop');
-    	if (consumption<opt_consumption || isNaN(opt_consumption)){
-    		$("#submit").show();
-    		$("#thanks").html("<a>You beat the best score! HOW?!?!?!</a>");
-    	}
-    	else{
-    		$("#thanks").html("<a>Nice try! Try HARDER!!!!!</a>");
-    	}
-    }*/
     
     car_pos = Math.round(chassis.p.x*px2m); //-9.03
-    /////////////////////////////DP simulation //////////////////////////////////////////
-    /*if($('#runner').text()>=5){
-	    if (car_pos<=DP_x[indx+1]){
-	    	if (DP_comm[indx]==1){
-		    	motor1.rate += acc_rate;
-				if(motor1.rate>max_rate1){motor1.rate=max_rate1;}
-	    	}
-	    	else if(DP_comm[indx]==0){
-	    		motor1.rate = 0;
-	    		motor2.rate = 0;
-	    		wheel1.v_limit = Infinity;
-	    		wheel2.v_limit = Infinity;
-	    		wheel1.setMoment(wheel1moment);
-	    		wheel2.setMoment(wheel2moment);
-	    	}
-	    	else{
-	    		motor1.rate=0;
-				motor2.rate=0;
-				if(wheel1.w<-1){motor1.rate = 1*Math.max(wheel1.w,-3)*max_rate1;}
-				else{motor1.rate=0; wheel1.setAngVel(0);}
-				if (wheel1.w<-1 && wheel2.w<-1){
-				/*	var con1 = Math.abs(motor1.jAcc*wheel1.w);
-				    var con2 = Math.abs(motor2.jAcc*wheel2.w);
-				    consumption -= (con1 + con2)*m2m*px2m*px2m/t2t/t2t; // T *dt * rad/s mass*distance^2/time^2			
-				}
-				else{
-					wheel1.setMoment(7e1);
-					wheel2.setMoment(7e1);
-				}
-	    	}
-	    }
-	    else{
-			indx = indx+1;
-	    }
-    }*/
-    if($('#runner').text()>=tstart){
-    
-    	if(!start_race){
-    		cv = $('#canvasbg')[0].getContext('2d');
-    		cv.beginPath();
-    		cv.fillStyle = "#ffffff";
-    		cv.rect(scene_width/2-2*buttonR,scene_height/2-2*buttonR,4.5*buttonR, 4*buttonR);
-    		cv.fill();
-    	}
-//    	drawButtons(0.3, 0.3);
-	    drawTimer(timeout, $('#runner').text(), tstart);
-	    start_race = 1;
+
+    if(start_race == 1){
 	    
 	    //////////// Success ////////////
 	    if (car_pos>=maxdist){
-	    	this.stop();
+	    	messagebox('',true);
+			motor1.rate = 0;
+			motor2.rate = 0;
+			wheel1.setAngVel(0);
+			wheel2.setAngVel(0);
+			wheel1.v_limit = Infinity;
+			wheel2.v_limit = Infinity;
+			wheel1.setMoment(1e10);
+			wheel2.setMoment(1e10);
+			brake_sig = false;
+			acc_sig = false;
 	    	$('#runner').runner('stop');
+	    	start_race = 0;
 	    }
 	    /////////////////////////////////
 	    
 	    ///// Fail Check ////////////////
 	    if ((chassis.p.x<10)){
-	    	alert("Can't go back! Please restart.");
-	    	this.stop();
+	    	messagebox("Can't go back! Please restart.",false);
+	    	demo.stop();
 	    	$('#runner').runner('stop');
+	    	start_race = 0;
 	    }
 	    if (($('#runner').text()-tstart)>timeout){
-	    	alert("Time out! Please restart.");
-	    	this.stop();
+	    	messagebox("Time out! Please restart.",false);
+			motor1.rate = 0;
+			motor2.rate = 0;
+			wheel1.setAngVel(0);
+			wheel2.setAngVel(0);
+			wheel1.v_limit = Infinity;
+			wheel2.v_limit = Infinity;
+			wheel1.setMoment(1e10);
+			wheel2.setMoment(1e10);
+			brake_sig = false;
+			acc_sig = false;
 	    	$('#runner').runner('stop');
+	    	start_race = 0;
 	    }
 	    if (chassis.rot.x < 0){
-	    	alert("Car flipped! Please restart.");
-	    	this.stop();
+	    	messagebox("The driver is too drunk!",false);
 	    	$('#runner').runner('stop');
+	    	start_race = 0;
 	    }
-	    if (battstatus < 0){
-	    	alert("Battery dead! Please restart.");
-	    	this.stop();
+	    if (battstatus < 0.01){
+			motor1.rate = 0;
+			motor2.rate = 0;
+			wheel1.setAngVel(0);
+			wheel2.setAngVel(0);
+			wheel1.v_limit = Infinity;
+			wheel2.v_limit = Infinity;
+			wheel1.setMoment(1e10);
+			wheel2.setMoment(1e10);
+			brake_sig = false;
+			acc_sig = false;
+	    	messagebox("The battery is messed up!",false);
 	    	$('#runner').runner('stop');
+	    	start_race = 0;
 	    }
 		//vehSpeed = motor1speed/fr*Math.PI/30*wheel1.shapeList[0].r*px2m*2.23694;
 		fricImpl = -1*fric*(chassis.m + wheel1.m + wheel2.m + motorbar1.m + motorbar2.m)*wheel1.shapeList[0].r/tstep*wheel1.w/(Math.abs(wheel1.w)+0.0001);
@@ -323,8 +251,7 @@ scene.prototype.update = function (dt) {
 		$('#batttext').html(Math.round(battstatus*10)/10 + "%");
 		
 		/////////////////////Motor Control/////////////////////////////////
-		if (brake) {
-			$('#brake').addClass('activated');
+		if (brake_sig) {
 		 	motor1.rate = 0;
 		 	motor2.rate = 0;
 			wheel_speed = Math.abs(wheel1.w);
@@ -345,8 +272,7 @@ scene.prototype.update = function (dt) {
 				wheel2.setMoment(5e1);
 			}
 		}
-		else if (accelerate_motor) {
-			$('#acc').addClass('activated');
+		else if (acc_sig) {
 		    motor1.rate += acc_rate;
 			motor2.rate += acc_rate;
 			if(motor2.rate>max_rate1){motor2.rate=max_rate1;}
@@ -358,21 +284,21 @@ scene.prototype.update = function (dt) {
 	lockScroll();
     }
     else {
-    	cv = $('#canvasbg')[0].getContext('2d');
-    	cv.beginPath();
-    	cv.fillStyle = color_background;
-    	cv.rect(scene_width/2-2*buttonR,scene_height/2-2*buttonR,4*buttonR, 4*buttonR);
-    	cv.fill();
-    	cv.font = "60px Arial";
-    	cv.globalAlpha=1;
-    	cv.lineWidth = "3";
-    	cv.strokeStyle = color_timer;
-    	if ($('#runner').text()<=tstart-0.6){
-    		cv.strokeText(String(Math.round(tstart-($('#runner').text()))),scene_width/2-buttonR/3, scene_height/2+buttonR/3);
-    	}
-    	else{
-    		cv.strokeText("Go!",scene_width/2-buttonR/3, scene_height/2+buttonR/3);
-    	}
+//    	cv = $('#canvasbg')[0].getContext('2d');
+//    	cv.beginPath();
+//    	cv.fillStyle = color_background;
+//    	cv.rect(scene_width/2-2*buttonR,scene_height/2-2*buttonR,4*buttonR, 4*buttonR);
+//    	cv.fill();
+//    	cv.font = "60px Arial";
+//    	cv.globalAlpha=1;
+//    	cv.lineWidth = "3";
+//    	cv.strokeStyle = color_timer;
+//    	if ($('#runner').text()<=tstart-0.6){
+//    		cv.strokeText(String(Math.round(tstart-($('#runner').text()))),scene_width/2-buttonR/3, scene_height/2+buttonR/3);
+//    	}
+//    	else{
+//    		cv.strokeText("Go!",scene_width/2-buttonR/3, scene_height/2+buttonR/3);
+//    	}
     	$('#batttext').html(Math.round(battstatus*10)/10 + "%");
     };
 
@@ -383,37 +309,96 @@ var demo = new scene();
 demo.run();
 var keys = [];
 
+//buttons
+$(document).on("pageinit",function(event){
+	$("#brake").addClass("enabled");
+	$("#acc").addClass("enabled");
+	$("#brake").on("touchstart",function(){
+		if($("#brake").hasClass("enabled")){
+			brake_sig = true;
+			$('#brake').addClass('activated');			
+		}
+	});
+	$("#acc").on("touchstart",function(){
+		if($("#acc").hasClass("enabled")){
+			acc_sig = true;
+			$('#acc').addClass('activated');
+		}
+	});
+	$("#brake").on("touchend",function(){
+		if($("#brake").hasClass("enabled")){
+			brake_sig = false;
+			$('#brake').removeClass('activated');
+			motor1.rate = 0;
+			motor2.rate = 0;
+			wheel1.setAngVel(0);
+			wheel2.setAngVel(0);
+			wheel1.v_limit = Infinity;
+			wheel2.v_limit = Infinity;
+			wheel1.setMoment(wheel1moment);
+			wheel2.setMoment(wheel2moment);
+			brake_sig = false;
+			acc_sig = false;
+		}
+	});
+	$("#acc").on("touchend",function(){
+		if($("#acc").hasClass("enabled")){
+			acc_sig = false;
+			$('#acc').removeClass('activated');
+			motor1.rate = 0;
+			motor2.rate = 0;
+			wheel1.setAngVel(0);
+			wheel2.setAngVel(0);
+			wheel1.v_limit = Infinity;
+			wheel2.v_limit = Infinity;
+			wheel1.setMoment(wheel1moment);
+			wheel2.setMoment(wheel2moment);
+			brake_sig = false;
+			acc_sig = false;
+		}
+	});
+	$("#ok").on("tap",function(){
+		$("#messagebox").hide();
+		restart();
+	});
+	$("#restart").on("tap",function(){
+		$("#messagebox").hide();
+		restart();
+	});
+	getBestScore();
+});
+
 window.onorientationchange = function() { 
 	  //Need at least 800 milliseconds
 	  setTimeout(changeOrientation, 100);
-	  };
+};
 
-document.body.addEventListener('touchstart', function(e){
-	var touchobj = e.changedTouches[0]; // reference first touch point (ie: first finger)
-	 startx = parseInt(touchobj.clientX); // get x position of touch point relative to left edge of browser
-	 starty = parseInt(touchobj.clientY); // get y position of touch point relative to left edge of browser
-	 e.preventDefault();
-	 var distB = Math.max(Math.abs(startx-brakeX), Math.abs(starty-brakeY));
-	 var distA = Math.max(Math.abs(startx-accX), Math.abs(starty-accY));
-	 
-	 accelerate_motor = (distA<=3*buttonR) && ($('#runner').text()>=5);
-	 brake = (distB<=3*buttonR) && ($('#runner').text()>=5);
-	 }, false);
+//document.body.addEventListener('touchstart', function(e){
+//	var touchobj = e.changedTouches[0]; // reference first touch point (ie: first finger)
+//	 startx = parseInt(touchobj.clientX); // get x position of touch point relative to left edge of browser
+//	 starty = parseInt(touchobj.clientY); // get y position of touch point relative to left edge of browser
+//	 e.preventDefault();
+//	 var distB = Math.max(Math.abs(startx-brakeX), Math.abs(starty-brakeY));
+//	 var distA = Math.max(Math.abs(startx-accX), Math.abs(starty-accY));
+//	 
+//	 accelerate_motor = (distA<=3*buttonR) && ($('#runner').text()>=5);
+//	 brake = (distB<=3*buttonR) && ($('#runner').text()>=5);
+//	 }, false);
 
-document.body.addEventListener('touchend', function(e){
-		$('#acc').removeClass('activated');
-		$('#brake').removeClass('activated');
-		motor1.rate = 0;
-		motor2.rate = 0;
-		wheel1.setAngVel(0);
-		wheel2.setAngVel(0);
-		wheel1.v_limit = Infinity;
-		wheel2.v_limit = Infinity;
-		wheel1.setMoment(wheel1moment);
-		wheel2.setMoment(wheel2moment);
-		brake = false;
-		accelerate_motor = false;
-	 }, false);
+//document.body.addEventListener('touchend', function(e){
+//		$('#acc').removeClass('activated');
+//		$('#brake').removeClass('activated');
+//		motor1.rate = 0;
+//		motor2.rate = 0;
+//		wheel1.setAngVel(0);
+//		wheel2.setAngVel(0);
+//		wheel1.v_limit = Infinity;
+//		wheel2.v_limit = Infinity;
+//		wheel1.setMoment(wheel1moment);
+//		wheel2.setMoment(wheel2moment);
+//		brake = false;
+//		accelerate_motor = false;
+//	 }, false);
 
 demo.canvas.style.position = "absolute";
 demo.canvas.style.left = "0px";

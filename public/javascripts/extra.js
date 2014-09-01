@@ -1,26 +1,49 @@
 /************************ USER INTERFACE **********************************************/
 // create a timer at the beginning
-function drawTimer(maxTime, now, delay){
-	var timerX = scene_width/2;
-	var timerY = buttonR*3;
-	var time = maxTime-Math.floor(now-delay);
-	cv = $('#canvasbg')[0].getContext('2d');
-	cv.globalAlpha=1;
-	cv.beginPath();
-	cv.rect(timerX-2*buttonR,0,4*buttonR, 5*buttonR);
-	cv.fillStyle = color_background;
-	cv.fill();
-	cv.beginPath(); 
-	cv.strokeStyle = color_timer;
-	cv.lineWidth = "8";
-	cv.arc(timerX, timerY, buttonR, 0, Math.PI*2*((now-delay))/maxTime, true);
-	cv.stroke();
-	cv.font = "40px Arial";
-	cv.fillStyle = color_timer;
-	cv.fillText(("0" + time).slice(-2),timerX-buttonR/1.8,timerY+buttonR/5);
-	cv.font = "20px Arial";
-	cv.fillText("sec",timerX-buttonR/2.7,timerY+buttonR/1.7);
-};
+//function drawTimer(maxTime, now, delay){
+//	var timerX = scene_width/2;
+//	var timerY = buttonR*3;
+//	var time = maxTime-Math.floor(now-delay);
+//	cv = $('#canvasbg')[0].getContext('2d');
+//	cv.globalAlpha=1;
+//	cv.beginPath();
+//	cv.rect(timerX-2*buttonR,0,4*buttonR, 5*buttonR);
+//	cv.fillStyle = color_background;
+//	cv.fill();
+//	cv.beginPath(); 
+//	cv.strokeStyle = color_timer;
+//	cv.lineWidth = "8";
+//	cv.arc(timerX, timerY, buttonR, 0, Math.PI*2*((now-delay))/maxTime, true);
+//	cv.stroke();
+//	cv.font = "40px Arial";
+//	cv.fillStyle = color_timer;
+//	cv.fillText(("0" + time).slice(-2),timerX-buttonR/1.8,timerY+buttonR/5);
+//	cv.font = "20px Arial";
+//	cv.fillText("sec",timerX-buttonR/2.7,timerY+buttonR/1.7);
+//};
+
+// message box
+function messagebox(msg, win){
+	$("#messagebox").show();
+	$("#acc").removeClass("enabled");
+	$("#brake").removeClass("enabled");
+	$("#acc").removeClass("activated");
+	$("#brake").removeClass("activated");
+	if(win){
+		submitResult();
+		$("#ok-container").show();
+	}
+	else{
+		$("#textmessage").html(msg);
+		$("#restart-container").show();
+	}
+}
+
+// restart
+function restart(){
+	
+}
+
 
 /************************ GAME ENGINE **********************************************/
 // physics for this game
@@ -259,13 +282,35 @@ function defineSpace(canvas_id, width, height) {
      }
  };
 
- __ENVIRONMENT__.prototype.addFloor = function() {
+ __ENVIRONMENT__.prototype.addFloor = function(data, scene_widthx, xstep) {
  	var space = this.space;
- 	var floor = space.addShape(new cp.SegmentShape(space.staticBody, v(0, 0), v(1000, 0), 0));
- 	floor.setElasticity(1);
- 	floor.setFriction(1);
- 	floor.setLayers(NOT_GRABABLE_MASK);
+	var staticBody = space.staticBody;
+
+	for (var i=0;i<scene_widthx/xstep-3;i++){
+		gndShape[i] = new cp.SegmentShape(staticBody, v(i*xstep,data[i]), v((i+1)*xstep,data[i+1]), 0);
+		ground[i] = space.addShape(gndShape[i]);
+		ground[i].setElasticity(0);
+		ground[i].setFriction(0.1);
+		ground[i].layers = NOT_GRABABLE_MASK;		
+	}
+	
+	// extra floor to complete the scene
+	for (var j=i; j<i+6; j++){
+		gndShape[j] = new cp.SegmentShape(staticBody, v(j*xstep,data[i]), v((j+1)*xstep,data[i+1]), 0);
+		ground[j] = space.addShape(gndShape[j]);
+		ground[j].setElasticity(0);
+		ground[j].setFriction(0.1);
+		ground[j].layers = NOT_GRABABLE_MASK;		
+	}
  };
+ 
+ __ENVIRONMENT__.prototype.addTerminal = function(distance){
+	var space = this.space;
+	var staticBody = space.staticBody;
+	finishShape[0] = new cp.SegmentShape(staticBody, v(distance,0), v(distance,280), 0);
+	finishFlag[0] = space.addShape(finishShape[0]);
+	finishFlag[0].sensor = true;
+}
  
 // Drawing helper methods
 
@@ -292,44 +337,44 @@ function defineSpace(canvas_id, width, height) {
  	ctx.fillRect(pos_.x - DISPLACEMENT, pos_.y, size_.x - DISPLACEMENT, size_.y);
  };
 
- var springPoints = [
- 	v(0.00, 0.0),
- 	v(0.20, 0.0),
- 	v(0.25, 3.0),
- 	v(0.30,-6.0),
- 	v(0.35, 6.0),
- 	v(0.40,-6.0),
- 	v(0.45, 6.0),
- 	v(0.50,-6.0),
- 	v(0.55, 6.0),
- 	v(0.60,-6.0),
- 	v(0.65, 6.0),
- 	v(0.70,-3.0),
- 	v(0.75, 6.0),
- 	v(0.80, 0.0),
- 	v(1.00, 0.0)
- ];
+// var springPoints = [
+// 	v(0.00, 0.0),
+// 	v(0.20, 0.0),
+// 	v(0.25, 3.0),
+// 	v(0.30,-6.0),
+// 	v(0.35, 6.0),
+// 	v(0.40,-6.0),
+// 	v(0.45, 6.0),
+// 	v(0.50,-6.0),
+// 	v(0.55, 6.0),
+// 	v(0.60,-6.0),
+// 	v(0.65, 6.0),
+// 	v(0.70,-3.0),
+// 	v(0.75, 6.0),
+// 	v(0.80, 0.0),
+// 	v(1.00, 0.0)
+// ];
 
  var drawSpring = function(ctx, scale, point2canvas, a, b) {
- 	a = point2canvas(a); b = point2canvas(b);
- 	
- 	ctx.beginPath();
- 	ctx.moveTo(a.x - DISPLACEMENT, a.y);
-
- 	var delta = v.sub(b, a);
- 	var len = v.len(delta);
- 	var rot = v.mult(delta, 1/len);
-
- 	for(var i = 1; i < springPoints.length; i++) {
-
- 		var p = v.add(a, v.rotate(v(springPoints[i].x * len, springPoints[i].y * scale), rot));
-
- 		//var p = v.add(a, v.rotate(springPoints[i], delta));
- 		
- 		ctx.lineTo(p.x - DISPLACEMENT, p.y);
- 	}
-
- 	ctx.stroke();
+// 	a = point2canvas(a); b = point2canvas(b);
+// 	
+// 	ctx.beginPath();
+// 	ctx.moveTo(a.x - DISPLACEMENT, a.y);
+//
+// 	var delta = v.sub(b, a);
+// 	var len = v.len(delta);
+// 	var rot = v.mult(delta, 1/len);
+//
+// 	for(var i = 1; i < springPoints.length; i++) {
+//
+// 		var p = v.add(a, v.rotate(v(springPoints[i].x * len, springPoints[i].y * scale), rot));
+//
+// 		//var p = v.add(a, v.rotate(springPoints[i], delta));
+// 		
+// 		ctx.lineTo(p.x - DISPLACEMENT, p.y);
+// 	}
+//
+// 	ctx.stroke();
  };
 
  
@@ -352,10 +397,11 @@ function defineSpace(canvas_id, width, height) {
      	ctx.strokeStyle = "rgba(0,0,0, 0.2)";
  	}
  	else{
- 		ctx.fillStyle = "rgba(0,255,255,1)";
- 		ctx.strokeStyle = "rgba(0,0,0, 1)";
+ 		// car shape
+// 		ctx.lineWidth = 5;
+ 		ctx.fillStyle = '#222222'; // max changed the color to fit the other elements
+// 		ctx.strokeStyle = '#f9f9f9';
  	}
-     //ctx.fillStyle = "aqua";
      ctx.fill();
      ctx.stroke();
  };
@@ -369,7 +415,8 @@ function defineSpace(canvas_id, width, height) {
      a = point2canvas(a);
      b = point2canvas(b);
      if (this.sensor){
-     	ctx.strokeStyle = "rgba(0,0,0, 0.2)";
+    	ctx.lineWidth = 10;
+     	ctx.strokeStyle = "rgba(255,0,0, 0.2)";
      }
      else{
      	ctx.strokeStyle = "rgba(0,0,0, 1)";
@@ -386,7 +433,9 @@ function defineSpace(canvas_id, width, height) {
      var c = point2canvas(this.tc);
      ctx.beginPath();
      ctx.arc(c.x - DISPLACEMENT, c.y, scale * this.r, 0, 2*Math.PI, false);
-     ctx.fillStyle = "grey";
+     ctx.fillStyle = "rgba(0,0,0, 1)";
+     ctx.lineWidth = 5;
+     ctx.strokeStyle = '#e9e9e9';
      ctx.fill();
      ctx.stroke();
      
@@ -399,21 +448,21 @@ function defineSpace(canvas_id, width, height) {
  };
 
  cp.GrooveJoint.prototype.draw = function(ctx, scale, point2canvas) {
- 	var a = this.a.local2World(this.grv_a);
- 	var b = this.a.local2World(this.grv_b);
- 	var c = this.b.local2World(this.anchr2);
- 	
- 	ctx.strokeStyle = "grey";
- 	//drawLine(ctx, point2canvas, a, b);
- 	drawCircle(ctx, scale, point2canvas, c, 3);
+// 	var a = this.a.local2World(this.grv_a);
+// 	var b = this.a.local2World(this.grv_b);
+// 	var c = this.b.local2World(this.anchr2);
+// 	
+// 	ctx.strokeStyle = "grey";
+// 	//drawLine(ctx, point2canvas, a, b);
+// 	drawCircle(ctx, scale, point2canvas, c, 3);
  };
 
  cp.DampedSpring.prototype.draw = function(ctx, scale, point2canvas) {
- 	var a = this.a.local2World(this.anchr1);
- 	var b = this.b.local2World(this.anchr2);
-
- 	ctx.strokeStyle = "grey";
- 	drawSpring(ctx, scale, point2canvas, a, b);
+// 	var a = this.a.local2World(this.anchr1);
+// 	var b = this.b.local2World(this.anchr2);
+//
+// 	ctx.strokeStyle = "grey";
+// 	drawSpring(ctx, scale, point2canvas, a, b);
  };
  
  // Color
@@ -489,3 +538,40 @@ function lockScroll()
      });
 }
 
+
+/************************ DYNAMIC PROGRAMMING SIMULATION **********************************************/
+/////////////////////////////DP simulation //////////////////////////////////////////
+/*if($('#runner').text()>=5){
+    if (car_pos<=DP_x[indx+1]){
+    	if (DP_comm[indx]==1){
+	    	motor1.rate += acc_rate;
+			if(motor1.rate>max_rate1){motor1.rate=max_rate1;}
+    	}
+    	else if(DP_comm[indx]==0){
+    		motor1.rate = 0;
+    		motor2.rate = 0;
+    		wheel1.v_limit = Infinity;
+    		wheel2.v_limit = Infinity;
+    		wheel1.setMoment(wheel1moment);
+    		wheel2.setMoment(wheel2moment);
+    	}
+    	else{
+    		motor1.rate=0;
+			motor2.rate=0;
+			if(wheel1.w<-1){motor1.rate = 1*Math.max(wheel1.w,-3)*max_rate1;}
+			else{motor1.rate=0; wheel1.setAngVel(0);}
+			if (wheel1.w<-1 && wheel2.w<-1){
+			/*	var con1 = Math.abs(motor1.jAcc*wheel1.w);
+			    var con2 = Math.abs(motor2.jAcc*wheel2.w);
+			    consumption -= (con1 + con2)*m2m*px2m*px2m/t2t/t2t; // T *dt * rad/s mass*distance^2/time^2			
+			}
+			else{
+				wheel1.setMoment(7e1);
+				wheel2.setMoment(7e1);
+			}
+    	}
+    }
+    else{
+		indx = indx+1;
+    }
+}*/
