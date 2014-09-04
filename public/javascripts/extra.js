@@ -23,17 +23,35 @@
 //};
 
 // message box
+/*************************************************************/
+// Global variables //
+var demo;
+var consumption = 0;
+var start_race = 0;
+var battstatus = 100;
+var spdLookup = new Float64Array([0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000, 6500, 7000, 7500, 8000, 8500, 9000]);
+var trqLookup = new Float64Array([200,200,200,200,200,194,186,161,142,122,103,90,77.5,70,63.5,58,52,49,45]);
+var tstep = 60;
+var motoreff = new Float64Array([0.2,0.46,0.65,0.735,0.794,0.846,0.886,0.913,0.922,0.938,0.946,0.94,0.93975,0.943,0.945,0.945,0.94,0.9372,0.9355]);
+var px2m = 1/20; // 1 pixel == 1/20 meter
+var m2m = 500; // 1 mass in game to 500 kg
+var t2t = 1; // 1 time step == 1/120 second
+var fr = 10; // final drive ratio
+
 function messagebox(msg, win){
 	$("#messagebox").show();
 	$("#acc").removeClass("enabled");
 	$("#brake").removeClass("enabled");
 	$("#acc").removeClass("activated");
 	$("#brake").removeClass("activated");
+	$("#timer").hide();
 	if(win){
 		submitResult();
 		$("#ok-container").show();
+		$("#restart-container").hide();
 	}
 	else{
+		$("#ok-container").hide();
 		$("#textmessage").html(msg);
 		$("#restart-container").show();
 	}
@@ -41,14 +59,23 @@ function messagebox(msg, win){
 
 // restart
 function restart(){
-	
+	$('#runner').runner('reset');
+	consumption = 0;
+	battstatus = 100;
+	start_race = 1;
+	demo = new scene();
+	$("#brake").addClass("enabled");
+	$("#acc").addClass("enabled");
+	$("#timer").show();
+	demo.run();
+	$('#runner').runner('start');
 }
 
 
 /************************ GAME ENGINE **********************************************/
 // physics for this game
 function maxTrqlerp(spd){
-	var maxTrq = 8000;
+	//var maxTrq = 8000;
 	if (spd>0){
 		for (var i=0; i<(spdLookup.length-1); i++){
 			if(spdLookup[i]<=spd && spdLookup[i+1]>spd){
@@ -110,6 +137,7 @@ function updateConsumption(consumption) {
 	con2 = motor2torque/tstep*motor2speed*Math.PI/30*motor2eff;
 	if (Math.abs(con2)> 216000){con2=1000;}
 	consumption += (con1 + con2);
+	//$('#batttext').html(Math.round(con1+con2));
 	
 	return consumption;
 }
@@ -309,6 +337,7 @@ function defineSpace(canvas_id, width, height) {
 	var staticBody = space.staticBody;
 	finishShape[0] = new cp.SegmentShape(staticBody, v(distance,0), v(distance,280), 0);
 	finishFlag[0] = space.addShape(finishShape[0]);
+	finishFlag[0].flag = true;
 	finishFlag[0].sensor = true;
 }
  
@@ -414,7 +443,7 @@ function defineSpace(canvas_id, width, height) {
      var b = this.tb;
      a = point2canvas(a);
      b = point2canvas(b);
-     if (this.sensor){
+     if (this.flag){
     	ctx.lineWidth = 10;
      	ctx.strokeStyle = "rgba(255,0,0, 0.2)";
      }
@@ -509,7 +538,16 @@ function getNumberArray(arr){
 function sign(x) { return x ? x < 0 ? -1 : 1 : 0; }
 
 function changeOrientation(){
-	switch(window.orientation) {
+	if ($(window).width()>$(window).height()){
+        $('#landscape').hide();
+        lockScroll();
+	}
+	else{
+        window.scrollTo(1,1);
+        $('#landscape').show();
+        lockScroll();
+	}
+	/*switch(window.orientation) {
 	case 0: // portrait, home bottom
       window.scrollTo(1,1);
       $('#landscape').show();
@@ -528,7 +566,7 @@ function changeOrientation(){
            $('#landscape').hide();
             lockScroll();
 	 		break;
-	  }
+	  }*/
 }
 
 function lockScroll()
@@ -537,7 +575,6 @@ function lockScroll()
                         event.preventDefault();
      });
 }
-
 
 /************************ DYNAMIC PROGRAMMING SIMULATION **********************************************/
 /////////////////////////////DP simulation //////////////////////////////////////////

@@ -12,13 +12,12 @@ var NOT_GRABABLE_MASK = ~GRABABLE_MASK_BIT;
 var scene_widthx = 6800; // ???m
 var scene_heightx = 280;
 var started = false;
-var spdLookup = new Float64Array([0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000, 6500, 7000, 7500, 8000, 8500, 9000]);
-var trqLookup = new Float64Array([200,200,200,200,200,194,186,161,142,122,103,90,77.5,70,63.5,58,52,49,45]);
-var tstep = 60;
-var start_race = 1;
+
+
 var wheel_speed;
 var max_batt = 0.4; // Change this value
-var battstatus = 100;
+
+
 
 var acc_sig = false;
 var brake_sig = false;
@@ -27,19 +26,15 @@ var brake_sig = false;
 var vehSpeedOld = 0;
 //**************************************************///
 
-var motoreff = new Float64Array([0.2,0.46,0.65,0.735,0.794,0.846,0.886,0.913,0.922,0.938,0.946,0.94,0.93975,0.943,0.945,0.945,0.94,0.9372,0.9355]);
+
 
 var DP_x = new Float64Array([0, 82+9, 282+9, 400]);
 var DP_comm = new Float64Array([1, 0, -1, -1]);
 
-var px2m = 1/20; // 1 pixel == 1/20 meter
-var m2m = 500; // 1 mass in game to 500 kg
-var t2t = 1; // 1 time step == 1/120 second
-var consumption = 0;
-var fr = 10; // final drive ratio
+
 var fric = 2.8;
 var timeout = 30; // 30s
-var tstart = 5; // game starts after 5 sec
+var tstart = 0; // game starts after 5 sec
 var indx = 0;
 //var data = [0,0,0,0,10,20,30,40,50,60,70,80,90,45,0,0,0,0,0,0,10,20,30,40,50,60,70,80,90,45,0,0,0,0,0,0];
 var data = [0,0,0,0,10,20,30,40,50,60,70,80,90,45,0,0,0,0,0,0,10,20,30,40,50,60,70,80,90,45,0,0,0,0,0,0];
@@ -49,7 +44,9 @@ var gndShape = [];
 var finishFlag = [];
 var finishShape = [];
 var maxdist = 309;
+$("#StartScreen").width($(window).width());
 $("#wrapper").width($(window).width());
+
 
 var __ENVIRONMENT__ = defineSpace("canvas1", scene_width, scene_heightx);
 
@@ -118,11 +115,11 @@ var scene = function(){
 	
 	var posA = v( 50, 0);
 	var posB = v(110, 0);
-	boxOffset = v(100, 100);
+	boxOffset = v(100, 10);
 	var POS_A = function() { return v.add(boxOffset, posA); };
 	var POS_B = function() { return v.add(boxOffset, posB); };
 	
-	chassis = addChassis(v(80, 40));	
+	chassis = addChassis(v(80, 10));	
 	motorbar1 = addBar(posA);
 	motorbar2 = addBar(posB);
 	motorbar3 = addBar(posA);
@@ -144,9 +141,6 @@ var scene = function(){
 	motor2 = new cp.SimpleMotor(motorbar2, wheel2, 0);
 	space.addConstraint(motor1);
 	space.addConstraint(motor2);
-	
-	$('#runner').runner();
-	$('#runner').runner('start');
 	
 	// parameters
 	max_rate1 = 1e7; // motor 1 rate
@@ -177,12 +171,12 @@ scene.prototype.update = function (dt) {
     }
     
     car_pos = Math.round(chassis.p.x*px2m); //-9.03
-
+    $("#timer").html(Math.round(timeout-$("#runner").text()));
+    
     if(start_race == 1){
 	    
 	    //////////// Success ////////////
 	    if (car_pos>=maxdist){
-	    	messagebox('',true);
 			motor1.rate = 0;
 			motor2.rate = 0;
 			wheel1.setAngVel(0);
@@ -195,18 +189,18 @@ scene.prototype.update = function (dt) {
 			acc_sig = false;
 	    	$('#runner').runner('stop');
 	    	start_race = 0;
+	    	messagebox('',true);
 	    }
 	    /////////////////////////////////
 	    
 	    ///// Fail Check ////////////////
 	    if ((chassis.p.x<10)){
-	    	messagebox("Can't go back! Please restart.",false);
 	    	demo.stop();
 	    	$('#runner').runner('stop');
 	    	start_race = 0;
+	    	messagebox("Can't go back! Please restart.",false);
 	    }
 	    if (($('#runner').text()-tstart)>timeout){
-	    	messagebox("Time out! Please restart.",false);
 			motor1.rate = 0;
 			motor2.rate = 0;
 			wheel1.setAngVel(0);
@@ -219,11 +213,12 @@ scene.prototype.update = function (dt) {
 			acc_sig = false;
 	    	$('#runner').runner('stop');
 	    	start_race = 0;
+	    	messagebox("Time out! Please restart.",false);
 	    }
 	    if (chassis.rot.x < 0){
-	    	messagebox("The driver is too drunk!",false);
 	    	$('#runner').runner('stop');
 	    	start_race = 0;
+	    	messagebox("The driver is too drunk!",false);
 	    }
 	    if (battstatus < 0.01){
 			motor1.rate = 0;
@@ -236,9 +231,9 @@ scene.prototype.update = function (dt) {
 			wheel2.setMoment(1e10);
 			brake_sig = false;
 			acc_sig = false;
-	    	messagebox("The battery is messed up!",false);
 	    	$('#runner').runner('stop');
 	    	start_race = 0;
+	    	messagebox("The battery is messed up!",false);
 	    }
 		//vehSpeed = motor1speed/fr*Math.PI/30*wheel1.shapeList[0].r*px2m*2.23694;
 		fricImpl = -1*fric*(chassis.m + wheel1.m + wheel2.m + motorbar1.m + motorbar2.m)*wheel1.shapeList[0].r/tstep*wheel1.w/(Math.abs(wheel1.w)+0.0001);
@@ -247,7 +242,8 @@ scene.prototype.update = function (dt) {
 		var pBar = document.getElementById("pbar");
 		pBar.value = (car_pos-9)/(maxdist-9)*100;
 		battstatus = 100-(consumption/3600/1000/max_batt*100);
-		document.getElementById("battvalue").style.height= battstatus + "%";
+		document.getElementById("battvalue").style.width= battstatus + "%";
+		
 		$('#batttext').html(Math.round(battstatus*10)/10 + "%");
 		
 		/////////////////////Motor Control/////////////////////////////////
@@ -305,7 +301,7 @@ scene.prototype.update = function (dt) {
 };
 
 //Run
-var demo = new scene();
+demo = new scene();
 demo.run();
 var keys = [];
 
@@ -371,40 +367,29 @@ $(document).on("pageinit",function(event){
 		$("#messagebox").hide();
 		restart();
 	});
-	getBestScore();
+	$("#StartScreen").on("tap", function(event){
+		event.preventDefault();
+		if ($(window).width()>$(window).height()){
+			$("#StartScreen").hide(500, function(){
+				$("#brake").removeClass("locked");
+				$("#acc").removeClass("locked");
+				$('#runner').runner();
+				$('#runner').runner('start');
+				start_race = 1;
+				getBestScore();
+			});
+		}
+		else{
+			$('#landscape').show();
+			lockScroll();
+		}
+	});
 });
 
 window.onorientationchange = function() { 
 	  //Need at least 800 milliseconds
-	  setTimeout(changeOrientation, 100);
+	  setTimeout(changeOrientation, 500);
 };
-
-//document.body.addEventListener('touchstart', function(e){
-//	var touchobj = e.changedTouches[0]; // reference first touch point (ie: first finger)
-//	 startx = parseInt(touchobj.clientX); // get x position of touch point relative to left edge of browser
-//	 starty = parseInt(touchobj.clientY); // get y position of touch point relative to left edge of browser
-//	 e.preventDefault();
-//	 var distB = Math.max(Math.abs(startx-brakeX), Math.abs(starty-brakeY));
-//	 var distA = Math.max(Math.abs(startx-accX), Math.abs(starty-accY));
-//	 
-//	 accelerate_motor = (distA<=3*buttonR) && ($('#runner').text()>=5);
-//	 brake = (distB<=3*buttonR) && ($('#runner').text()>=5);
-//	 }, false);
-
-//document.body.addEventListener('touchend', function(e){
-//		$('#acc').removeClass('activated');
-//		$('#brake').removeClass('activated');
-//		motor1.rate = 0;
-//		motor2.rate = 0;
-//		wheel1.setAngVel(0);
-//		wheel2.setAngVel(0);
-//		wheel1.v_limit = Infinity;
-//		wheel2.v_limit = Infinity;
-//		wheel1.setMoment(wheel1moment);
-//		wheel2.setMoment(wheel2moment);
-//		brake = false;
-//		accelerate_motor = false;
-//	 }, false);
 
 demo.canvas.style.position = "absolute";
 demo.canvas.style.left = "0px";

@@ -38,7 +38,8 @@ body {
 }
 
 #wrapper {
-	position: relative;
+	position: absolute;
+	top: 0px;
 	height: 440px;
 }
 
@@ -53,12 +54,23 @@ body {
 	z-index: 9;
 }
 
-#rank {
+#timer {
 	position: absolute;
-	top: 410px;
-	left: 10px;
-	color: rgba(255,255,255,0.9);
+	margin: auto;
+	width: 40px;
+	height: 40px;
+	top: 30px;
+	left: 0px;
+	right: 0px;
+/*     border-radius: 50%; */
+    text-align:center;
+    text-decoration:none;
+    font-size:40px;
+    font-weight:bold;
+    transition: all 0.1s;
+    line-height:40px;
 	z-index: 9;
+/* 	background: #f9f9f9; */
 }
 
 #runner {
@@ -103,22 +115,23 @@ body {
 }
 
 #landscape p{
-    background: url("./images/landscape.png") no-repeat scroll 0 0 transparent;
+    background: url("../images/landscape.png") no-repeat scroll 0 0 transparent;
     color: #FFFFFF;
-    height: 121px;
-    left: 30%;
+    background-size: contain;
+    left: 35%;
     padding-top: 106px;
     position: absolute;
     top: 20%;
-    width: 116px;
     opacity: 1;
 }
 
 #landscape p b{
-     width: 100px;
+     width: 300px;
+     padding-top: 100px;
      display: block;
      text-align: center;
-     margin-left: 10px;
+     font-size: 30px;
+     margin-left: 0px;
 }
 
 progress[value] {
@@ -146,18 +159,20 @@ progress[value]::-webkit-progress-value{
 
 #battshape{
 	position: absolute;
-    top: 80px;
-    left: 10px;
-	width: 30px;
-    height: 140px;
+    bottom: 50px;
+    left: 0;
+    right: 0;
+    margin: auto;
+	width: 300px;
+    height: 30px;
 }
 
 #outer {
 	position: absolute;
-	left: 0px;
-	top: 5px;
-    width: 30px;
-    height: 140px;
+	right: 5px;
+	top: 0px;
+    width: 295px;
+    height: 30px;
     border: 2px solid #000;
     overflow: hidden;
     -moz-border-radius: 4px;
@@ -167,10 +182,10 @@ progress[value]::-webkit-progress-value{
 
 #battcap {
 	position: absolute;
-	top: 0px;
-	left: 8px;
-	width: 20px;
-	height: 5px;
+	right: 0px;
+	top: 8px;
+	width: 5px;
+	height: 20px;
 	background-color: #000;
 }
 
@@ -188,14 +203,16 @@ progress[value]::-webkit-progress-value{
 
 .battcons{
 	position: absolute;
-	height: 25px;
-	width: 30px;
-	left: 10px;
-	top: 230px;
+	height: 35px;
+	width: 120px;
+	left: 0;
+	right: 0;
+	margin: auto;
+	bottom: 90px;
 	text-align: center;
 	font-weight: bold;
 	font-family: Arial;
-	font-size: 15px;
+	font-size: 30px;
 }
 
 .motor1T{
@@ -244,15 +261,6 @@ progress[value]::-webkit-progress-value{
 	right: 0;
 }
 
-#timer{
-	position:absolute;
-	background: #464646;
-}
-
-#timer:hover{
-	background: #262626;
-}
-
 #brake{
 	z-index: 9999;
 }
@@ -270,6 +278,11 @@ progress[value]::-webkit-progress-value{
 	border: 40px double #222222;
 }
 
+#brake.locked {
+	border-color:#e9e9e9;
+	color: #e9e9e9;
+}
+
 #acc{
 /* 	background: #e2e760; */
 	border: 20px dashed #222222;
@@ -285,6 +298,7 @@ progress[value]::-webkit-progress-value{
 	width: 160px;
 	height: 160px;
 	right: 200px;
+
 }
 
 #acc.activated {
@@ -296,6 +310,11 @@ progress[value]::-webkit-progress-value{
     -webkit-animation-duration: 1s;
     -webkit-animation-iteration-count: infinite;
     -webkit-animation-timing-function: linear;
+}
+
+#acc.locked {
+	border-color:#e9e9e9;
+	color: #e9e9e9;
 }
 
 /* message box */
@@ -374,4 +393,44 @@ progress[value]::-webkit-progress-value{
 
 #restart.activated{
 	
+}
+
+#StartScreen {
+	position: absolute;
+	background: rgba(50,50,50,0.90);
+	width: 100%;
+	top: 0px;
+	height: 440px;
+	z-index: 9999;
+    transition: all 1.3s;
+    color: #e9e9e9;
+}
+
+#BrakeText {
+	position: absolute;
+	left: 200px;
+	top: 220px;
+/* 	color: #999999; */
+}
+
+#AccText {
+	position: absolute;
+	right: 200px;
+	top: 220px;
+/* 	color: #999999; */
+}
+
+h1 {
+	padding-top: 0%;
+   	font-size: 30px;
+   	text-align: center;
+/*    	color: #222222; */
+   	font-family: "Comic Sans MS";
+}
+
+h2 {
+   	font-size: 25px;
+   	text-align: center;
+/*    	color: #222222; */
+   	font-family: "Comic Sans MS";
 }

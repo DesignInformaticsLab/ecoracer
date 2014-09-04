@@ -1,9 +1,17 @@
 extends layout
 block content
+  #StartScreen
+    h1 EcoRacer
+    h2 *** You only have 30 seconds to get out... ***
+    h2 *** So beat other drivers by using LESS battery energy! ***
+    h2 *** Tap to start ***
+    #BrakeText
+      h2 Your brake!
+    #AccText
+      h2 Your throttle!
   #landscape 
     p. 
-      b.
-        Rotate Device to Landscape
+      <b>Rotate Device to Landscape</b>
   #wrapper
     #data
       #car_progress
@@ -19,12 +27,12 @@ block content
     canvas(id='canvasbg')
     canvas(id='canvas1')
     #brake-container
-      #brake.round-button.
+      #brake.round-button.locked.
         B
     #acc-container
-      #acc.round-button.
+      #acc.round-button.locked.
         A
-    #rank
+    #timer
     #messagebox
       #textmessage
       #ok-container
