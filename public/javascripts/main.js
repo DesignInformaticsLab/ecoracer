@@ -396,6 +396,7 @@ scene.prototype.update = function (dt) {
 				wheel1.setMoment(wheel1moment);
 				wheel2.setMoment(wheel2moment);
 			}
+			keys.push([-1,chassis.p.x]);
 		}
 		else if (acc_sig && !battempty) {
 		    motor1.rate += acc_rate;
@@ -403,6 +404,7 @@ scene.prototype.update = function (dt) {
 			if(motor2.rate>max_rate1){motor2.rate=max_rate1;}
 			if(motor1.rate>max_rate1){motor1.rate=max_rate1;}
 			consumption = updateConsumption(consumption);
+			keys.push([1,chassis.p.x]);
 		}
 	////////////////////////////////////////////////////////////////////////////
 	

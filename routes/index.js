@@ -40,15 +40,18 @@ router.post('/adddata', function(req, res) {
     pg.connect(connection, function(err, client, done) {
         if(err) res.send("Could not connect to DB: " + err);
         
-        client.query('INSERT INTO ecoracer_table (name, score, info) VALUES ($1, $2, $3)',
-            [req.body.name, req.body.score, req.body.info], 
+        client.query('INSERT INTO ecoracer_table (id, score, keys, date) VALUES ($1, $2, $3, $4)',
+            [
+             req.headers['x-forwarded-for'] || 
+             req.connection.remoteAddress || 
+             req.socket.remoteAddress ||
+             req.connection.socket.remoteAddress, 
+//			'',
+             req.body.score, req.body.keys, req.body.date], 
             function(err, result) {
                 if(err) { 
-                	return client.rollback_transaction(function () {
-                		console.error(err);res.send("Error " + err);
-                    });
+                	console.error(err); res.send("Error " + err);
                 }
-                res.send( 'fuck' );
                 done();
         });
     });

@@ -1,11 +1,13 @@
 function submitResult(){
-	$.post('/adddata',{'id':[],
-					   'name':[],
-					   'score':consumption,
-					   'info':JSON.stringify({'solution':[],
-						   					  'date':[],
-						   					  'interaction':[]}),
-	});
+	
+	// get date
+	var date = new Date();
+	
+	// post results
+	$.post('/adddata',{'score':consumption,
+					   'keys':keys,
+   					   'date':date});
+
 	$.post('/getscore',{'score':consumption,}, function(data){
 		$("#textmessage").html("You spent "+ Math.round(consumption/1000/3600*1000)/1000 + 
 				" kWh of energy, that's better than "+ Math.round(data.length/(total_num_user+1)*100) + "% of players!");
