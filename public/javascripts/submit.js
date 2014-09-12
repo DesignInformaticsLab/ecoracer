@@ -2,7 +2,7 @@ function submitResult(){
 	
 	// get date
 	var date = new Date();
-	
+	consumption = Math.round(consumption);
 	// post results
 	$.post('/adddata',{'score':consumption,
 					   'keys':JSON.stringify({'acc':acc_keys,'brake':brake_keys}),
