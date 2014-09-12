@@ -217,26 +217,30 @@ progress[value]::-webkit-progress-value{
 
 .motor1T{
 	position: absolute;
-	height: 25px;
-	width: 30px;
-	left: 10px;
-	top: 300px;
+	height: 35px;
+	width: 120px;
+	left: 0;
+	right: 0;
+	margin: auto;
+	bottom: 120px;
 	text-align: center;
 	font-weight: bold;
 	font-family: Arial;
-	font-size: 15px;
+	font-size: 30px;
 }
 
 .motor2T{
 	position: absolute;
-	height: 25px;
-	width: 30px;
-	left: 10px;
-	top: 330px;
+	height: 35px;
+	width: 120px;
+	left: 0;
+	right: 0;
+	margin: auto;
+	bottom: 150px;
 	text-align: center;
 	font-weight: bold;
 	font-family: Arial;
-	font-size: 15px;
+	font-size: 30px;
 }
 
 .round-button {
@@ -344,6 +348,7 @@ progress[value]::-webkit-progress-value{
     font-size:20px;
     font-weight:bold;	
 }
+
 
 #ok-container{
 	position: relative;

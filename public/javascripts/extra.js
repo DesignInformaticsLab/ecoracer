@@ -28,18 +28,23 @@
 var demo;
 var consumption = 0;
 var start_race = 0;
+var tap_start = 0;
 var battstatus = 100;
 var spdLookup = new Float64Array([0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000, 6500, 7000, 7500, 8000, 8500, 9000]);
 var trqLookup = new Float64Array([200,200,200,200,200,194,186,161,142,122,103,90,77.5,70,63.5,58,52,49,45]);
-var tstep = 60;
+var tstep = 48;
+var counter = 0;
+
 var motoreff = new Float64Array([0.2,0.46,0.65,0.735,0.794,0.846,0.886,0.913,0.922,0.938,0.946,0.94,0.93975,0.943,0.945,0.945,0.94,0.9372,0.9355]);
 var px2m = 1/20; // 1 pixel == 1/20 meter
 var m2m = 500; // 1 mass in game to 500 kg
 var t2t = 1; // 1 time step == 1/120 second
 var fr = 10; // final drive ratio
+var pi = Math.PI;
 
 function messagebox(msg, win){
 	$("#messagebox").show();
+	$("#textmessage").html(msg);
 	$("#acc").removeClass("enabled");
 	$("#brake").removeClass("enabled");
 	$("#acc").removeClass("activated");
@@ -52,23 +57,28 @@ function messagebox(msg, win){
 	}
 	else{
 		$("#ok-container").hide();
-		$("#textmessage").html(msg);
 		$("#restart-container").show();
 	}
 }
 
 // restart
 function restart(){
-	$('#runner').runner('reset');
+	//$('#runner').runner('reset');
 	consumption = 0;
 	battstatus = 100;
-	start_race = 1;
+	start_race = 0;
+	demo.stop();
 	demo = new scene();
+	wheel1moment = Jw1;
+	wheel2moment = Jw2;
+	wheel1.setMoment(wheel1moment);
+	wheel2.setMoment(wheel2moment);
 	$("#brake").addClass("enabled");
 	$("#acc").addClass("enabled");
 	$("#timer").show();
 	demo.run();
-	$('#runner').runner('start');
+	counter = 0;
+	//$('#runner').runner('start');
 }
 
 
@@ -122,9 +132,11 @@ function efflerp(spd, trq){
 }
 
 function updateConsumption(consumption) {
-    motor1speed = -1*wheel1.w/t2t*fr/2/Math.PI*60; //RPM;
+    //motor1speed = -1*wheel1.w/t2t*fr/2/Math.PI*60; //RPM;
+	motor1speed = Math.sqrt(Math.pow(chassis.vx,2)+Math.pow(chassis.vy,2))/wheel1.shapeList[0].r/t2t*fr/pi*30;
     maxTrq1 = maxTrqlerp(motor1speed)/m2m/px2m/px2m*t2t*t2t; //Nm
-    motor2speed = -1*wheel2.w/t2t*fr/2/Math.PI*60; //RPM;
+    //motor2speed = -1*wheel2.w/t2t*fr/2/Math.PI*60; //RPM;
+    motor2speed = motor1speed;
     maxTrq2 = maxTrqlerp(motor2speed)/m2m/px2m/px2m*t2t*t2t; //Nm
 	motor2.maxForce = maxTrq2*fr;
 	motor1.maxForce = maxTrq1*fr;
@@ -132,13 +144,11 @@ function updateConsumption(consumption) {
 	motor2torque = -1*Math.min(motor2.jAcc*tstep/fr,maxTrq2)*m2m*px2m*px2m/t2t/t2t;
 	motor1eff = efflerp(motor1speed,motor1torque);
 	motor2eff = efflerp(motor2speed,motor2torque);
-	con1 = motor1torque/tstep*motor1speed*Math.PI/30*motor1eff;
+	con1 = motor1torque/tstep*motor1speed*pi/30*motor1eff;
 	if (Math.abs(con1)> 216000){con1=1000;}
-	con2 = motor2torque/tstep*motor2speed*Math.PI/30*motor2eff;
+	con2 = motor2torque/tstep*motor2speed*pi/30*motor2eff;
 	if (Math.abs(con2)> 216000){con2=1000;}
 	consumption += (con1 + con2);
-	//$('#batttext').html(Math.round(con1+con2));
-	
 	return consumption;
 }
 
@@ -339,8 +349,38 @@ function defineSpace(canvas_id, width, height) {
 	finishFlag[0] = space.addShape(finishShape[0]);
 	finishFlag[0].flag = true;
 	finishFlag[0].sensor = true;
+};
+
+ __ENVIRONMENT__.prototype.addStation = function(distance, elevation){
+		var space = this.space;
+		var staticBody = space.staticBody;
+		/*stationShape[0] = new cp.BoxShape(staticBody, stationData[2], stationData[3], v(distance,45));
+		station[0] = space.addShape(stationShape[0]);
+		station[0].flag = true;
+		station[0].sensor = true;*/
+
+		stationShape[0] = new cp.CircleShape(staticBody, 10, v(distance,elevation+40));
+		station[0] = space.addShape(stationShape[0]);
+		station[0].flag = true;
+		station[0].sensor = true;
+		
+		stationShape[0] = new cp.CircleShape(staticBody, 2, v(distance+5,elevation+40));
+		station[0] = space.addShape(stationShape[0]);
+		//station[0].flag = true;
+		station[0].sensor = true;
+		
+		stationShape[0] = new cp.CircleShape(staticBody, 2, v(distance-5,elevation+40));
+		station[0] = space.addShape(stationShape[0]);
+		//station[0].flag = true;
+		station[0].sensor = true;
+		
+		stationShape[0] = new cp.BoxShape(staticBody, stationData[0], stationData[1], v(distance,elevation));
+		station[0] = space.addShape(stationShape[0]);
+		station[0].flag = true;
+		station[0].sensor = true;
+		
+
 }
- 
 // Drawing helper methods
 
  var drawCircle = function(ctx, scale, point2canvas, c, radius) {
@@ -421,8 +461,8 @@ function defineSpace(canvas_id, width, height) {
          ctx.lineTo(p.x - DISPLACEMENT, p.y);
      }
      
-     if(this.sensor){
-     	ctx.fillStyle = "rgba(0,0,0, 0.2)";
+     if(this.flag){
+     	ctx.fillStyle = "rgba(255,255,255, 0.1)";
      	ctx.strokeStyle = "rgba(0,0,0, 0.2)";
  	}
  	else{
@@ -462,11 +502,22 @@ function defineSpace(canvas_id, width, height) {
      var c = point2canvas(this.tc);
      ctx.beginPath();
      ctx.arc(c.x - DISPLACEMENT, c.y, scale * this.r, 0, 2*Math.PI, false);
-     ctx.fillStyle = "rgba(0,0,0, 1)";
-     ctx.lineWidth = 5;
-     ctx.strokeStyle = '#e9e9e9';
+     if (this.flag && this.sensor){
+		ctx.fillStyle = "rgba(0,0,0, 0.2)";
+		ctx.strokeStyle = "rgba(0,0,0,0)";
+	 }
+     else if (this.sensor){
+ 		ctx.fillStyle = "rgba(0,0,0, 1)";
+		ctx.strokeStyle = "rgba(0,0,0, 0)";
+     }
+     else {
+         ctx.fillStyle = "rgba(0,0,0, 1)";
+         ctx.lineWidth = 5;
+         ctx.strokeStyle = '#e9e9e9';
+     }
      ctx.fill();
      ctx.stroke();
+
      
      // And draw a little radian so you can see the circle roll.
      a = point2canvas(this.tc); b = point2canvas(cp.v.mult(this.body.rot, this.r).add(this.tc));
@@ -578,11 +629,13 @@ function lockScroll()
 
 /************************ DYNAMIC PROGRAMMING SIMULATION **********************************************/
 /////////////////////////////DP simulation //////////////////////////////////////////
-/*if($('#runner').text()>=5){
-    if (car_pos<=DP_x[indx+1]){
+/*    if (car_pos<=DP_x[indx+1]){
     	if (DP_comm[indx]==1){
 	    	motor1.rate += acc_rate;
+			motor2.rate += acc_rate;
+			if(motor2.rate>max_rate1){motor2.rate=max_rate1;}
 			if(motor1.rate>max_rate1){motor1.rate=max_rate1;}
+			consumption = updateConsumption(consumption);
     	}
     	else if(DP_comm[indx]==0){
     		motor1.rate = 0;
@@ -593,22 +646,27 @@ function lockScroll()
     		wheel2.setMoment(wheel2moment);
     	}
     	else{
-    		motor1.rate=0;
-			motor2.rate=0;
-			if(wheel1.w<-1){motor1.rate = 1*Math.max(wheel1.w,-3)*max_rate1;}
-			else{motor1.rate=0; wheel1.setAngVel(0);}
-			if (wheel1.w<-1 && wheel2.w<-1){
-			/*	var con1 = Math.abs(motor1.jAcc*wheel1.w);
-			    var con2 = Math.abs(motor2.jAcc*wheel2.w);
-			    consumption -= (con1 + con2)*m2m*px2m*px2m/t2t/t2t; // T *dt * rad/s mass*distance^2/time^2			
+			motor1.rate = 0;
+		 	motor2.rate = 0;
+			wheel_speed = Math.abs(wheel1.w);
+			if(wheel1.w<-1){
+				motor1.rate = 1*Math.max(wheel1.w,-1.5)*max_rate1;
+				motor2.rate = 1*Math.max(wheel1.w,-1.5)*max_rate1;
+				consumption = updateConsumption(consumption);
+			}
+			else if (wheel1.w>3){
+				motor1.rate = 2*Math.min(wheel1.w,2)*max_rate1;
+				motor2.rate = 2*Math.min(wheel1.w,2)*max_rate1;
+			}
+			else{motor1.rate=0; motor2.rate = 0; wheel1.setAngVel(0); wheel2.setAngVel(0);}
+			if (wheel_speed>1){
 			}
 			else{
-				wheel1.setMoment(7e1);
-				wheel2.setMoment(7e1);
+				wheel1.setMoment(5e1);
+				wheel2.setMoment(5e1);
 			}
     	}
     }
     else{
 		indx = indx+1;
-    }
-}*/
+    } */

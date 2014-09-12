@@ -9,41 +9,58 @@ var MARGIN = 175;
 var v = cp.v;
 var GRABABLE_MASK_BIT = 1 << 31;
 var NOT_GRABABLE_MASK = ~GRABABLE_MASK_BIT;
-var scene_widthx = 6800; // ???m
+var scene_widthx = 18800; // ???m
 var scene_heightx = 280;
 var started = false;
 
-
 var wheel_speed;
-var max_batt = 0.4; // Change this value
-
-
+var motor1speed = 0;
 
 var acc_sig = false;
 var brake_sig = false;
+var DPon = false;
 
 //************************************************///
-var vehSpeedOld = 0;
+var vehSpeed = 0;
+var save_x = [];
+var save_v = [];
+var car_posOld = 0;
 //**************************************************///
 
-
-
-var DP_x = new Float64Array([0, 82+9, 282+9, 400]);
-var DP_comm = new Float64Array([1, 0, -1, -1]);
+var DP_x = new Float64Array([0,295,305,310,320,330,355,360,365,375,380,385,390,395,400,410,415,420,770, 950]);
+var DP_comm = new Float64Array([1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,-1 -1]);
 
 
 var fric = 2.8;
-var timeout = 30; // 30s
+var timeout = 36; // 30s
+var max_batt = 0.55; // Change this value
 var tstart = 0; // game starts after 5 sec
 var indx = 0;
+//var data = [00,00,10,20,30,40,50,60,70,80,90,90,90,45,00,00,00,00,00,00,05,10,20,40,60,80,90,90,90,90,45,00,00,20,00,00,00,10,20,30,40,50,60,60,60,40,40,20,00,00,10,20,30,40,40,40,60,60,70,35,00,00,00,00,10,20,30,40,40,50,60,60,60,40,20,00,10,30,50,50,25,00,00,00,30,60,90,90,90,60,30,00,00,00,00,00];
+var data = [00,00,10,20,30,40,50,60,70,80,90,90,90,60,30,00,00,00,00,00,05,10,20,40,60,80,90,90,90,90,70,50,30,30,30,30,30,10,10,10,40,70,70,70,90,90,90,70,50,30,10,00,00,00,40,80,80,80,80,70,60,50,40,30,20,10,00,00,10,20,30,40,50,60,70,80,80,80,70,60,50,40,40,40,60,80,80,80,60,40,20,00,00,00,00,00];
 //var data = [0,0,0,0,10,20,30,40,50,60,70,80,90,45,0,0,0,0,0,0,10,20,30,40,50,60,70,80,90,45,0,0,0,0,0,0];
-var data = [0,0,0,0,10,20,30,40,50,60,70,80,90,45,0,0,0,0,0,0,10,20,30,40,50,60,70,80,90,45,0,0,0,0,0,0];
 var xstep = 200;
 var ground = [];
 var gndShape = [];
 var finishFlag = [];
 var finishShape = [];
-var maxdist = 309;
+
+/// Station Parameters ////
+var stationShape = [];
+var station = [];
+var stationPosX = [17*200];
+var stationPosY = [0];
+var stationData = [30, 120, 20, 10];
+var chrageBatt = 20;
+var isCharging = false;
+var lastChargingX = 0;
+//////////////////////////
+var battempty = false;
+//var maxdist = 309;
+var maxdist = 909;
+var cTime = 0;
+
+
 $("#StartScreen").width($(window).width());
 $("#wrapper").width($(window).width());
 
@@ -59,8 +76,11 @@ var scene = function(){
 	space.gravity = v(0, -400);
 	space.sleepTimeThreshold = 100;
 	
+	
 	this.addFloor(data, scene_widthx, xstep);
 	this.addTerminal(scene_widthx-3*xstep);
+	//for (var i=0; i<stationPosX.length; i++){this.addStation(stationPosX[i],0);}
+	
 	
 	$('#canvasbg')[0].width = scene_width;
 	$('#canvasbg')[0].height = scene_height;
@@ -148,8 +168,14 @@ var scene = function(){
 	acc_rate = 1e7; // instant rate increment
 	w_limit_rate = 1;
 	
-	wheel1moment = wheel1.i;
-	wheel2moment = wheel2.i;
+	Jw1 = wheel1.i;
+	Jw2 = wheel2.i;
+	
+	wheel1moment = 1e10;
+	wheel2moment = 1e10;
+	
+	wheel1.setMoment(wheel1moment);
+	wheel2.setMoment(wheel2moment);
 	
 	// limits
 	speed_limit = 56/px2m*t2t; // 100 m/s
@@ -157,6 +183,7 @@ var scene = function(){
 	wheel2.w_limit = speed_limit/wheel2.shapeList[0].r;
 	motorbar1.w_limit = 94*t2t; // max 700 rad/second
 	motorbar2.w_limit = 94*t2t;
+	
 };
 
 scene.prototype = Object.create(__ENVIRONMENT__.prototype);
@@ -165,17 +192,30 @@ scene.prototype = Object.create(__ENVIRONMENT__.prototype);
 scene.prototype.update = function (dt) {
     var steps = 1;
     dt = dt / steps;
-
     for (var i = 0; i < steps; i++) {
         this.space.step(dt);
     }
     
+    cTime = Math.floor(counter/tstep);
     car_pos = Math.round(chassis.p.x*px2m); //-9.03
-    $("#timer").html(Math.round(timeout-$("#runner").text()));
+    car_pos9 = car_pos-9;
+    // vehSpeed = Math.round(motor1speed/fr*Math.PI/30*wheel1.shapeList[0].r*px2m*2.23694*10)/10;
+    // vehSpeed = Math.round(Math.sqrt(Math.pow(chassis.vx,2)+Math.pow(chassis.vy,2))*px2m*2.23694*10)/10;
+    $("#timer").html(timeout-cTime);
     
     if(start_race == 1){
-	    
+        counter+=1;
+        ////// Save Results /////////////
+        /* if (car_pos9 >= car_posOld+5){
+			car_posOld = car_pos9;
+			save_x.push(car_pos9);
+			save_v.push(vehSpeed);
+		}
+		if (car_pos9 >= 430){
+			demo.stop();
+		}*/
 	    //////////// Success ////////////
+        
 	    if (car_pos>=maxdist){
 			motor1.rate = 0;
 			motor2.rate = 0;
@@ -187,20 +227,25 @@ scene.prototype.update = function (dt) {
 			wheel2.setMoment(1e10);
 			brake_sig = false;
 			acc_sig = false;
-	    	$('#runner').runner('stop');
+	    	//$('#runner').runner('stop');
 	    	start_race = 0;
-	    	messagebox('',true);
+	    	if (!battempty){
+	    		messagebox("Congratulations!",true);
+	    	}
+	    	else{
+	    		messagebox("Good job but try to save battery!",false);
+	    	}
 	    }
 	    /////////////////////////////////
-	    
+
 	    ///// Fail Check ////////////////
 	    if ((chassis.p.x<10)){
 	    	demo.stop();
-	    	$('#runner').runner('stop');
+	    	//$('#runner').runner('stop');
 	    	start_race = 0;
 	    	messagebox("Can't go back! Please restart.",false);
 	    }
-	    if (($('#runner').text()-tstart)>timeout){
+	    if (cTime>timeout){
 			motor1.rate = 0;
 			motor2.rate = 0;
 			wheel1.setAngVel(0);
@@ -211,16 +256,17 @@ scene.prototype.update = function (dt) {
 			wheel2.setMoment(1e10);
 			brake_sig = false;
 			acc_sig = false;
-	    	$('#runner').runner('stop');
+	    	//$('#runner').runner('stop');
 	    	start_race = 0;
 	    	messagebox("Time out! Please restart.",false);
 	    }
 	    if (chassis.rot.x < 0){
-	    	$('#runner').runner('stop');
+	    	//$('#runner').runner('stop');
 	    	start_race = 0;
 	    	messagebox("The driver is too drunk!",false);
 	    }
-	    if (battstatus < 0.01){
+	    //// Old Battery Check ////
+	    /*if (battstatus < 0.01){
 			motor1.rate = 0;
 			motor2.rate = 0;
 			wheel1.setAngVel(0);
@@ -231,21 +277,104 @@ scene.prototype.update = function (dt) {
 			wheel2.setMoment(1e10);
 			brake_sig = false;
 			acc_sig = false;
-	    	$('#runner').runner('stop');
+	    	//$('#runner').runner('stop');
 	    	start_race = 0;
 	    	messagebox("The battery is messed up!",false);
+	    }*/
+	    /////////////////////////
+	    if (battstatus < 0.01){
+	    	battempty = true;
+	    	if ((Math.abs(chassis.vx)<=2) && (car_pos<maxdist)){
+	    		start_race = 0;
+		    	messagebox("The battery is messed up!",false);
+	    	}
 	    }
-		//vehSpeed = motor1speed/fr*Math.PI/30*wheel1.shapeList[0].r*px2m*2.23694;
+	    else {
+	    	battempty = false;
+	    }
+		
+	    
+/////////////////////////////DP simulation //////////////////////////////////////////
+        if (DPon){
+		    if (car_pos<=DP_x[indx+1]){
+	        	if (DP_comm[indx]==1){
+	    	    	motor1.rate += acc_rate;
+	    			motor2.rate += acc_rate;
+	    			if(motor2.rate>max_rate1){motor2.rate=max_rate1;}
+	    			if(motor1.rate>max_rate1){motor1.rate=max_rate1;}
+	    			consumption = updateConsumption(consumption);
+	        	}
+	        	else if(DP_comm[indx]==0){
+	        		motor1.rate = 0;
+	        		motor2.rate = 0;
+	        		wheel1.v_limit = Infinity;
+	        		wheel2.v_limit = Infinity;
+	        		wheel1.setMoment(wheel1moment);
+	        		wheel2.setMoment(wheel2moment);
+	        	}
+	        	else{
+	    			motor1.rate = 0;
+	    		 	motor2.rate = 0;
+	    			wheel_speed = Math.abs(wheel1.w);
+	    			if(wheel1.w<-1){
+	    				motor1.rate = 1*Math.max(wheel1.w,-1.5)*max_rate1;
+	    				motor2.rate = 1*Math.max(wheel1.w,-1.5)*max_rate1;
+	    				consumption = updateConsumption(consumption);
+	    			}
+	    			else if (wheel1.w>3){
+	    				motor1.rate = 2*Math.min(wheel1.w,2)*max_rate1;
+	    				motor2.rate = 2*Math.min(wheel1.w,2)*max_rate1;
+	    			}
+	    			else{motor1.rate=0; motor2.rate = 0; wheel1.setAngVel(0); wheel2.setAngVel(0);}
+	    			if (wheel_speed>1){
+	    			}
+	    			else{
+	    				wheel1.setMoment(wheel1moment);
+	    				wheel2.setMoment(wheel2moment);
+	    			}
+	        	}
+	        }
+	        else{
+	    		indx = indx+1;
+	        }
+		};
+	    
 		fricImpl = -1*fric*(chassis.m + wheel1.m + wheel2.m + motorbar1.m + motorbar2.m)*wheel1.shapeList[0].r/tstep*wheel1.w/(Math.abs(wheel1.w)+0.0001);
 		wheel1.w += fricImpl*wheel1.i_inv;
 		wheel2.w += fricImpl*wheel2.i_inv;
 		var pBar = document.getElementById("pbar");
 		pBar.value = (car_pos-9)/(maxdist-9)*100;
+		
+		
+		/*for (var i=0; i<stationPosX.length; i++){
+			if (!isCharging && (chassis.p.x>=stationPosX[i]) && (chassis.p.x<stationPosX[i]+100)){
+				isCharging = true;
+				consumption = consumption - 10*3600*1000*max_batt/100; // add 10 percent battery
+				
+				motor1.rate = 0;
+				motor2.rate = 0;
+				wheel1.setAngVel(0);
+				wheel2.setAngVel(0);
+				wheel1.v_limit = Infinity;
+				wheel2.v_limit = Infinity;
+				wheel1.setMoment(1e10);
+				wheel2.setMoment(1e10);
+				brake_sig = false;
+				acc_sig = false;
+				
+				
+				lastCharingX = chassis.p.x;
+			}
+		}
+		
+		if (isCharging && (chassis.p.x > (lastCharingX+200))){
+			isCharging = false;
+		}*/
 		battstatus = 100-(consumption/3600/1000/max_batt*100);
 		document.getElementById("battvalue").style.width= battstatus + "%";
 		
-		$('#batttext').html(Math.round(battstatus*10)/10 + "%");
-		
+		$('#batttext').html(Math.round(battstatus*10)/10*(battstatus>0) + "%");
+
 		/////////////////////Motor Control/////////////////////////////////
 		if (brake_sig) {
 		 	motor1.rate = 0;
@@ -264,11 +393,11 @@ scene.prototype.update = function (dt) {
 			if (wheel_speed>1){
 			}
 			else{
-				wheel1.setMoment(5e1);
-				wheel2.setMoment(5e1);
+				wheel1.setMoment(wheel1moment);
+				wheel2.setMoment(wheel2moment);
 			}
 		}
-		else if (acc_sig) {
+		else if (acc_sig && !battempty) {
 		    motor1.rate += acc_rate;
 			motor2.rate += acc_rate;
 			if(motor2.rate>max_rate1){motor2.rate=max_rate1;}
@@ -295,7 +424,9 @@ scene.prototype.update = function (dt) {
 //    	else{
 //    		cv.strokeText("Go!",scene_width/2-buttonR/3, scene_height/2+buttonR/3);
 //    	}
-    	$('#batttext').html(Math.round(battstatus*10)/10 + "%");
+    	battstatus = 100-(consumption/3600/1000/max_batt*100);
+		document.getElementById("battvalue").style.width= battstatus + "%";
+    	$('#batttext').html(Math.round(battstatus*10)/10*(battstatus>0) + "%");
     };
 
 };
@@ -320,6 +451,7 @@ $(document).on("pageinit",function(event){
 		event.preventDefault();
 		if($("#acc").hasClass("enabled")){
 			acc_sig = true;
+			start_race = tap_start;
 			$('#acc').addClass('activated');
 		}
 	});
@@ -373,9 +505,13 @@ $(document).on("pageinit",function(event){
 			$("#StartScreen").hide(500, function(){
 				$("#brake").removeClass("locked");
 				$("#acc").removeClass("locked");
-				$('#runner').runner();
-				$('#runner').runner('start');
-				start_race = 1;
+				//$('#runner').runner();
+				//$('#runner').runner('start');
+				tap_start = 1;
+				wheel1moment = Jw1;
+				wheel2moment = Jw2;
+				wheel1.setMoment(wheel1moment);
+				wheel2.setMoment(wheel2moment);
 				getBestScore();
 			});
 		}
