@@ -78,6 +78,8 @@ function restart(){
 	$("#timer").show();
 	demo.run();
 	counter = 0;
+	acc_keys = [];
+	brake_keys = [];
 	//$('#runner').runner('start');
 }
 
