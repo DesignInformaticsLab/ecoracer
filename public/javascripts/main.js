@@ -203,6 +203,11 @@ scene.prototype.update = function (dt) {
     // vehSpeed = Math.round(Math.sqrt(Math.pow(chassis.vx,2)+Math.pow(chassis.vy,2))*px2m*2.23694*10)/10;
     $("#timer").html(timeout-cTime);
     
+    if(chassis.p.y<0){
+    	demo.stop();
+    	start_race = 0;
+    	messagebox("Can't go back! Please restart.",false);
+    }
     if(start_race == 1){
         counter+=1;
         ////// Save Results /////////////
@@ -434,7 +439,8 @@ scene.prototype.update = function (dt) {
 //Run
 demo = new scene();
 demo.run();
-var keys = [];
+var acc_keys = [];
+var brake_keys = [];
 
 //buttons
 $(document).on("tap",function(event){
@@ -448,7 +454,7 @@ $(document).on("pageinit",function(event){
 		if($("#brake").hasClass("enabled")){
 			brake_sig = true;
 			$('#brake').addClass('activated');		
-			keys.push([-1,chassis.p.x]);
+			brake_keys.push(Math.round(chassis.p.x));
 		}
 	});
 	$("#acc").on("touchstart",function(event){
@@ -457,7 +463,7 @@ $(document).on("pageinit",function(event){
 			acc_sig = true;
 			start_race = tap_start;
 			$('#acc').addClass('activated');
-			keys.push([1,chassis.p.x]);
+			acc_keys.push(Math.round(chassis.p.x));
 		}
 	});
 	$("#brake").on("touchend",function(event){
@@ -475,7 +481,7 @@ $(document).on("pageinit",function(event){
 			wheel2.setMoment(wheel2moment);
 			brake_sig = false;
 			acc_sig = false;
-			keys.push([-1,chassis.p.x]);
+			brake_keys.push(Math.round(chassis.p.x));
 		}
 	});
 	$("#acc").on("touchend",function(event){
@@ -493,7 +499,7 @@ $(document).on("pageinit",function(event){
 			wheel2.setMoment(wheel2moment);
 			brake_sig = false;
 			acc_sig = false;
-			keys.push([1,chassis.p.x]);
+			acc_keys.push(Math.round(chassis.p.x));
 		}
 	});
 	$("#ok").on("tap",function(event){

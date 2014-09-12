@@ -5,12 +5,12 @@ function submitResult(){
 	
 	// post results
 	$.post('/adddata',{'score':consumption,
-					   'keys':keys,
+					   'keys':JSON.stringify({'acc':acc_keys,'brake':brake_keys}),
    					   'date':date});
 
 	$.post('/getscore',{'score':consumption,}, function(data){
 		$("#textmessage").html("You spent "+ Math.round(consumption/1000/3600*1000)/1000 + 
-				" kWh of energy, that's better than "+ Math.round(data.length/(total_num_user+1)*100) + "% of players!");
+				" kWh of energy, that's better than "+ Math.round(data.length/total_num_user*100) + "% of players!");
 	});
 }
 
