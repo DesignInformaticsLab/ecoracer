@@ -396,7 +396,6 @@ scene.prototype.update = function (dt) {
 				wheel1.setMoment(wheel1moment);
 				wheel2.setMoment(wheel2moment);
 			}
-			keys.push([-1,chassis.p.x]);
 		}
 		else if (acc_sig && !battempty) {
 		    motor1.rate += acc_rate;
@@ -404,7 +403,6 @@ scene.prototype.update = function (dt) {
 			if(motor2.rate>max_rate1){motor2.rate=max_rate1;}
 			if(motor1.rate>max_rate1){motor1.rate=max_rate1;}
 			consumption = updateConsumption(consumption);
-			keys.push([1,chassis.p.x]);
 		}
 	////////////////////////////////////////////////////////////////////////////
 	
@@ -439,6 +437,9 @@ demo.run();
 var keys = [];
 
 //buttons
+$(document).on("tap",function(event){
+	event.preventDefault();
+});
 $(document).on("pageinit",function(event){
 	$("#brake").addClass("enabled");
 	$("#acc").addClass("enabled");
@@ -446,7 +447,8 @@ $(document).on("pageinit",function(event){
 		event.preventDefault();
 		if($("#brake").hasClass("enabled")){
 			brake_sig = true;
-			$('#brake').addClass('activated');			
+			$('#brake').addClass('activated');		
+			keys.push([-1,chassis.p.x]);
 		}
 	});
 	$("#acc").on("touchstart",function(event){
@@ -455,6 +457,7 @@ $(document).on("pageinit",function(event){
 			acc_sig = true;
 			start_race = tap_start;
 			$('#acc').addClass('activated');
+			keys.push([1,chassis.p.x]);
 		}
 	});
 	$("#brake").on("touchend",function(event){
@@ -472,6 +475,7 @@ $(document).on("pageinit",function(event){
 			wheel2.setMoment(wheel2moment);
 			brake_sig = false;
 			acc_sig = false;
+			keys.push([-1,chassis.p.x]);
 		}
 	});
 	$("#acc").on("touchend",function(event){
@@ -489,6 +493,7 @@ $(document).on("pageinit",function(event){
 			wheel2.setMoment(wheel2moment);
 			brake_sig = false;
 			acc_sig = false;
+			keys.push([1,chassis.p.x]);
 		}
 	});
 	$("#ok").on("tap",function(event){
