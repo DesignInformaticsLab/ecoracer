@@ -1,5 +1,4 @@
 function submitResult(){
-	
 	// get date
 	var date = new Date();
 	consumption = Math.round(consumption);
@@ -21,7 +20,99 @@ function getBestScore(){
 	$.get('/bestscore',{}, function(data){
 		score = data;
 		total_num_user = score.length;
-		best_score = score[0];
-		$("#rank").html(best_score);
 	});	
+}
+
+function getAllResults(){
+	var d, i;
+	$.post('/getresults',{}, function(data){
+		for(i=0;i<data.length;i++){
+			d = data[i];
+			$("#results").append("<div class=data id=data"+i+"></div>");
+			plot(d,i);
+		}
+	});	
+}
+
+// plot user control strategy and consumption
+function plot(d,i){
+	var padding = 20;//px
+	var svg_length = 1000;//px
+	var svg_height = 200;//px
+	
+	var j;
+	var data = $.parseJSON(d.keys);
+	var acc = data.acc;
+	var brake = data.brake;
+	
+	var total_distance = 909*20; // *** change this to an equation
+	var accData = [];
+	for (j=0;j<Math.floor(acc.length/2);j++){
+		accData.push({"x": acc[2*j], "y": 0});
+		accData.push({"x": acc[2*j], "y": 1});
+		accData.push({"x": acc[2*j+1], "y": 1});
+		accData.push({"x": acc[2*j+1], "y": 0});
+	}
+	if (acc.length%2 != 0){// one extra acc
+		accData.push({"x": acc[acc.length-1], "y": 0});
+		accData.push({"x": acc[acc.length-1], "y": 1});
+		accData.push({"x": total_distance, "y": 0});
+		accData.push({"x": total_distance, "y": 1});		
+	}
+
+	var brakeData = [];
+	for (j=0;j<Math.floor(brake.length/2);j++){
+		brakeData.push({"x": brake[2*j], "y": 0});
+		brakeData.push({"x": brake[2*j], "y": 1});
+		brakeData.push({"x": brake[2*j+1], "y": 1});
+		brakeData.push({"x": brake[2*j+1], "y": 0});
+	}
+	if (brake.length%2 != 0){// one extra acc
+		brakeData.push({"x": brake[brake.length-1], "y": 0});
+		brakeData.push({"x": brake[brake.length-1], "y": 1});
+		brakeData.push({"x": total_distance, "y": 0});
+		brakeData.push({"x": total_distance, "y": 1});		
+	}
+	
+	var lineFunction = d3.svg.line()
+	                    .x(function(d) { return d.x/total_distance*(svg_length-padding*2)+padding; })
+                        .y(function(d) { return (1-d.y)*(svg_height-padding*2)+padding; })
+                        .interpolate("linear");
+	var xScale = d3.scale.linear()
+                        .domain([0, total_distance])
+                        .range([padding, svg_length-padding*2]);
+	var yScale = d3.scale.linear()
+						.domain([0, 1])
+						.range([padding, svg_height-padding*2]);
+	var xAxis = d3.svg.axis()
+						.scale(xScale)
+						.orient("bottom")
+						.ticks(5);
+	var yAxis = d3.svg.axis()
+						.scale(yScale)
+						.orient("left")
+						.ticks(2);
+	var svgContainer = d3.select("#data"+i).append("svg")
+                        .attr("width", svg_length)
+                        .attr("height", svg_height);
+    svgContainer.append("path")
+						.attr("d", lineFunction(accData))
+						.attr("stroke", "blue")
+					    .attr("stroke-width", 2)
+					    .attr("fill", "none")
+    svgContainer.append("path")
+                    	.attr("d", lineFunction(brakeData))
+                    	.attr("stroke", "red")
+	                    .attr("stroke-width", 2)
+	                    .attr("fill", "none")
+	svgContainer.append("g")
+						.attr("transform", "translate(0," + (svg_height - padding) + ")")
+	                    .attr("class", "x axis")
+	                    .call(xAxis)
+	svgContainer.append("text")
+	                    .attr("x", svg_length/2-padding)             
+				        .attr("y", padding/2)
+				        .attr("text-anchor", "middle")  
+				        .style("font-size", "14px") 
+				        .text(d.score+" from ip: " + d.id);
 }

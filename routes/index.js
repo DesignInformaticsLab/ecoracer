@@ -76,4 +76,20 @@ router.post('/getscore', function(req, res) {
     });
 });
 
+/* GET all user data. */
+router.get('/results', function(req, res) {
+	res.render('results');
+});
+router.post('/getresults', function(req, res) {
+  pg.connect(connection, function(err, client, done) {
+	    client.query('SELECT * FROM ecoracer_table', function(err, result) {
+	      done();
+	      if (err)
+	       { console.error(err); res.send("Error " + err); }
+	      else
+	       { res.send( result.rows ); }
+	    });
+	  });
+});
+
 module.exports = router;

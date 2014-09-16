@@ -36,7 +36,7 @@ app.use('/users', users);
 
 /// catch 404 and forward to error handler
 app.use(function(req, res, next) {
-    var err = new Error('Fuck!!!');
+    var err = new Error('cannot find the page');
     err.status = 404;
     next(err);
 });
