@@ -30,14 +30,14 @@ function getAllResults(){
 		userData = data;
 		for(i=0;i<data.length;i++){
 			d = data[i];
-			$("#results").append("<div class=data id="+i+"></div>");
+			$("#results").append("<div class=data id=data"+i+"></div>");
 			plot(d,i);
 		}
 	});	
 }
 
 $(".data").click(function(){
-	var id = parseInt($(this).id);
+	var id = parseInt($(this).id.slice(4));
 //	simulate(userData[id]);
 });
 
@@ -45,8 +45,8 @@ $(".data").click(function(){
 // plot user control strategy and consumption
 function plot(d,i){
 	var padding = 20;//px
-	var svg_length = $("#"+i).width();//px
-	var svg_height = $("#"+i).height();//px
+	var svg_length = $("#data"+i).width();//px
+	var svg_height = $("#data"+i).height();//px
 	
 	var j;
 	var data = $.parseJSON(d.keys);
@@ -100,7 +100,7 @@ function plot(d,i){
 						.scale(yScale)
 						.orient("left")
 						.ticks(2);
-	var svgContainer = d3.select("#"+i).append("svg")
+	var svgContainer = d3.select("#data"+i).append("svg")
                         .attr("width", svg_length)
                         .attr("height", svg_height);
     svgContainer.append("path")
