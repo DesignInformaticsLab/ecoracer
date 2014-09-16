@@ -23,22 +23,30 @@ function getBestScore(){
 	});	
 }
 
+var userData;
 function getAllResults(){
 	var d, i;
 	$.post('/getresults',{}, function(data){
+		userData = data;
 		for(i=0;i<data.length;i++){
 			d = data[i];
-			$("#results").append("<div class=data id=data"+i+"></div>");
+			$("#results").append("<div class=data id="+i+"></div>");
 			plot(d,i);
 		}
 	});	
 }
 
+$(".data").click(function(){
+	var id = parseInt($(this).id);
+//	simulate(userData[id]);
+});
+
+
 // plot user control strategy and consumption
 function plot(d,i){
 	var padding = 20;//px
-	var svg_length = 1000;//px
-	var svg_height = 200;//px
+	var svg_length = $("#"+i).width();//px
+	var svg_height = $("#"+i).height();//px
 	
 	var j;
 	var data = $.parseJSON(d.keys);
@@ -56,8 +64,8 @@ function plot(d,i){
 	if (acc.length%2 != 0){// one extra acc
 		accData.push({"x": acc[acc.length-1], "y": 0});
 		accData.push({"x": acc[acc.length-1], "y": 1});
-		accData.push({"x": total_distance, "y": 0});
-		accData.push({"x": total_distance, "y": 1});		
+		accData.push({"x": total_distance, "y": 1});
+		accData.push({"x": total_distance, "y": 0});		
 	}
 
 	var brakeData = [];
@@ -67,11 +75,11 @@ function plot(d,i){
 		brakeData.push({"x": brake[2*j+1], "y": 1});
 		brakeData.push({"x": brake[2*j+1], "y": 0});
 	}
-	if (brake.length%2 != 0){// one extra acc
+	if (brake.length%2 != 0){// one extra brake
 		brakeData.push({"x": brake[brake.length-1], "y": 0});
 		brakeData.push({"x": brake[brake.length-1], "y": 1});
-		brakeData.push({"x": total_distance, "y": 0});
-		brakeData.push({"x": total_distance, "y": 1});		
+		brakeData.push({"x": total_distance, "y": 1});
+		brakeData.push({"x": total_distance, "y": 0});		
 	}
 	
 	var lineFunction = d3.svg.line()
@@ -80,10 +88,10 @@ function plot(d,i){
                         .interpolate("linear");
 	var xScale = d3.scale.linear()
                         .domain([0, total_distance])
-                        .range([padding, svg_length-padding*2]);
+                        .range([padding, svg_length-padding]);
 	var yScale = d3.scale.linear()
 						.domain([0, 1])
-						.range([padding, svg_height-padding*2]);
+						.range([padding, svg_height-padding]);
 	var xAxis = d3.svg.axis()
 						.scale(xScale)
 						.orient("bottom")
@@ -92,7 +100,7 @@ function plot(d,i){
 						.scale(yScale)
 						.orient("left")
 						.ticks(2);
-	var svgContainer = d3.select("#data"+i).append("svg")
+	var svgContainer = d3.select("#"+i).append("svg")
                         .attr("width", svg_length)
                         .attr("height", svg_height);
     svgContainer.append("path")
