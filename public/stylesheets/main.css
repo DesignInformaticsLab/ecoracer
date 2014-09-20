@@ -23,16 +23,20 @@
 body {
     margin: 40px;
 /*     overflow: hidden; */
-    font-family: 'Comfortaa', cursive;
+/*     font-family: 'Comfortaa', cursive; */
 /*     background: rgba(0,0,0,1); */
 }
 
 #canvas1 {
+	position: absolute;
+	top: 0px;
 	transition: all 2s;
 	background: #e9e9e9;
 }
 
 #canvasbg {
+	position: absolute;
+	top: 0px;
 	transition: all 2s;
 	background: #e9e9e9;
 }
@@ -40,7 +44,7 @@ body {
 #wrapper {
 	position: absolute;
 	top: 0px;
-	height: 440px;
+	left: 0px;
 }
 
 #data {
@@ -51,7 +55,7 @@ body {
 /* 	margin-right: 10px; */
 	left: 0px;
 /* 	background: rgba(255,255,255,0.9); */
-	z-index: 9;
+	z-index: 5;
 }
 
 #timer {
@@ -69,7 +73,7 @@ body {
     font-weight:bold;
     transition: all 0.1s;
     line-height:40px;
-	z-index: 9;
+	z-index: 5;
 /* 	background: #f9f9f9; */
 }
 
@@ -107,10 +111,10 @@ body {
 	top: 0px;
 	left: 0px;
 	background: #000000;
-	width: 1350px;
-	height: 600px;
+	width: 100%;
+	height: 100%;
 	display: none;
-	z-index: 20000;
+	z-index: 10;
 	opacity: 0.9;
 }
 
@@ -159,7 +163,7 @@ progress[value]::-webkit-progress-value{
 
 #battshape{
 	position: absolute;
-    bottom: 50px;
+    bottom: 60px;
     left: 0;
     right: 0;
     margin: auto;
@@ -211,7 +215,7 @@ progress[value]::-webkit-progress-value{
 	bottom: 90px;
 	text-align: center;
 	font-weight: bold;
-	font-family: Arial;
+/* 	font-family: Arial; */
 	font-size: 30px;
 }
 
@@ -225,7 +229,7 @@ progress[value]::-webkit-progress-value{
 	bottom: 120px;
 	text-align: center;
 	font-weight: bold;
-	font-family: Arial;
+/* 	font-family: Arial; */
 	font-size: 30px;
 }
 
@@ -239,7 +243,7 @@ progress[value]::-webkit-progress-value{
 	bottom: 150px;
 	text-align: center;
 	font-weight: bold;
-	font-family: Arial;
+/* 	font-family: Arial; */
 	font-size: 30px;
 }
 
@@ -259,14 +263,14 @@ progress[value]::-webkit-progress-value{
     line-height:80px;
    	position:absolute;
 	margin: auto;
-	top: 0;
-	left: 0;
-	bottom: 0;
-	right: 0;
+/* 	top: 0; */
+/* 	left: 0; */
+/* 	bottom: 0; */
+/* 	right: 0; */
 }
 
 #brake{
-	z-index: 9999;
+	z-index: 6;
 }
 #brake-container{
 	position: absolute;
@@ -294,7 +298,7 @@ progress[value]::-webkit-progress-value{
     -webkit-animation-duration: 5s;
     -webkit-animation-iteration-count: infinite;
     -webkit-animation-timing-function: linear;
-    z-index: 9999;
+    z-index: 6;
 }
 #acc-container{
 	position: absolute;
@@ -326,9 +330,8 @@ progress[value]::-webkit-progress-value{
 	position: absolute;
 	margin: auto;
 	top: 30px;
-	left: 0;
-	right: 0;
-	width: 500px;
+	left: 20%;
+	width: 30%;
 	height: 135px;
 /* 	border: 10px solid #666666; */
 	border-radius: 0%;
@@ -349,55 +352,37 @@ progress[value]::-webkit-progress-value{
     font-weight:bold;	
 }
 
-
-#ok-container{
+#ok, #restart{
 	position: relative;
 	top: 10px;
 	margin: auto;
 	width: 180px;
 	height: 40px;
 	display: none;
+	text-align: center;
+	text-decoration: none;
+	font-size: 28px;
+	font-weight: bold;
+	border: 5px solid #222222;
+	z-index: 5;
 }
 
-#restart-container{
-	position: relative;
-	top: 10px;
+#scorebox{
+	position: absolute;
 	margin: auto;
-	width: 180px;
-	height: 40px;
+	top: 30px;
+	left: 55%;
+	width: 30%;
+	height: 135px;
+	border-radius: 0%;
+	transition: all 0.3s;
+	font-size: 20px;
+	font-weight: bold;
 	display: none;
 }
 
-#ok{
-	position: relative;
+.score{
 	width: 100%;
-	height: 100%;
-	text-align: center;
-	text-decoration: none;
-	font-size: 20px;
-	font-weight: bold;
-	border: 8px solid #222222;
-	z-index: 9999;
-}
-
-#ok.activated{
-	
-}
-
-#restart{
-	position: relative;
-	width: 100%;
-	height: 100%;
-	text-align: center;
-	text-decoration: none;
-	font-size: 20px;
-	font-weight: bold;
-	border: 8px solid #222222;
-	z-index: 9999;	
-}
-
-#restart.activated{
-	
 }
 
 #StartScreen {
@@ -405,8 +390,8 @@ progress[value]::-webkit-progress-value{
 	background: rgba(50,50,50,0.90);
 	width: 100%;
 	top: 0px;
-	height: 440px;
-	z-index: 9999;
+	height: 100%;
+	z-index: 6;
     transition: all 1.3s;
     color: #e9e9e9;
 }
@@ -430,18 +415,18 @@ h1 {
    	font-size: 30px;
    	text-align: center;
 /*    	color: #222222; */
-   	font-family: "Comic Sans MS";
+/*    	font-family: "Comic Sans MS"; */
 }
 
 h2 {
    	font-size: 25px;
    	text-align: center;
 /*    	color: #222222; */
-   	font-family: "Comic Sans MS";
+/*    	font-family: "Comic Sans MS"; */
 }
 
 
-/* for plotting results */
+/************************ PLOT RESULTS **********************************************/
 .axis path,
 .axis line {
 	fill: none;
@@ -449,7 +434,7 @@ h2 {
 	shape-rendering: crispEdges;
 }
 .axis text {
-	font-family: sans-serif;
+/* 	font-family: sans-serif; */
 	font-size: 11px;
 }
 #results {
@@ -469,3 +454,72 @@ h2 {
 .data:hover{
 	background: #e9e9e9;
 }
+
+
+/************************ DESIGN INTERFACE **********************************************/
+#designbutton, #designed{
+	position:absolute;
+	right: 0px;
+	top: 40px;
+	margin: 0px;
+	z-index: 5;
+    width:40px;
+    height:40px;
+    border: 10px solid #222222;
+    border-radius: 50%;
+    text-align:center;
+    text-decoration:none;
+    transition: all 0.1s;
+}
+#designed{
+	background: url("../images/ok.png") no-repeat scroll 0 0 transparent;
+	background-size: 40px;
+}
+#designbutton{
+	background: url("../images/gear.png") no-repeat scroll 0 0 transparent;
+	background-size: 40px;
+}
+
+#design{
+	position: absolute;
+	width:100%;
+	height:100%;
+	z-index: 7;
+	background: #e9e9e9;
+	display: none;
+}
+
+#finaldrive{
+	position: absolute;
+	left: 100px;
+	width: 380px;
+	height:100%;
+}
+
+#finaldrivetext{
+	position: absolute;
+	top: 40px;
+	font-size: 28px;
+	width: 100%;
+	height: 50px;
+	color: #222222;
+	text-align: center;
+}
+
+#canvas_gear{
+	position: absolute;
+	top: 70px;
+	width: 380px;
+	height: 380px;
+}
+.sun path {
+  stroke: #222222;	
+  fill: #aaaaaa;
+  stroke-width: 10px;
+}
+.planet path {
+  stroke: #222222;	
+  fill: #aaaaaa;
+  stroke-width: 10px;
+}
+

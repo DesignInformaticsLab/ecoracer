@@ -1,69 +1,7 @@
-// *********************** VISUAL *************************** //
-var scene_width = $(window).width();
-var scene_height = 440;
-
-//*********************** VISUAL *************************** //
-var DISPLACEMENT = 0;
-var MARGIN = 175;
-
-var v = cp.v;
-var GRABABLE_MASK_BIT = 1 << 31;
-var NOT_GRABABLE_MASK = ~GRABABLE_MASK_BIT;
-var scene_widthx = 18800; // ???m
-var scene_heightx = 280;
-var started = false;
-
-var wheel_speed;
-var motor1speed = 0;
-
-var acc_sig = false;
-var brake_sig = false;
-var DPon = false;
-
-//************************************************///
-var vehSpeed = 0;
-var save_x = [];
-var save_v = [];
-var car_posOld = 0;
-//**************************************************///
-
-var DP_x = new Float64Array([0,295,305,310,320,330,355,360,365,375,380,385,390,395,400,410,415,420,770, 950]);
-var DP_comm = new Float64Array([1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,-1 -1]);
-
-
-var fric = 2.8;
-var timeout = 36; // 30s
-var max_batt = 0.55; // Change this value
-var tstart = 0; // game starts after 5 sec
-var indx = 0;
-//var data = [00,00,10,20,30,40,50,60,70,80,90,90,90,45,00,00,00,00,00,00,05,10,20,40,60,80,90,90,90,90,45,00,00,20,00,00,00,10,20,30,40,50,60,60,60,40,40,20,00,00,10,20,30,40,40,40,60,60,70,35,00,00,00,00,10,20,30,40,40,50,60,60,60,40,20,00,10,30,50,50,25,00,00,00,30,60,90,90,90,60,30,00,00,00,00,00];
-var data = [00,00,10,20,30,40,50,60,70,80,90,90,90,60,30,00,00,00,00,00,05,10,20,40,60,80,90,90,90,90,70,50,30,30,30,30,30,10,10,10,40,70,70,70,90,90,90,70,50,30,10,00,00,00,40,80,80,80,80,70,60,50,40,30,20,10,00,00,10,20,30,40,50,60,70,80,80,80,70,60,50,40,40,40,60,80,80,80,60,40,20,00,00,00,00,00];
-//var data = [0,0,0,0,10,20,30,40,50,60,70,80,90,45,0,0,0,0,0,0,10,20,30,40,50,60,70,80,90,45,0,0,0,0,0,0];
-var xstep = 200;
-var ground = [];
-var gndShape = [];
-var finishFlag = [];
-var finishShape = [];
-
-/// Station Parameters ////
-var stationShape = [];
-var station = [];
-var stationPosX = [17*200];
-var stationPosY = [0];
-var stationData = [30, 120, 20, 10];
-var chrageBatt = 20;
-var isCharging = false;
-var lastChargingX = 0;
-//////////////////////////
-var battempty = false;
-//var maxdist = 309;
-var maxdist = 909;
-var cTime = 0;
-
-
-$("#StartScreen").width($(window).width());
-$("#wrapper").width($(window).width());
-
+$("#StartScreen").width(scene_width);
+$("#StartScreen").height(scene_height);
+$("#wrapper").width(scene_width);
+$("#wrapper").height(scene_height);
 
 var __ENVIRONMENT__ = defineSpace("canvas1", scene_width, scene_heightx);
 
@@ -206,7 +144,7 @@ scene.prototype.update = function (dt) {
     if(chassis.p.y<0){
     	demo.stop();
     	start_race = 0;
-    	messagebox("Can't go back! Please restart.",false);
+    	messagebox("Oops...",false);
     }
     if(start_race == 1){
         counter+=1;
@@ -505,11 +443,13 @@ $(document).on("pageinit",function(event){
 	$("#ok").on("tap",function(event){
 		event.preventDefault();
 		$("#messagebox").hide();
+		$("#scorebox").hide();
 		restart();
 	});
 	$("#restart").on("tap",function(event){
 		event.preventDefault();
 		$("#messagebox").hide();
+		$("#scorebox").hide();
 		restart();
 	});
 	$("#StartScreen").on("tap", function(event){
@@ -533,6 +473,15 @@ $(document).on("pageinit",function(event){
 			lockScroll();
 		}
 	});
+	
+	initialize_design();
+	$("#designbutton").on("tap", function(){
+		$("#design").show();
+	});
+	$("#designed").on("tap", function(){
+		$("#design").hide();
+		restart();
+	});	
 });
 
 window.onorientationchange = function() { 

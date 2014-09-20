@@ -10,6 +10,13 @@ function submitResult(){
 	$.post('/getscore',{'score':consumption,}, function(data){
 		$("#textmessage").html("You spent "+ Math.round(consumption/1000/3600*1000)/1000 + 
 				" kWh of energy, that's better than "+ Math.round(data.length/total_num_user*100) + "% of players!");
+		// show top 5 scores
+		for(var i=0;i<Math.min(5,score.length);i++){
+			$("#scorebox").append("<div class='score'>"+(i+1)+". " + Math.round(score[i].score/1000/3600*1000)/1000 + "kWh<\div>");
+		}
+		if(score.length<5){
+			$("#scorebox").append("<div class='score'>"+score.length+1+". " + Math.round(consumption/1000/3600*1000)/1000 + "kWh (YOU)<\div>");
+		}
 	});
 }
 
