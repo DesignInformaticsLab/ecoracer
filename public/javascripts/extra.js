@@ -653,44 +653,6 @@ function getNumberArray(arr){
 
 function sign(x) { return x ? x < 0 ? -1 : 1 : 0; }
 
-window.onorientationchange = function() { 
-	scene_width = $(window).width();
-	scene_height = $(window).height();
-	setTimeout(changeOrientation, 500);
-};
-
-function changeOrientation(){
-	if ($(window).width()>$(window).height()){
-        $('#landscape').hide();
-        lockScroll();
-	}
-	else{
-        window.scrollTo(1,1);
-        $('#landscape').show();
-        lockScroll();
-	}
-	/*switch(window.orientation) {
-	case 0: // portrait, home bottom
-      window.scrollTo(1,1);
-      $('#landscape').show();
-      lockScroll();
-	  break;
-	case 180: // portrait, home bottom
-          window.scrollTo(1,1);
-          $('#landscape').show();
-          lockScroll();
-		  break;
-	 case -90: // landscape, home left
-           $('#landscape').hide();
-              lockScroll();
-              break;
-	 case 90: // landscape, home right
-           $('#landscape').hide();
-            lockScroll();
-	 		break;
-	  }*/
-}
-
 function lockScroll()
 {
      $(document).bind("touchmove",function(event){

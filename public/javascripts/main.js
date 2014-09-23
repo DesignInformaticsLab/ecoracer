@@ -484,3 +484,55 @@ $(document).on("pageinit",function(event){
 
 demo.canvas.style.position = "absolute";
 demo.canvas.style.left = "0px";
+
+
+
+$(window).resize(function(){
+	scene_width = $(window).width();
+	scene_height = $(window).height();
+	$("#StartScreen").width(scene_width);
+	$("#StartScreen").height(scene_height);
+	$("#wrapper").width(scene_width);
+	$("#wrapper").height(scene_height);
+	$('#canvasbg')[0].width = scene_width;
+	$('#canvasbg')[0].height = scene_height;
+	w = demo.width = demo.canvas.width = scene_width;
+});
+
+window.onorientationchange = function() { 
+	scene_width = $(window).width();
+	scene_height = $(window).height();
+	setTimeout(changeOrientation, 500);
+};
+
+function changeOrientation(){
+	if ($(window).width()>$(window).height()){
+        $('#landscape').hide();
+        lockScroll();
+	}
+	else{
+        window.scrollTo(1,1);
+        $('#landscape').show();
+        lockScroll();
+	}
+	/*switch(window.orientation) {
+	case 0: // portrait, home bottom
+      window.scrollTo(1,1);
+      $('#landscape').show();
+      lockScroll();
+	  break;
+	case 180: // portrait, home bottom
+          window.scrollTo(1,1);
+          $('#landscape').show();
+          lockScroll();
+		  break;
+	 case -90: // landscape, home left
+           $('#landscape').hide();
+              lockScroll();
+              break;
+	 case 90: // landscape, home right
+           $('#landscape').hide();
+            lockScroll();
+	 		break;
+	  }*/
+}
