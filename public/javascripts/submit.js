@@ -5,7 +5,8 @@ function submitResult(){
 	// post results
 	$.post('/adddata',{'score':consumption,
 					   'keys':JSON.stringify({'acc':acc_keys,'brake':brake_keys}),
-   					   'date':date});
+   					   'date':date,
+   					   'finaldrive':fr});
 
 	$.post('/getscore',{'score':consumption,}, function(data){
 		$("#textmessage").html("You spent "+ Math.round(consumption/1000/3600*1000)/1000 + 
@@ -129,5 +130,5 @@ function plot(d,i){
 				        .attr("y", padding/2)
 				        .attr("text-anchor", "middle")  
 				        .style("font-size", "14px") 
-				        .text(d.score+" from ip: " + d.id);
+				        .text(d.score+" from ip: " + d.id + " with finaldrive: " + d.finaldrive);
 }
