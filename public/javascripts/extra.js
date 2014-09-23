@@ -1,35 +1,8 @@
 /************************ GAME INTERFACE **********************************************/
-// create a timer at the beginning
-//function drawTimer(maxTime, now, delay){
-//	var timerX = scene_width/2;
-//	var timerY = buttonR*3;
-//	var time = maxTime-Math.floor(now-delay);
-//	cv = $('#canvasbg')[0].getContext('2d');
-//	cv.globalAlpha=1;
-//	cv.beginPath();
-//	cv.rect(timerX-2*buttonR,0,4*buttonR, 5*buttonR);
-//	cv.fillStyle = color_background;
-//	cv.fill();
-//	cv.beginPath(); 
-//	cv.strokeStyle = color_timer;
-//	cv.lineWidth = "8";
-//	cv.arc(timerX, timerY, buttonR, 0, Math.PI*2*((now-delay))/maxTime, true);
-//	cv.stroke();
-//	cv.font = "40px Arial";
-//	cv.fillStyle = color_timer;
-//	cv.fillText(("0" + time).slice(-2),timerX-buttonR/1.8,timerY+buttonR/5);
-//	cv.font = "20px Arial";
-//	cv.fillText("sec",timerX-buttonR/2.7,timerY+buttonR/1.7);
-//};
 
-// message box
+
 /*************************************************************/
 // Global variables //
-// *********************** VISUAL *************************** //
-var scene_width = $(window).width();
-var scene_height = $(window).height();
-
-//*********************** VISUAL *************************** //
 var DISPLACEMENT = 0;
 var MARGIN = 175;
 

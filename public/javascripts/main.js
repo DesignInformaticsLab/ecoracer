@@ -1,3 +1,5 @@
+var scene_width = $(window).width();
+var scene_height = $(window).height();
 $("#StartScreen").width(scene_width);
 $("#StartScreen").height(scene_height);
 $("#wrapper").width(scene_width);
