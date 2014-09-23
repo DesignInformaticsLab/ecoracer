@@ -653,6 +653,12 @@ function getNumberArray(arr){
 
 function sign(x) { return x ? x < 0 ? -1 : 1 : 0; }
 
+window.onorientationchange = function() { 
+	scene_width = $(window).width();
+	scene_height = $(window).height();
+	setTimeout(changeOrientation, 500);
+};
+
 function changeOrientation(){
 	if ($(window).width()>$(window).height()){
         $('#landscape').hide();

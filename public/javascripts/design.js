@@ -1,6 +1,6 @@
 /************************ DESIGN INTERFACE **********************************************/
-var MAX_FINALDRIVE = 15.0;
-var MIN_FINALDRIVE = 5.0;
+var MAX_FINALDRIVE = 40.0;
+var MIN_FINALDRIVE = 10.0;
 var touch_x, touch_y;
 var gear_time_start = Date.now();
 var gear_speed = 1.0;
@@ -9,10 +9,10 @@ var gear_frame;
 function initialize_design(){
 	$("#finaldrivetext").html("Final Drive Ratio: "+fr);
 	var width = $("#canvas_gear").width(),
-    height = $("#canvas_gear").height(),
-    radius = 50,
-    x = Math.sin(2 * Math.PI / 3),
-    y = Math.cos(2 * Math.PI / 3);
+    	height = $("#canvas_gear").height(),
+    	radius = 50,
+    	x = Math.sin(2 * Math.PI / 3),
+    	y = Math.cos(2 * Math.PI / 3);
 
 	var offset = 0,
 	    speed = 4,
@@ -48,10 +48,10 @@ function initialize_design(){
 	});
 	$("#finaldrive").on('touchmove',function(e){
 		fr = Math.max(Math.min(MAX_FINALDRIVE, (e.originalEvent.touches[0].pageY - touch_y)*0.1+fr),MIN_FINALDRIVE);
-		fr = Math.round(fr*10)/10;
+		fr = Math.round(fr);
 		$("#finaldrivetext").html("Final Drive Ratio: "+fr);
-	    $(".sun")[0].setAttribute("transform", "translate(0," + radius * 1.5 + ")"+"scale(" + (1.0-0.03*(fr-10)) + ")");
-	    $(".planet")[0].setAttribute("transform", "translate(0,-" + radius * 1.5 + ")"+"scale(" + (1.0+0.03*(fr-10)) + ")");
+	    $(".sun")[0].setAttribute("transform", "translate(0," + radius * 1.5 + ")"+"scale(" + (1.0-0.01*(fr-25)) + ")");
+	    $(".planet")[0].setAttribute("transform", "translate(0,-" + radius * 1.5 + ")"+"scale(" + (1.0+0.01*(fr-25)) + ")");
 		touch_x = e.originalEvent.touches[0].pageX;
 		touch_y = e.originalEvent.touches[0].pageY;
 	});
@@ -78,9 +78,9 @@ function gear(d) {
   return path.join("");
 }
 
-d3.timer(function() {
-  var angle = (Date.now() - gear_time_start) * gear_speed,
-      transform = function(d) { return "rotate(" + angle / d.radius + ")"; };
-  gear_frame.selectAll("path").attr("transform", transform);
-  gear_frame.attr("transform", transform); // frame of reference
-});
+//d3.timer(function() {
+//  var angle = (Date.now() - gear_time_start) * gear_speed,
+//      transform = function(d) { return "rotate(" + angle / d.radius + ")"; };
+//  gear_frame.selectAll("path").attr("transform", transform);
+//  gear_frame.attr("transform", transform); // frame of reference
+//});

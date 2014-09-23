@@ -458,8 +458,6 @@ $(document).on("pageinit",function(event){
 			$("#StartScreen").hide(500, function(){
 				$("#brake").removeClass("locked");
 				$("#acc").removeClass("locked");
-				//$('#runner').runner();
-				//$('#runner').runner('start');
 				tap_start = 1;
 				wheel1moment = Jw1;
 				wheel2moment = Jw2;
@@ -483,11 +481,6 @@ $(document).on("pageinit",function(event){
 		restart();
 	});	
 });
-
-window.onorientationchange = function() { 
-	  //Need at least 800 milliseconds
-	  setTimeout(changeOrientation, 500);
-};
 
 demo.canvas.style.position = "absolute";
 demo.canvas.style.left = "0px";
