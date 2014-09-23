@@ -14,10 +14,21 @@ function submitResult(){
 		// show top 5 scores
 		$("#scorebox").empty();
 		$("#scorebox").append("TOP SCORES");
+		var count = 1;
+		var addedyou = false;
 		for(var i=0;i<Math.min(5,score.length);i++){
-			$("#scorebox").append("<div class='score'>"+(i+1)+". " + Math.round(score[i].score/1000/3600*1000)/1000 + "kWh<\div>");
+			if (count<=5){
+				if (score[i].score<consumption || addedyou){
+					$("#scorebox").append("<div class='score'>"+(count)+". " + Math.round(score[i].score/1000/3600*1000)/1000 + "kWh<\div>");
+				}
+				else{
+					$("#scorebox").append("<div class='score'>"+(count)+". " + Math.round(consumption/1000/3600*1000)/1000 + "kWh (YOU)<\div>");
+					addedyou = true;
+				}
+				count += 1;		
+			}
 		}
-		if(score.length<5){
+		if(score.length<5 && !addedyou){
 			$("#scorebox").append("<div class='score'>"+(score.length+1)+". " + Math.round(consumption/1000/3600*1000)/1000 + "kWh (YOU)<\div>");
 		}
 	});
