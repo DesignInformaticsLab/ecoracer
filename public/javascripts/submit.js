@@ -16,7 +16,7 @@ function submitResult(){
 			$("#scorebox").append("<div class='score'>"+(i+1)+". " + Math.round(score[i].score/1000/3600*1000)/1000 + "kWh<\div>");
 		}
 		if(score.length<5){
-			$("#scorebox").append("<div class='score'>"+score.length+1+". " + Math.round(consumption/1000/3600*1000)/1000 + "kWh (YOU)<\div>");
+			$("#scorebox").append("<div class='score'>"+(score.length+1)+". " + Math.round(consumption/1000/3600*1000)/1000 + "kWh (YOU)<\div>");
 		}
 	});
 }
