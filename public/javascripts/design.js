@@ -55,6 +55,13 @@ function initialize_design(){
 		touch_x = e.originalEvent.touches[0].pageX;
 		touch_y = e.originalEvent.touches[0].pageY;
 	});
+	
+	d3.timer(function() {
+		  var angle = (Date.now() - gear_time_start) * gear_speed,
+		      transform = function(d) { return "rotate(" + angle / d.radius + ")"; };
+		  gear_frame.selectAll("path").attr("transform", transform);
+		  gear_frame.attr("transform", transform); // frame of reference
+		});
 }
 
 function gear(d) {
@@ -77,10 +84,3 @@ function gear(d) {
   path.push("M0,", -r3, "A", r3, ",", r3, " 0 0,0 0,", r3, "A", r3, ",", r3, " 0 0,0 0,", -r3, "Z");
   return path.join("");
 }
-
-//d3.timer(function() {
-//  var angle = (Date.now() - gear_time_start) * gear_speed,
-//      transform = function(d) { return "rotate(" + angle / d.radius + ")"; };
-//  gear_frame.selectAll("path").attr("transform", transform);
-//  gear_frame.attr("transform", transform); // frame of reference
-//});

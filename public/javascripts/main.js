@@ -474,12 +474,13 @@ $(document).on("pageinit",function(event){
 		}
 	});
 	
-	initialize_design();
 	$("#designbutton").on("tap", function(){
 		$("#design").show();
+		initialize_design();
 	});
 	$("#designed").on("tap", function(){
 		$("#design").hide();
+		$("#canvas_gear").empty();
 		restart();
 	});	
 });
