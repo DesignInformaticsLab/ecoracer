@@ -397,6 +397,14 @@ $(document).on("pageinit",function(event){
 			brake_keys.push(Math.round(chassis.p.x));
 		}
 	});
+	$("#brake").mousedown(function(event){
+		event.preventDefault();
+		if($("#brake").hasClass("enabled")){
+			brake_sig = true;
+			$('#brake').addClass('activated');		
+			brake_keys.push(Math.round(chassis.p.x));
+		}
+	});
 	$("#acc").on("touchstart",function(event){
 		event.preventDefault();
 		if($("#acc").hasClass("enabled")){
@@ -406,6 +414,16 @@ $(document).on("pageinit",function(event){
 			acc_keys.push(Math.round(chassis.p.x));
 		}
 	});
+	$("#acc").mousedown(function(event){
+		event.preventDefault();
+		if($("#acc").hasClass("enabled")){
+			acc_sig = true;
+			start_race = tap_start;
+			$('#acc').addClass('activated');
+			acc_keys.push(Math.round(chassis.p.x));
+		}
+	});
+	
 	$("#brake").on("touchend",function(event){
 		event.preventDefault();
 		if($("#brake").hasClass("enabled")){
@@ -424,7 +442,43 @@ $(document).on("pageinit",function(event){
 			brake_keys.push(Math.round(chassis.p.x));
 		}
 	});
+	$("#brake").mouseup(function(event){
+		event.preventDefault();
+		if($("#brake").hasClass("enabled")){
+			brake_sig = false;
+			$('#brake').removeClass('activated');
+			motor1.rate = 0;
+			motor2.rate = 0;
+			wheel1.setAngVel(0);
+			wheel2.setAngVel(0);
+			wheel1.v_limit = Infinity;
+			wheel2.v_limit = Infinity;
+			wheel1.setMoment(wheel1moment);
+			wheel2.setMoment(wheel2moment);
+			brake_sig = false;
+			acc_sig = false;
+			brake_keys.push(Math.round(chassis.p.x));
+		}
+	});
 	$("#acc").on("touchend",function(event){
+		event.preventDefault();
+		if($("#acc").hasClass("enabled")){
+			acc_sig = false;
+			$('#acc').removeClass('activated');
+			motor1.rate = 0;
+			motor2.rate = 0;
+			wheel1.setAngVel(0);
+			wheel2.setAngVel(0);
+			wheel1.v_limit = Infinity;
+			wheel2.v_limit = Infinity;
+			wheel1.setMoment(wheel1moment);
+			wheel2.setMoment(wheel2moment);
+			brake_sig = false;
+			acc_sig = false;
+			acc_keys.push(Math.round(chassis.p.x));
+		}
+	});
+	$("#acc").mouseup(function(event){
 		event.preventDefault();
 		if($("#acc").hasClass("enabled")){
 			acc_sig = false;

@@ -163,7 +163,7 @@ progress[value]::-webkit-progress-value{
 
 #battshape{
 	position: absolute;
-    bottom: 60px;
+    top: 300px;
     left: 0;
     right: 0;
     margin: auto;
@@ -212,7 +212,7 @@ progress[value]::-webkit-progress-value{
 	left: 0;
 	right: 0;
 	margin: auto;
-	bottom: 90px;
+	top: 350px;
 	text-align: center;
 	font-weight: bold;
 /* 	font-family: Arial; */

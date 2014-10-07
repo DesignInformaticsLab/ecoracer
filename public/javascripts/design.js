@@ -5,6 +5,7 @@ var touch_x, touch_y;
 var gear_time_start = Date.now();
 var gear_speed = 1.0;
 var gear_frame;
+var mousedown = false;
 
 function initialize_design(){
 	$("#finaldrivetext").html("Final Drive Ratio: "+fr);
@@ -46,6 +47,11 @@ function initialize_design(){
 		touch_x = e.originalEvent.touches[0].pageX;
 		touch_y = e.originalEvent.touches[0].pageY;
 	});
+	$("#finaldrive").mousedown(function(e){
+		touch_x = e.pageX;
+		touch_y = e.pageY;
+		mousedown = true;
+	});
 	$("#finaldrive").on('touchmove',function(e){
 		fr = Math.max(Math.min(MAX_FINALDRIVE, (e.originalEvent.touches[0].pageY - touch_y)*0.1+fr),MIN_FINALDRIVE);
 		fr = Math.round(fr);
@@ -55,6 +61,20 @@ function initialize_design(){
 		touch_x = e.originalEvent.touches[0].pageX;
 		touch_y = e.originalEvent.touches[0].pageY;
 	});
+	$("#finaldrive").mousemove(function(e){
+		if(mousedown){
+			fr = Math.max(Math.min(MAX_FINALDRIVE, (e.pageY - touch_y)*0.1+fr),MIN_FINALDRIVE);
+			fr = Math.round(fr);
+			$("#finaldrivetext").html("Final Drive Ratio: "+fr);
+		    $(".sun")[0].setAttribute("transform", "translate(0," + radius * 1.5 + ")"+"scale(" + (1.0-0.01*(fr-25)) + ")");
+		    $(".planet")[0].setAttribute("transform", "translate(0,-" + radius * 1.5 + ")"+"scale(" + (1.0+0.01*(fr-25)) + ")");
+			touch_x = e.pageX;
+			touch_y = e.pageY;			
+		}
+	});
+	$("body").mouseup(function(e){
+		mousedown = false;
+	})
 	
 	d3.timer(function() {
 		  var angle = (Date.now() - gear_time_start) * gear_speed,
