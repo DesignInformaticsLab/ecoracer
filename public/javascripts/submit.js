@@ -232,7 +232,7 @@ function drawHistory(){
 				        .text("Distance (meter)");
 	svgContainer.append("text")
 						.attr("transform", "rotate(-90)")
-					    .attr("y", padding/2+10)             
+					    .attr("y", padding/2-10)             
 					    .attr("x", -svg_height/2)
 					    .attr("text-anchor", "middle")  
 					    .style("font-size", "20px") 

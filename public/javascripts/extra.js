@@ -117,6 +117,11 @@ function restart(){
 	brake_keys = [];
 	getBestScore();
 	historyDrawn = false;
+	save_x = [];
+	save_v = [];
+	save_eff = [];
+	motor2eff = 0;
+	$("#history").html("");
 	//$('#runner').runner('start');
 }
 
