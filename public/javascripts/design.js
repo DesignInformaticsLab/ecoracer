@@ -8,7 +8,7 @@ var gear_frame;
 var mousedown = false;
 
 function initialize_design(){
-	$("#finaldrivetext").html("Final Drive Ratio: "+fr);
+	$("#finaldrivetext").html("<a>Final Drive Ratio: "+fr + "</a><br><a>Swipe to tune</a>");
 	var width = $("#canvas_gear").width(),
     	height = $("#canvas_gear").height(),
     	radius = 50,
@@ -55,7 +55,7 @@ function initialize_design(){
 	$("#finaldrive").on('touchmove',function(e){
 		fr = Math.max(Math.min(MAX_FINALDRIVE, (e.originalEvent.touches[0].pageY - touch_y)*0.1+fr),MIN_FINALDRIVE);
 		fr = Math.round(fr);
-		$("#finaldrivetext").html("Final Drive Ratio: "+fr);
+		$("#finaldrivetext").html("<a>Final Drive Ratio: "+fr+"</a><br><a>Swipe to tune</a>");
 	    $(".sun")[0].setAttribute("transform", "translate(0," + radius * 1.5 + ")"+"scale(" + (1.0-0.01*(fr-25)) + ")");
 	    $(".planet")[0].setAttribute("transform", "translate(0,-" + radius * 1.5 + ")"+"scale(" + (1.0+0.01*(fr-25)) + ")");
 		touch_x = e.originalEvent.touches[0].pageX;
@@ -65,7 +65,7 @@ function initialize_design(){
 		if(mousedown){
 			fr = Math.max(Math.min(MAX_FINALDRIVE, (e.pageY - touch_y)*0.1+fr),MIN_FINALDRIVE);
 			fr = Math.round(fr);
-			$("#finaldrivetext").html("Final Drive Ratio: "+fr);
+			$("#finaldrivetext").html("<a>Final Drive Ratio: "+fr+"</a><br><a>Swipe to tune</a>");
 		    $(".sun")[0].setAttribute("transform", "translate(0," + radius * 1.5 + ")"+"scale(" + (1.0-0.01*(fr-25)) + ")");
 		    $(".planet")[0].setAttribute("transform", "translate(0,-" + radius * 1.5 + ")"+"scale(" + (1.0+0.01*(fr-25)) + ")");
 			touch_x = e.pageX;
