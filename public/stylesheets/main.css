@@ -77,6 +77,39 @@ body {
 /* 	background: #f9f9f9; */
 }
 
+#speedval {
+	position: absolute;
+	margin: auto;
+	width: 40px;
+	height: 40px;
+	top: 30px;
+	left: 100px;
+    text-align:center;
+    text-decoration:none;
+    font-size:20px;
+    font-weight:bold;
+    transition: all 0.1s;
+    line-height:20px;
+	z-index: 5;
+}
+
+#effval {
+	position: absolute;
+	margin: auto;
+	width: 40px;
+	height: 40px;
+	top: 30px;
+	left: 200px;
+    text-align:center;
+    text-decoration:none;
+    font-size:20px;
+    font-weight:bold;
+    transition: all 0.1s;
+    line-height:20px;
+	z-index: 5;
+}
+
+
 #runner {
 	display:none;
 }
@@ -365,6 +398,36 @@ progress[value]::-webkit-progress-value{
 	font-weight: bold;
 	border: 5px solid #222222;
 	z-index: 5;
+    cursor: pointer;
+}
+
+#review{
+	position: relative;
+	top: 10px;
+	margin: auto;
+	width: 180px;
+	height: 40px;
+	display: none;
+	text-align: center;
+	text-decoration: none;
+	font-size: 28px;
+	font-weight: bold;
+	border: 5px solid #222222;
+	z-index: 5;
+    cursor: pointer;
+}
+
+#history{
+    position:absolute;
+    top: 0px;
+    width: 100%;
+    height: 400px;
+    display: none;
+    z-index: 6;
+    transition: 0.5s;
+    font-size: 20px;
+    border: 5px solid #222222;
+    background: #e9e9e9;
 }
 
 #scorebox{
@@ -427,16 +490,23 @@ h2 {
 
 
 /************************ PLOT RESULTS **********************************************/
+path {
+    stroke-width: 5px;
+    fill: none;
+}
+
 .axis path,
 .axis line {
 	fill: none;
+    stroke-width: 2px;
 	stroke: black;
 	shape-rendering: crispEdges;
 }
 .axis text {
 /* 	font-family: sans-serif; */
-	font-size: 11px;
+	font-size: 20px;
 }
+
 #results {
 	position: relative;
 	width: 100%;

@@ -1,8 +1,4 @@
 /************************ GAME INTERFACE **********************************************/
-
-
-/*************************************************************/
-// Global variables //
 var DISPLACEMENT = 0;
 var MARGIN = 175;
 
@@ -12,9 +8,9 @@ var NOT_GRABABLE_MASK = ~GRABABLE_MASK_BIT;
 var scene_widthx = 18800; // ???m
 var scene_heightx = 280;
 var started = false;
+var historyDrawn = false;
 
-var wheel_speed;
-var motor1speed = 0;
+var motor2eff = 0;
 
 var acc_sig = false;
 var brake_sig = false;
@@ -24,6 +20,7 @@ var DPon = false;
 var vehSpeed = 0;
 var save_x = [];
 var save_v = [];
+var save_eff = [];
 var car_posOld = 0;
 //**************************************************///
 
@@ -90,10 +87,12 @@ function messagebox(msg, win){
 		submitResult();
 		$("#ok").show();
 		$("#restart").hide();
+		$("#review").show();
 	}
 	else{
 		$("#ok").hide();
 		$("#restart").show();
+		$("#review").show();
 	}
 }
 
@@ -117,6 +116,7 @@ function restart(){
 	acc_keys = [];
 	brake_keys = [];
 	getBestScore();
+	historyDrawn = false;
 	//$('#runner').runner('start');
 }
 
@@ -180,11 +180,11 @@ function updateConsumption(consumption) {
 	motor1.maxForce = maxTrq1*fr;
 	motor1torque = -1*Math.min(motor1.jAcc*tstep/fr,maxTrq1)*m2m*px2m*px2m/t2t/t2t;
 	motor2torque = -1*Math.min(motor2.jAcc*tstep/fr,maxTrq2)*m2m*px2m*px2m/t2t/t2t;
-	motor1eff = efflerp(motor1speed,motor1torque);
-	motor2eff = efflerp(motor2speed,motor2torque);
+	motor1eff = efflerp(motor1speed,motor1torque)||0;
+	motor2eff = efflerp(Math.abs(motor2speed),-1*Math.abs(motor2torque))||0;
 	con1 = motor1torque/tstep*motor1speed*pi/30*motor1eff;
 	if (Math.abs(con1)> 216000){con1=1000;}
-	con2 = motor2torque/tstep*motor2speed*pi/30*motor2eff;
+	con2 = motor2torque/tstep*motor2speed*pi/30*motor1eff;
 	if (Math.abs(con2)> 216000){con2=1000;}
 	consumption += (con1 + con2);
 	return consumption;

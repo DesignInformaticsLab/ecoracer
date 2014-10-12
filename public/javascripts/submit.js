@@ -57,7 +57,7 @@ function getAllResults(){
 	});	
 }
 
-$(".data").click(function(){
+$(".data").on('tap', function(){
 	var id = parseInt($(this).id.slice(4));
 //	simulate(userData[id]);
 });
@@ -144,4 +144,91 @@ function plot(d,i){
 				        .attr("text-anchor", "middle")  
 				        .style("font-size", "14px") 
 				        .text(d.score+" from ip: " + d.id + " with finaldrive: " + d.finaldrive);
+}
+
+function drawHistory(){
+	
+//	var save_x = [0,5,10,15,20,25,30];
+//	var save_v = [2,4,5,6,7,8,10];
+//	var save_eff = [0,9,0.9,0.8,0.7,0.8,0.9,0.9];
+	var padding = 40;//px
+	var svg_length = $("#history").width();//px
+	var svg_height = $("#history").height();//px
+	
+	var j;
+	
+	var total_distance = 909; // 909*20 *** change this to an equation
+	var speedData = [];
+	var effData = [];
+	for (j=0;j<save_v.length;j++){
+		speedData.push({"x": save_x[j], "y": save_v[j]});
+		effData.push({"x": save_x[j], "y": save_eff[j]});
+	}
+	var max_speed = 100;
+	var max_eff = 100;
+
+	var speedLineFunction = d3.svg.line()
+	                    .x(function(d) { return d.x/total_distance*(svg_length-padding*2)+padding; })
+                        .y(function(d) { return (1-d.y/max_speed)*(svg_height-padding*2)+padding; })
+                        .interpolate("linear");
+	var effLineFunction = d3.svg.line()
+						.x(function(d) { return d.x/total_distance*(svg_length-padding*2)+padding; })
+					    .y(function(d) { return (1-d.y/max_eff)*(svg_height-padding*2)+padding; })
+					    .interpolate("linear");
+						
+	var xScale = d3.scale.linear()
+                        .domain([0, total_distance])
+                        .range([padding, svg_length-padding]);
+	var yScaleEff = d3.scale.linear()
+						.domain([0, max_eff])
+						.range([svg_height-padding, padding]);
+	var yScaleSpeed = d3.scale.linear()
+						.domain([0, max_speed])
+						.range([svg_height-padding, padding]);
+	var xAxis = d3.svg.axis()
+						.scale(xScale)
+						.orient("bottom")
+						.ticks(10);
+	var yAxisSpeed = d3.svg.axis()
+						.scale(yScaleSpeed)
+						.orient("left")
+						.ticks(10);
+	var yAxisEff = d3.svg.axis()
+						.scale(yScaleEff)
+						.orient("right")
+						.ticks(10);
+	var svgContainer = d3.select("#history").append("svg")
+                        .attr("width", svg_length)
+                        .attr("height", svg_height);
+    svgContainer.append("path")
+						.attr("d", speedLineFunction(speedData))
+						.attr("stroke", "blue")
+					    .attr("stroke-width", 2)
+					    .attr("fill", "none")
+    svgContainer.append("path")
+                    	.attr("d", effLineFunction(effData))
+                    	.attr("stroke", "red")
+	                    .attr("stroke-width", 2)
+	                    .attr("fill", "none")
+	svgContainer.append("g")
+						.attr("transform", "translate(0," + (svg_height - padding) + ")")
+	                    .attr("class", "x axis")
+	                    .call(xAxis)
+	svgContainer.append("g")
+						.attr("transform", "translate(" + padding +",0)")
+	                    .attr("class", "y axis")
+	                    .style("fill", "blue")
+	                    .call(yAxisSpeed)
+	svgContainer.append("g")
+						.attr("transform", "translate("+ (svg_length - padding) + ",0)")
+	                    .attr("class", "y axis")
+	                    .style("fill", "red")
+	                    .call(yAxisEff)	                    
+	svgContainer.append("text")
+	                    .attr("x", svg_length/2-padding)             
+				        .attr("y", padding/2)
+				        .attr("text-anchor", "middle")  
+				        .style("font-size", "28px") 
+				        .text("Driving statistics");
+	
 }

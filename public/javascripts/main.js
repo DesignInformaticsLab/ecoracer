@@ -139,8 +139,7 @@ scene.prototype.update = function (dt) {
     cTime = Math.floor(counter/tstep);
     car_pos = Math.round(chassis.p.x*px2m); //-9.03
     car_pos9 = car_pos-9;
-    // vehSpeed = Math.round(motor1speed/fr*Math.PI/30*wheel1.shapeList[0].r*px2m*2.23694*10)/10;
-    // vehSpeed = Math.round(Math.sqrt(Math.pow(chassis.vx,2)+Math.pow(chassis.vy,2))*px2m*2.23694*10)/10;
+    vehSpeed = Math.round(Math.sqrt(Math.pow(chassis.vx,2)+Math.pow(chassis.vy,2))*px2m*2.23694);
     $("#timer").html(timeout-cTime);
     
     if(chassis.p.y<0){
@@ -149,16 +148,21 @@ scene.prototype.update = function (dt) {
     	messagebox("Oops...",false);
     }
     if(start_race == 1){
+    	$("#speedval").html("Speed: "+vehSpeed + 'mph');
+    	if(acc_sig && !battempty){
+        	$("#effval").html("Motor Efficiency: "+Math.round(motor2eff*0.95*100)+'%');
+    	}
+    	else{
+        	$("#effval").html("Motor Efficiency: "+'--%');
+    	}
         counter+=1;
         ////// Save Results /////////////
-        /* if (car_pos9 >= car_posOld+5){
-			car_posOld = car_pos9;
-			save_x.push(car_pos9);
+        if (car_pos >= car_posOld+5){
+			car_posOld = car_pos;
+			save_x.push(car_pos);
 			save_v.push(vehSpeed);
+			save_eff.push(Math.round(motor2eff*100));
 		}
-		if (car_pos9 >= 430){
-			demo.stop();
-		}*/
 	    //////////// Success ////////////
         
 	    if (car_pos>=maxdist){
@@ -248,6 +252,7 @@ scene.prototype.update = function (dt) {
 	    			if(motor2.rate>max_rate1){motor2.rate=max_rate1;}
 	    			if(motor1.rate>max_rate1){motor1.rate=max_rate1;}
 	    			consumption = updateConsumption(consumption);
+	    			$("#effval").html("Motor Efficiency: "+Math.round(motor2eff*0.95*100)+'%');
 	        	}
 	        	else if(DP_comm[indx]==0){
 	        		motor1.rate = 0;
@@ -256,6 +261,7 @@ scene.prototype.update = function (dt) {
 	        		wheel2.v_limit = Infinity;
 	        		wheel1.setMoment(wheel1moment);
 	        		wheel2.setMoment(wheel2moment);
+	        		$("#effval").html("Motor Efficiency: "+"--%");
 	        	}
 	        	else{
 	    			motor1.rate = 0;
@@ -265,12 +271,14 @@ scene.prototype.update = function (dt) {
 	    				motor1.rate = 1*Math.max(wheel1.w,-1.5)*max_rate1;
 	    				motor2.rate = 1*Math.max(wheel1.w,-1.5)*max_rate1;
 	    				consumption = updateConsumption(consumption);
+	    				$("#effval").html("Motor Efficiency: "+Math.round(motor2eff*0.95*100)+'%');
 	    			}
 	    			else if (wheel1.w>3){
 	    				motor1.rate = 2*Math.min(wheel1.w,2)*max_rate1;
 	    				motor2.rate = 2*Math.min(wheel1.w,2)*max_rate1;
+	    				$("#effval").html("Motor Efficiency: "+"--%");
 	    			}
-	    			else{motor1.rate=0; motor2.rate = 0; wheel1.setAngVel(0); wheel2.setAngVel(0);}
+	    			else{motor1.rate=0; motor2.rate = 0; wheel1.setAngVel(0); wheel2.setAngVel(0);$("#effval").html("Motor Efficiency: "+Math.round(motor2eff*0.95*100)+'%');}
 	    			if (wheel_speed>1){
 	    			}
 	    			else{
@@ -329,10 +337,12 @@ scene.prototype.update = function (dt) {
 				motor1.rate = 1*Math.max(wheel1.w,-1.5)*max_rate1;
 				motor2.rate = 1*Math.max(wheel1.w,-1.5)*max_rate1;
 				consumption = updateConsumption(consumption);
+				$("#effval").html("Motor Efficiency: "+Math.round(motor2eff*0.95*100)+'%');
 			}
 			else if (wheel1.w>3){
 				motor1.rate = 2*Math.min(wheel1.w,2)*max_rate1;
 				motor2.rate = 2*Math.min(wheel1.w,2)*max_rate1;
+				$("#effval").html("Motor Efficiency: "+"--%"); motor2eff = 0;
 			}
 			else{motor1.rate=0; motor2.rate = 0; wheel1.setAngVel(0); wheel2.setAngVel(0);}
 			if (wheel_speed>1){
@@ -348,6 +358,10 @@ scene.prototype.update = function (dt) {
 			if(motor2.rate>max_rate1){motor2.rate=max_rate1;}
 			if(motor1.rate>max_rate1){motor1.rate=max_rate1;}
 			consumption = updateConsumption(consumption);
+			$("#effval").html("Motor Efficiency: "+Math.round(motor2eff*0.95*100)+'%');
+		}
+		else {
+			$("#effval").html("Motor Efficiency: "+"--%"); motor2eff = 0;
 		}
 	////////////////////////////////////////////////////////////////////////////
 	
@@ -372,6 +386,8 @@ scene.prototype.update = function (dt) {
     	battstatus = 100-(consumption/3600/1000/max_batt*100);
 		document.getElementById("battvalue").style.width= battstatus + "%";
     	$('#batttext').html(Math.round(battstatus*10)/10*(battstatus>0) + "%");
+        $("#speedval").html('Speed: 0mph');
+        $("#effval").html("Motor Efficiency: "+"--%");
     };
 
 };
@@ -500,14 +516,27 @@ $(document).on("pageinit",function(event){
 		event.preventDefault();
 		$("#messagebox").hide();
 		$("#scorebox").hide();
+		$("#review").hide();
 		restart();
 	});
 	$("#restart").on("tap",function(event){
 		event.preventDefault();
 		$("#messagebox").hide();
 		$("#scorebox").hide();
+		$("#review").hide();
 		restart();
 	});
+	$("#review").on("tap",function(event){
+		event.preventDefault();
+		if(!historyDrawn){drawHistory();historyDrawn=true;}
+		$("#history").show();
+	});
+	$("#history").on("tap",function(event){
+		event.preventDefault();
+		$("#history").hide();
+	});
+	
+	
 	$("#StartScreen").on("tap", function(event){
 		event.preventDefault();
 		if ($(window).width()>$(window).height()){
