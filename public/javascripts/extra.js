@@ -120,7 +120,9 @@ function restart(){
 	save_x = [];
 	save_v = [];
 	save_eff = [];
+	vehSpeed = 0;
 	motor2eff = 0;
+	car_posOld = 0;
 	$("#history").html("");
 	//$('#runner').runner('start');
 }
