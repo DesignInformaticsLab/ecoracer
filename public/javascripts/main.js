@@ -157,7 +157,7 @@ scene.prototype.update = function (dt) {
     	}
         counter+=1;
         ////// Save Results /////////////
-        if (car_pos >= car_posOld+5){
+        if (car_pos >= car_posOld+10){
 			car_posOld = car_pos;
 			save_x.push(car_pos);
 			save_v.push(vehSpeed);

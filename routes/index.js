@@ -11,7 +11,7 @@ router.get('/', function(req, res) {
 /* GET best score. */
 router.get('/bestscore', function(req, res) {
 	pg.connect(connection, function(err, client, done) {
-	    client.query('SELECT score FROM ecoracer_design_table ORDER BY score ASC', function(err, result) {
+	    client.query('SELECT score FROM ecoracer_me250_table ORDER BY score ASC', function(err, result) {
 	      done();
 	      if (err)
 	       { console.error(err); res.send("Error " + err); }
@@ -25,7 +25,7 @@ router.get('/bestscore', function(req, res) {
 /* GET all data. */
 router.get('/db', function (req, res) {
   pg.connect(connection, function(err, client, done) {
-    client.query('SELECT * FROM ecoracer_design_table', function(err, result) {
+    client.query('SELECT * FROM ecoracer_me250_table', function(err, result) {
       done();
       if (err)
        { console.error(err); res.send("Error " + err); }
@@ -40,7 +40,7 @@ router.post('/adddata', function(req, res) {
     pg.connect(connection, function(err, client, done) {
         if(err) res.send("Could not connect to DB: " + err);
         
-        client.query('INSERT INTO ecoracer_design_table (id, score, keys, date, finaldrive) VALUES ($1, $2, $3, $4, $5)',
+        client.query('INSERT INTO ecoracer_me250_table (id, score, keys, date, finaldrive) VALUES ($1, $2, $3, $4, $5)',
             [
              req.headers['x-forwarded-for'] || 
              req.connection.remoteAddress || 
@@ -63,7 +63,7 @@ router.post('/getscore', function(req, res) {
         if(err) res.send("Could not connect to DB: " + err);
         var current_score = req.body.score;
         var worse = 0;
-    	var queryText = 'SELECT * FROM ecoracer_design_table WHERE score > ' + current_score;
+    	var queryText = 'SELECT * FROM ecoracer_me250_table WHERE score > ' + current_score;
         client.query(queryText, function(err, result) {
     		if(err) {
     			console.error(err); res.send("Error " + err);
@@ -82,7 +82,7 @@ router.get('/results', function(req, res) {
 });
 router.post('/getresults', function(req, res) {
   pg.connect(connection, function(err, client, done) {
-	    client.query('SELECT * FROM ecoracer_design_table', function(err, result) {
+	    client.query('SELECT * FROM ecoracer_me250_table', function(err, result) {
 	      done();
 	      if (err)
 	       { console.error(err); res.send("Error " + err); }

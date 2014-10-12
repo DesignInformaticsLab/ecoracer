@@ -151,7 +151,7 @@ function drawHistory(){
 //	var save_x = [0,5,10,15,20,25,30];
 //	var save_v = [2,4,5,6,7,8,10];
 //	var save_eff = [0,9,0.9,0.8,0.7,0.8,0.9,0.9];
-	var padding = 40;//px
+	var padding = 60;//px
 	var svg_length = $("#history").width();//px
 	var svg_height = $("#history").height();//px
 	
@@ -204,26 +204,46 @@ function drawHistory(){
 						.attr("d", speedLineFunction(speedData))
 						.attr("stroke", "blue")
 					    .attr("stroke-width", 2)
-					    .attr("fill", "none")
+					    .attr("fill", "none");
     svgContainer.append("path")
                     	.attr("d", effLineFunction(effData))
                     	.attr("stroke", "red")
 	                    .attr("stroke-width", 2)
-	                    .attr("fill", "none")
+	                    .attr("fill", "none");
 	svgContainer.append("g")
 						.attr("transform", "translate(0," + (svg_height - padding) + ")")
 	                    .attr("class", "x axis")
-	                    .call(xAxis)
+	                    .call(xAxis);
 	svgContainer.append("g")
 						.attr("transform", "translate(" + padding +",0)")
 	                    .attr("class", "y axis")
 	                    .style("fill", "blue")
-	                    .call(yAxisSpeed)
+	                    .call(yAxisSpeed);
 	svgContainer.append("g")
 						.attr("transform", "translate("+ (svg_length - padding) + ",0)")
 	                    .attr("class", "y axis")
 	                    .style("fill", "red")
-	                    .call(yAxisEff)	                    
+	                    .call(yAxisEff);
+	svgContainer.append("text")
+	                    .attr("x", svg_length/2-padding)             
+				        .attr("y", svg_height-10)
+				        .attr("text-anchor", "middle")  
+				        .style("font-size", "20px") 
+				        .text("Distance (meter)");
+	svgContainer.append("text")
+						.attr("transform", "rotate(-90)")
+					    .attr("y", padding/2+10)             
+					    .attr("x", -svg_height/2)
+					    .attr("text-anchor", "middle")  
+					    .style("font-size", "20px") 
+					    .text("Speed (mph)");
+	svgContainer.append("text")
+						.attr("transform", "rotate(90)")
+					    .attr("y", -svg_length+padding/2-10)             
+					    .attr("x", svg_height/2)
+					    .attr("text-anchor", "middle")  
+					    .style("font-size", "20px") 
+					    .text("Efficiency (%)"); 
 	svgContainer.append("text")
 	                    .attr("x", svg_length/2-padding)             
 				        .attr("y", padding/2)
