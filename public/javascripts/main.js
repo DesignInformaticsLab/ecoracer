@@ -118,11 +118,14 @@ var scene = function(){
 	wheel2.setMoment(wheel2moment);
 	
 	// limits
-	speed_limit = 56/px2m*t2t; // 100 m/s
-	wheel1.w_limit = speed_limit/wheel1.shapeList[0].r;
-	wheel2.w_limit = speed_limit/wheel2.shapeList[0].r;
-	motorbar1.w_limit = 94*t2t; // max 700 rad/second
-	motorbar2.w_limit = 94*t2t;
+	speed_limit = 9200*pi/30/fr*(wheel1.shapeList[0].r)*t2t; // Max motor speed is 9000 but 9200 gives better results.
+	wheel1.v_limit = speed_limit;
+	wheel1.v_limit = speed_limit;
+	wheel1.w_limit = speed_limit/wheel1.shapeList[0].r*1.5; // This 1.5 has to be here! (experimental)
+	wheel2.w_limit = speed_limit/wheel1.shapeList[0].r*1.5; // (experimental)
+	motorbar1.w_limit = wheel1.w_limit;
+	motorbar2.w_limit = wheel2.w_limit;
+
 	
 };
 
@@ -150,7 +153,7 @@ scene.prototype.update = function (dt) {
     if(start_race == 1){
     	$("#speedval").html("Speed: "+vehSpeed + 'mph');
     	if(acc_sig && !battempty){
-        	$("#effval").html("Motor Efficiency: "+Math.round(motor2eff*0.95*100)+'%');
+        	$("#effval").html("Motor Efficiency: "+Math.round(motor2eff*100)+'%');
     	}
     	else{
         	$("#effval").html("Motor Efficiency: "+'--%');
@@ -170,8 +173,8 @@ scene.prototype.update = function (dt) {
 			motor2.rate = 0;
 			wheel1.setAngVel(0);
 			wheel2.setAngVel(0);
-			wheel1.v_limit = Infinity;
-			wheel2.v_limit = Infinity;
+			//wheel1.v_limit = Infinity;
+			//wheel2.v_limit = Infinity;
 			wheel1.setMoment(1e10);
 			wheel2.setMoment(1e10);
 			brake_sig = false;
@@ -199,8 +202,8 @@ scene.prototype.update = function (dt) {
 			motor2.rate = 0;
 			wheel1.setAngVel(0);
 			wheel2.setAngVel(0);
-			wheel1.v_limit = Infinity;
-			wheel2.v_limit = Infinity;
+			//wheel1.v_limit = Infinity;
+			//wheel2.v_limit = Infinity;
 			wheel1.setMoment(1e10);
 			wheel2.setMoment(1e10);
 			brake_sig = false;
@@ -220,8 +223,8 @@ scene.prototype.update = function (dt) {
 			motor2.rate = 0;
 			wheel1.setAngVel(0);
 			wheel2.setAngVel(0);
-			wheel1.v_limit = Infinity;
-			wheel2.v_limit = Infinity;
+			//wheel1.v_limit = Infinity;
+			//wheel2.v_limit = Infinity;
 			wheel1.setMoment(1e10);
 			wheel2.setMoment(1e10);
 			brake_sig = false;
@@ -244,47 +247,26 @@ scene.prototype.update = function (dt) {
 		
 	    
 /////////////////////////////DP simulation //////////////////////////////////////////
-        if (DPon){
+        if (DPon && (car_pos <= maxdist)){
 		    if (car_pos<=DP_x[indx+1]){
 	        	if (DP_comm[indx]==1){
-	    	    	motor1.rate += acc_rate;
-	    			motor2.rate += acc_rate;
-	    			if(motor2.rate>max_rate1){motor2.rate=max_rate1;}
-	    			if(motor1.rate>max_rate1){motor1.rate=max_rate1;}
-	    			consumption = updateConsumption(consumption);
-	    			$("#effval").html("Motor Efficiency: "+Math.round(motor2eff*0.95*100)+'%');
+	    	    	acc_sig = true;
+	    	    	brake_sig = false;
+
 	        	}
 	        	else if(DP_comm[indx]==0){
+	        		acc_sig = false;
+	        		brake_sig = false;
 	        		motor1.rate = 0;
 	        		motor2.rate = 0;
-	        		wheel1.v_limit = Infinity;
-	        		wheel2.v_limit = Infinity;
+	        		//wheel1.v_limit = Infinity;
+	        		//wheel2.v_limit = Infinity;
 	        		wheel1.setMoment(wheel1moment);
 	        		wheel2.setMoment(wheel2moment);
-	        		$("#effval").html("Motor Efficiency: "+"--%");
 	        	}
 	        	else{
-	    			motor1.rate = 0;
-	    		 	motor2.rate = 0;
-	    			wheel_speed = Math.abs(wheel1.w);
-	    			if(wheel1.w<-1){
-	    				motor1.rate = 1*Math.max(wheel1.w,-1.5)*max_rate1;
-	    				motor2.rate = 1*Math.max(wheel1.w,-1.5)*max_rate1;
-	    				consumption = updateConsumption(consumption);
-	    				$("#effval").html("Motor Efficiency: "+Math.round(motor2eff*0.95*100)+'%');
-	    			}
-	    			else if (wheel1.w>3){
-	    				motor1.rate = 2*Math.min(wheel1.w,2)*max_rate1;
-	    				motor2.rate = 2*Math.min(wheel1.w,2)*max_rate1;
-	    				$("#effval").html("Motor Efficiency: "+"--%");
-	    			}
-	    			else{motor1.rate=0; motor2.rate = 0; wheel1.setAngVel(0); wheel2.setAngVel(0);$("#effval").html("Motor Efficiency: "+Math.round(motor2eff*0.95*100)+'%');}
-	    			if (wheel_speed>1){
-	    			}
-	    			else{
-	    				wheel1.setMoment(wheel1moment);
-	    				wheel2.setMoment(wheel2moment);
-	    			}
+	    			brake_sig = true;
+	    			acc_sig = false;
 	        	}
 	        }
 	        else{
@@ -308,8 +290,8 @@ scene.prototype.update = function (dt) {
 				motor2.rate = 0;
 				wheel1.setAngVel(0);
 				wheel2.setAngVel(0);
-				wheel1.v_limit = Infinity;
-				wheel2.v_limit = Infinity;
+				//wheel1.v_limit = Infinity;
+				//wheel2.v_limit = Infinity;
 				wheel1.setMoment(1e10);
 				wheel2.setMoment(1e10);
 				brake_sig = false;
@@ -337,7 +319,7 @@ scene.prototype.update = function (dt) {
 				motor1.rate = 1*Math.max(wheel1.w,-1.5)*max_rate1;
 				motor2.rate = 1*Math.max(wheel1.w,-1.5)*max_rate1;
 				consumption = updateConsumption(consumption);
-				$("#effval").html("Motor Efficiency: "+Math.round(motor2eff*0.95*100)+'%');
+				$("#effval").html("Motor Efficiency: "+Math.round(motor2eff*100)+'%');
 			}
 			else if (wheel1.w>3){
 				motor1.rate = 2*Math.min(wheel1.w,2)*max_rate1;
@@ -358,7 +340,7 @@ scene.prototype.update = function (dt) {
 			if(motor2.rate>max_rate1){motor2.rate=max_rate1;}
 			if(motor1.rate>max_rate1){motor1.rate=max_rate1;}
 			consumption = updateConsumption(consumption);
-			$("#effval").html("Motor Efficiency: "+Math.round(motor2eff*0.95*100)+'%');
+			$("#effval").html("Motor Efficiency: "+Math.round(motor2eff*100)+'%');
 		}
 		else {
 			$("#effval").html("Motor Efficiency: "+"--%"); motor2eff = 0;
@@ -449,8 +431,8 @@ $(document).on("pageinit",function(event){
 			motor2.rate = 0;
 			wheel1.setAngVel(0);
 			wheel2.setAngVel(0);
-			wheel1.v_limit = Infinity;
-			wheel2.v_limit = Infinity;
+			//wheel1.v_limit = Infinity;
+			//wheel2.v_limit = Infinity;
 			wheel1.setMoment(wheel1moment);
 			wheel2.setMoment(wheel2moment);
 			brake_sig = false;
@@ -467,8 +449,8 @@ $(document).on("pageinit",function(event){
 			motor2.rate = 0;
 			wheel1.setAngVel(0);
 			wheel2.setAngVel(0);
-			wheel1.v_limit = Infinity;
-			wheel2.v_limit = Infinity;
+			//wheel1.v_limit = Infinity;
+			//wheel2.v_limit = Infinity;
 			wheel1.setMoment(wheel1moment);
 			wheel2.setMoment(wheel2moment);
 			brake_sig = false;
@@ -485,8 +467,8 @@ $(document).on("pageinit",function(event){
 			motor2.rate = 0;
 			wheel1.setAngVel(0);
 			wheel2.setAngVel(0);
-			wheel1.v_limit = Infinity;
-			wheel2.v_limit = Infinity;
+			//wheel1.v_limit = Infinity;
+			//wheel2.v_limit = Infinity;
 			wheel1.setMoment(wheel1moment);
 			wheel2.setMoment(wheel2moment);
 			brake_sig = false;
@@ -503,8 +485,8 @@ $(document).on("pageinit",function(event){
 			motor2.rate = 0;
 			wheel1.setAngVel(0);
 			wheel2.setAngVel(0);
-			wheel1.v_limit = Infinity;
-			wheel2.v_limit = Infinity;
+			//wheel1.v_limit = Infinity;
+			//wheel2.v_limit = Infinity;
 			wheel1.setMoment(wheel1moment);
 			wheel2.setMoment(wheel2moment);
 			brake_sig = false;
@@ -544,6 +526,7 @@ $(document).on("pageinit",function(event){
 				$("#brake").removeClass("locked");
 				$("#acc").removeClass("locked");
 				tap_start = 1;
+				start_race = DPon;
 				wheel1moment = Jw1;
 				wheel2moment = Jw2;
 				wheel1.setMoment(wheel1moment);

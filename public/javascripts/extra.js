@@ -24,8 +24,8 @@ var save_eff = [];
 var car_posOld = 0;
 //**************************************************///
 
-var DP_x = new Float64Array([0,295,305,310,320,330,355,360,365,375,380,385,390,395,400,410,415,420,770, 950]);
-var DP_comm = new Float64Array([1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,-1 -1]);
+var DP_x = new Float64Array([0,210,215,230,245,255,295,305,330,335,345,350,385,410,415,420,475,480,540,545,845,850,860, 950]);
+var DP_comm = new Float64Array([1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,-1,0,-1,-1]);
 
 
 var fric = 2.8;
@@ -62,16 +62,21 @@ var consumption = 0;
 var start_race = 0;
 var tap_start = 0;
 var battstatus = 100;
-var spdLookup = new Float64Array([0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000, 6500, 7000, 7500, 8000, 8500, 9000]);
-var trqLookup = new Float64Array([200,200,200,200,200,194,186,161,142,122,103,90,77.5,70,63.5,58,52,49,45]);
+var spdLookup = new Float64Array([0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000, 6500, 7000, 7500, 8000, 8500, 9000, 9500, 10000, 10500, 11000, 11500]);
+var trqLookup = new Float64Array([200,200,200,200,200,194,186,161,142,122,103,90,77.5,70,63.5,58,52,49,45, 42, 40, 38, 36, 34]);
 var tstep = 48;
 var counter = 0;
 
-var motoreff = new Float64Array([0.2,0.46,0.65,0.735,0.794,0.846,0.886,0.913,0.922,0.938,0.946,0.94,0.93975,0.943,0.945,0.945,0.94,0.9372,0.9355]);
+var motoreff = new Float64Array([0.2,0.46,0.65,0.735,0.794,0.846,0.886,0.913,0.922,0.938,0.946,0.94,0.93975,0.943,0.945,0.945,0.94,0.9372,0.9355, 0.9, 0.86, 0.81, 0.74, 0.65]);
 var px2m = 1/20; // 1 pixel == 1/20 meter
 var m2m = 500; // 1 mass in game to 500 kg
 var t2t = 1; // 1 time step == 1/120 second
 var fr = 10; // final drive ratio
+
+if (DPon){
+	fr = 18;
+}
+
 var pi = Math.PI;
 
 function messagebox(msg, win){
@@ -132,10 +137,15 @@ function restart(){
 function maxTrqlerp(spd){
 	//var maxTrq = 8000;
 	if (spd>0){
-		for (var i=0; i<(spdLookup.length-1); i++){
-			if(spdLookup[i]<=spd && spdLookup[i+1]>spd){
-				maxTrq = (spd - spdLookup[i])/500*(trqLookup[i+1]-trqLookup[i])+trqLookup[i];
-			}			
+		if (spd <=spdLookup[spdLookup.length-1]){
+			for (var i=0; i<(spdLookup.length-1); i++){
+				if(spdLookup[i]<=spd && spdLookup[i+1]>spd){
+					maxTrq = (spd - spdLookup[i])/500*(trqLookup[i+1]-trqLookup[i])+trqLookup[i];
+				}			
+			}
+		}
+		else{
+			maxTrq = 20;
 		}
 	}
 	else{
@@ -162,18 +172,23 @@ function efflerp(spd, trq){
 	var efflerp = 0.95*((delspd+500)*(deltrq+10)/(5000)*Q11 - (delspd)*(deltrq+10)/(5000)*Q21 - (delspd+500)*(deltrq)/(5000)*Q12 + (delspd)*(deltrq)/(5000)*Q22); */
 	
 	var absspd = Math.abs(spd);
-	var efflerp = 0.7;
-	for (var i=0; i<(spdLookup.length-1); i++){
-		if(spdLookup[i]<=absspd && spdLookup[i+1]>absspd){
-			 efflerp = ((absspd - spdLookup[i])/500*(motoreff[i+1]-motoreff[i])+motoreff[i])*0.95;
-		}			
+	//var efflerp = 0.7;
+	if (absspd <=spdLookup[spdLookup.length-1]){
+		for (var i=0; i<(spdLookup.length-1); i++){
+			if(spdLookup[i]<=absspd && spdLookup[i+1]>absspd){
+				 efflerpp = ((absspd - spdLookup[i])/500*(motoreff[i+1]-motoreff[i])+motoreff[i])*0.95;
+			}			
+		}
+	}
+	else {
+		efflerpp = 0.6*0.95;
 	}
 	
 	if (spd*trq > 0){
-		efflerp = 1/efflerp;
+		efflerpp = 1/efflerpp;
 	}
 	
-	return efflerp;
+	return efflerpp;
 }
 
 function updateConsumption(consumption) {
@@ -639,47 +654,3 @@ function lockScroll()
                         event.preventDefault();
      });
 }
-
-/************************ DYNAMIC PROGRAMMING SIMULATION **********************************************/
-/////////////////////////////DP simulation //////////////////////////////////////////
-/*    if (car_pos<=DP_x[indx+1]){
-    	if (DP_comm[indx]==1){
-	    	motor1.rate += acc_rate;
-			motor2.rate += acc_rate;
-			if(motor2.rate>max_rate1){motor2.rate=max_rate1;}
-			if(motor1.rate>max_rate1){motor1.rate=max_rate1;}
-			consumption = updateConsumption(consumption);
-    	}
-    	else if(DP_comm[indx]==0){
-    		motor1.rate = 0;
-    		motor2.rate = 0;
-    		wheel1.v_limit = Infinity;
-    		wheel2.v_limit = Infinity;
-    		wheel1.setMoment(wheel1moment);
-    		wheel2.setMoment(wheel2moment);
-    	}
-    	else{
-			motor1.rate = 0;
-		 	motor2.rate = 0;
-			wheel_speed = Math.abs(wheel1.w);
-			if(wheel1.w<-1){
-				motor1.rate = 1*Math.max(wheel1.w,-1.5)*max_rate1;
-				motor2.rate = 1*Math.max(wheel1.w,-1.5)*max_rate1;
-				consumption = updateConsumption(consumption);
-			}
-			else if (wheel1.w>3){
-				motor1.rate = 2*Math.min(wheel1.w,2)*max_rate1;
-				motor2.rate = 2*Math.min(wheel1.w,2)*max_rate1;
-			}
-			else{motor1.rate=0; motor2.rate = 0; wheel1.setAngVel(0); wheel2.setAngVel(0);}
-			if (wheel_speed>1){
-			}
-			else{
-				wheel1.setMoment(5e1);
-				wheel2.setMoment(5e1);
-			}
-    	}
-    }
-    else{
-		indx = indx+1;
-    } */
