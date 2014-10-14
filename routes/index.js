@@ -1,31 +1,118 @@
 var express = require('express');
+var bcrypt = require('bcrypt-nodejs');
 var router = express.Router();
 var pg = require('pg');
-var connection = process.env.DATABASE_URL || "postgres://postgres:KVTWN78mpostgres@localhost:5432/postgres";
 
-/* GET home page. */
+var connection = process.env.DATABASE_URL || "postgres://postgres:KVTWN78mpostgres@localhost:5432/postgres";
+function handle_error(res, err) {
+	  console.error(err);
+	  res.status(500).send("Error " + err);
+	}
+
+/* default GET register. */
 router.get('/', function(req, res) {
 	res.render('index');
 });
 
-/* GET best score. */
-router.get('/bestscore', function(req, res) {
-	pg.connect(connection, function(err, client, done) {
-	    client.query('SELECT score FROM ecoracer_me250_table ORDER BY score ASC', function(err, result) {
-	      done();
-	      if (err)
-	       { console.error(err); res.send("Error " + err); }
-	      else
-	       { res.send( result.rows ); }
-	    });
-	  });	
-  
+/* GET register. */
+router.get('/register', function(req, res) {
+	res.render('index');
 });
 
-/* GET all data. */
+/* GET user. */
+router.post('/getUser', function(req, res) {
+  var rv = {};
+  pg.connect(connection, function(err, client, done) {
+    if(err) {
+      handle_error(res, err);
+      done();
+      return;
+    }
+    var query = client.query("SELECT * FROM ecoracer_users_me250_table WHERE name = $1", [req.body.username]);
+    query.on('error', handle_error.bind(this, res));
+    query.on('row', function(row, result) {
+      result.addRow(row);
+    });
+    query.on('end', function(result) {
+      if(result.rows.length === 0) {
+	    console.log("Error: User does not exist");
+        res.send("");
+      } else if(!bcrypt.compareSync(req.body.password, result.rows[0].pass)) {
+    	console.log("Error: Incorrect password");
+        res.send("");
+      } else if(result.rowCount > 1) {
+        //this should really never happen, login code
+        //should take care of it and we should be getting
+        //a unique user ID here
+    	console.log("Error: duplicate users"); 
+        res.status(403).send("Error: duplicate users");
+      } else {
+        rv.id = result.rows[0].id;
+        rv.name = result.rows[0].name;
+        rv.bestscore = 0;
+        
+        var best_score = client.query("SELECT score FROM ecoracer_games_me250_table WHERE userid = $1 AND score > 0 ORDER BY score ASC LIMIT 1",
+                [result.rows[0].id]);
+        best_score.on('err', handle_error.bind(this, err));
+        best_score.on('row', function(res) { rv.bestscore = res.score; });
+        client.once('drain', function() {
+          res.status(202).send(rv);
+        });
+      }
+    });
+    done();
+  });
+});
+
+/* POST user signup */
+router.post('/signup', function(req, res) {
+  /* this handler adds a user to the database
+     we need not check if the user is already
+     in the database since there is a unique
+     constraint on the username */
+  pg.connect(connection, function(err, client, done) {
+    //using the sync versions because
+    //bcrypt is not a IO operation and I can not deal
+    //with any more callbacks
+    var salt = bcrypt.genSaltSync(10);
+    //console.log(req.body);
+    var hash = bcrypt.hashSync(req.body.password, salt);
+    var query = client.query("INSERT INTO ecoracer_users_me250_table (name, pass) VALUES ($1,$2)", [req.body.username, hash]);
+    query.on('error', handle_error.bind(this, res));
+    res.status(202).send("User Created");
+    done();
+  });
+});
+
+/* GET top 5 scores from the population and count the number of plays. */
+router.get('/bestscore', function(req, res) {
+	var rv = {};
+	pg.connect(connection, function(err, client, done) {
+		if(err) {
+		      handle_error(res, err);
+		      done();
+		      return;
+	    }
+		rv.bestscore = [];
+		rv.total_num_user = 0;
+		var best_score_all = client.query("SELECT score FROM ecoracer_games_me250_table WHERE score>0 ORDER BY score ASC LIMIT 5");
+		best_score_all.on('err', handle_error.bind(this, err));
+		best_score_all.on('row', function(res) { rv.bestscore.push(res.score); });
+		var total_num_user = client.query("SELECT COUNT(*) AS total_num_user FROM ecoracer_games_me250_table WHERE score>0");
+		total_num_user.on('err', handle_error.bind(this, err));
+		total_num_user.on('row', function(res) { rv.total_num_user = res.total_num_user; });		
+		
+        client.once('drain', function() {
+//          console.log('drained...');
+          res.status(202).send(rv);
+        });
+	});	
+});
+
+/* GET all game data. for debug only */
 router.get('/db', function (req, res) {
   pg.connect(connection, function(err, client, done) {
-    client.query('SELECT * FROM ecoracer_me250_table', function(err, result) {
+    client.query('SELECT * FROM ecoracer_games_me250_table', function(err, result) {
       done();
       if (err)
        { console.error(err); res.send("Error " + err); }
@@ -40,14 +127,14 @@ router.post('/adddata', function(req, res) {
     pg.connect(connection, function(err, client, done) {
         if(err) res.send("Could not connect to DB: " + err);
         
-        client.query('INSERT INTO ecoracer_me250_table (id, score, keys, date, finaldrive) VALUES ($1, $2, $3, $4, $5)',
+        client.query('INSERT INTO ecoracer_games_me250_table (userid, score, keys, time, finaldrive, ranking_percentage, ranking_scoreboard) VALUES ($1, $2, $3, now(), $4, $5, $6)',
             [
-             req.headers['x-forwarded-for'] || 
-             req.connection.remoteAddress || 
-             req.socket.remoteAddress ||
-             req.connection.socket.remoteAddress, 
-//			'',
-             req.body.score, req.body.keys, req.body.date, req.body.finaldrive], 
+//             req.headers['x-forwarded-for'] || 
+//             req.connection.remoteAddress || 
+//             req.socket.remoteAddress ||
+//             req.connection.socket.remoteAddress, 
+////			'',
+             req.body.userid, req.body.score, req.body.keys, req.body.finaldrive, req.body.ranking_percentage, req.body.ranking_scoreboard], 
             function(err, result) {
                 if(err) { 
                 	console.error(err); res.send("Error " + err);
@@ -63,7 +150,7 @@ router.post('/getscore', function(req, res) {
         if(err) res.send("Could not connect to DB: " + err);
         var current_score = req.body.score;
         var worse = 0;
-    	var queryText = 'SELECT * FROM ecoracer_me250_table WHERE score > ' + current_score;
+    	var queryText = 'SELECT COUNT(*) FROM ecoracer_games_me250_table WHERE score > ' + current_score;
         client.query(queryText, function(err, result) {
     		if(err) {
     			console.error(err); res.send("Error " + err);
@@ -82,7 +169,7 @@ router.get('/results', function(req, res) {
 });
 router.post('/getresults', function(req, res) {
   pg.connect(connection, function(err, client, done) {
-	    client.query('SELECT * FROM ecoracer_me250_table', function(err, result) {
+	    client.query('SELECT * FROM ecoracer_games_me250_table', function(err, result) {
 	      done();
 	      if (err)
 	       { console.error(err); res.send("Error " + err); }

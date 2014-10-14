@@ -89,13 +89,15 @@ function messagebox(msg, win){
 	$("#timer").hide();
 	if(win){
 		$("#scorebox").show();
-		submitResult();
+		submitResult(consumption);
 		$("#ok").show();
 		$("#restart").hide();
 		$("#review").show();
 	}
 	else{
+		$("#scorebox").show();
 		$("#ok").hide();
+		submitResult(-1);
 		$("#restart").show();
 		$("#review").show();
 	}
@@ -129,7 +131,10 @@ function restart(){
 	motor2eff = 0;
 	car_posOld = 0;
 	$("#history").html("");
-	//$('#runner').runner('start');
+	$.post('/getUser', {'username':this.username, 'password':this.password}, function(response){
+		U.bestscore = response.bestscore;
+		$("#myscore").html("My Best Score: "+ Math.round(U.bestscore/1000/3600*1000)/1000 + "kWh");
+	});
 }
 
 /************************ GAME ENGINE **********************************************/
@@ -653,4 +658,16 @@ function lockScroll()
      $(document).bind("touchmove",function(event){
                         event.preventDefault();
      });
+}
+
+var lastTapTime;
+function isJqmGhostClick(event) {
+    var currTapTime = new Date().getTime();
+    if(lastTapTime == null || currTapTime > (lastTapTime + 200)) {
+        lastTapTime = currTapTime;
+        return false;
+    }
+    else {
+        return true;
+    }
 }

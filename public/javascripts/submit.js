@@ -1,46 +1,73 @@
-function submitResult(){
+function submitResult(c){
 	// get date
 	var date = new Date();
-	consumption = Math.round(consumption);
-	// post results
-	$.post('/adddata',{'score':consumption,
-					   'keys':JSON.stringify({'acc':acc_keys,'brake':brake_keys}),
-   					   'date':date,
-   					   'finaldrive':fr});
+	var ranking_percentage = 0;
+	var ranking_scoreboard = -1;
+	if(c>0){// successful
+		c = Math.round(c);
+		$.post('/getscore',{'score':c}, function(data){
+			ranking_percentage = Math.round(parseInt(data[0].count)/total_num_user*100)||0;
+			$("#textmessage").html("You spent "+ Math.round(c/1000/3600*1000)/1000 + 
+					" kWh of energy, that's better than "+ ranking_percentage + "% of plays!");
+			// show top 5 scores
+			$("#scorebox").empty();
+			$("#scorebox").append("TOP SCORES");
+			var count = 1;
+			var addedyou = false;
+			if(typeof score !== "undefined"){
+				for(var i=0;i<Math.min(5,score.length);i++){
+					if (count<=5){
+						if (score[i]<c || addedyou){
+							$("#scorebox").append("<div class='score'>"+(count)+". " + Math.round(score[i]/1000/3600*1000)/1000 + "kWh<\div>");
+						}
+						else{
+							$("#scorebox").append("<div class='score'>"+(count)+". " + Math.round(c/1000/3600*1000)/1000 + "kWh (YOU)<\div>");
+							ranking_scoreboard = count;
+							addedyou = true;
+						}
+						count += 1;		
+					}
+				}
+				if(score.length<5 && !addedyou){
+					$("#scorebox").append("<div class='score'>"+(score.length+1)+". " + Math.round(c/1000/3600*1000)/1000 + "kWh (YOU)<\div>");
+				}			
+			}
 
-	$.post('/getscore',{'score':consumption,}, function(data){
-		$("#textmessage").html("You spent "+ Math.round(consumption/1000/3600*1000)/1000 + 
-				" kWh of energy, that's better than "+ Math.round(data.length/total_num_user*100) + "% of players!");
+			// post results
+			$.post('/adddata',{'userid':U.id,
+							   'score':c,
+							   'keys':JSON.stringify({'acc':acc_keys,'brake':brake_keys}),
+		   					   'finaldrive':fr,
+		   					   'ranking_percentage': ranking_percentage, 
+		   					   'ranking_scoreboard': ranking_scoreboard});	
+		});		
+	}
+	else{// failed
+		c=-1;
 		// show top 5 scores
 		$("#scorebox").empty();
 		$("#scorebox").append("TOP SCORES");
-		var count = 1;
-		var addedyou = false;
-		for(var i=0;i<Math.min(5,score.length);i++){
-			if (count<=5){
-				if (score[i].score<consumption || addedyou){
-					$("#scorebox").append("<div class='score'>"+(count)+". " + Math.round(score[i].score/1000/3600*1000)/1000 + "kWh<\div>");
-				}
-				else{
-					$("#scorebox").append("<div class='score'>"+(count)+". " + Math.round(consumption/1000/3600*1000)/1000 + "kWh (YOU)<\div>");
-					addedyou = true;
-				}
-				count += 1;		
+		if(typeof score !== "undefined"){
+			for(var i=0;i<Math.min(5,score.length);i++){
+				$("#scorebox").append("<div class='score'>"+(i)+". " + Math.round(score[i]/1000/3600*1000)/1000 + "kWh<\div>");
 			}
 		}
-		if(score.length<5 && !addedyou){
-			$("#scorebox").append("<div class='score'>"+(score.length+1)+". " + Math.round(consumption/1000/3600*1000)/1000 + "kWh (YOU)<\div>");
-		}
-	});
+		// post results
+		$.post('/adddata',{'userid':U.id,
+						   'score':c,
+						   'keys':JSON.stringify({'acc':acc_keys,'brake':brake_keys}),
+	   					   'finaldrive':fr,
+	   					   'ranking_percentage': ranking_percentage, 
+	   					   'ranking_scoreboard': ranking_scoreboard});	
+	}
 }
 
 function getBestScore(){
 	total_num_user = 0;
-	best_score = 0;
 	score = [];
 	$.get('/bestscore',{}, function(data){
-		score = data;
-		total_num_user = score.length;
+		score = data.bestscore;
+		total_num_user = parseInt(data.total_num_user);
 	});	
 }
 

@@ -1,3 +1,4 @@
+var U;
 var scene_width = $(window).width();
 var scene_height = $(window).height();
 $("#StartScreen").width(scene_width);
@@ -7,6 +8,33 @@ $("#wrapper").height(scene_height);
 
 var __ENVIRONMENT__ = defineSpace("canvas1", scene_width, scene_heightx);
 
+/****************************************** USER **********************************************************/
+function user(username, password){
+	var d = this;
+	this.username = username||$('#username')[0].value||default_username;// only for development
+	this.password = password||$('#password')[0].value||default_password;
+	
+	$.post('/getUser', {'username':this.username, 'password':this.password}, function(response){
+		if(response === ""){
+			$("#message").html("User doesn't exist or password wrong.");
+			setTimeout(function() { $("#message").html(""); }, 1500);
+		}
+		else{
+			$( "body" ).pagecontainer( "change", "#homepage" );
+			d.id = response.id;
+			d.name = response.name;
+			d.bestscore = response.bestscore;
+			if (d.bestscore>0){
+				$("#myscore").html("My Best Score: "+ Math.round(d.bestscore/1000/3600*1000)/1000 + "kWh");
+			}
+			else{
+				$("#myscore").html("My Best Score: --kWh");
+			}
+		}
+	});
+}
+
+/****************************************** GAME **********************************************************/
 var scene = function(){
 	__ENVIRONMENT__.call(this);
 
@@ -308,7 +336,7 @@ scene.prototype.update = function (dt) {
 		battstatus = 100-(consumption/3600/1000/max_batt*100);
 		document.getElementById("battvalue").style.width= battstatus + "%";
 		
-		$('#batttext').html(Math.round(battstatus*10)/10*(battstatus>0) + "%");
+    	$('#batttext').html(Math.round(consumption/1000/3600*1000)/1000 + "kWh used");
 
 		/////////////////////Motor Control/////////////////////////////////
 		if (brake_sig) {
@@ -367,7 +395,7 @@ scene.prototype.update = function (dt) {
 //    	}
     	battstatus = 100-(consumption/3600/1000/max_batt*100);
 		document.getElementById("battvalue").style.width= battstatus + "%";
-    	$('#batttext').html(Math.round(battstatus*10)/10*(battstatus>0) + "%");
+    	$('#batttext').html(Math.round(consumption/1000/3600*1000)/1000 + "kWh used");
         $("#speedval").html('Speed: 0mph');
         $("#effval").html("Motor Efficiency: "+"--%");
     };
@@ -385,169 +413,220 @@ $(document).on("tap",function(event){
 	event.preventDefault();
 });
 $(document).on("pageinit",function(event){
+	
+	$("#register").on('tap', function(event){
+		event.preventDefault();
+		if ($('#username')[0].value!='username' && $('#username')[0].value!=''){
+			if (!isJqmGhostClick(event)){
+				$.post('/signup', {'username': $('#username')[0].value, 'password': $('#password')[0].value}, 
+						function(response){
+							U = new user();
+						});
+			}			
+		}			
+	});
+	$("#login").on('tap', function(event){
+		event.preventDefault();
+		if ($('#username')[0].value!='username'){
+			if (!isJqmGhostClick(event)){
+				U = new user($('#username')[0].value, $('#password')[0].value);
+			}
+		}
+	});
+	
 	$("#brake").addClass("enabled");
 	$("#acc").addClass("enabled");
 	$("#brake").on("touchstart",function(event){
 		event.preventDefault();
-		if($("#brake").hasClass("enabled")){
-			brake_sig = true;
-			$('#brake').addClass('activated');		
-			brake_keys.push(Math.round(chassis.p.x));
+		if (!isJqmGhostClick(event)){
+			if($("#brake").hasClass("enabled")){
+				brake_sig = true;
+				$('#brake').addClass('activated');		
+				brake_keys.push(Math.round(chassis.p.x));
+			}
 		}
 	});
 	$("#brake").mousedown(function(event){
 		event.preventDefault();
-		if($("#brake").hasClass("enabled")){
-			brake_sig = true;
-			$('#brake').addClass('activated');		
-			brake_keys.push(Math.round(chassis.p.x));
+		if (!isJqmGhostClick(event)){
+			if($("#brake").hasClass("enabled")){
+				brake_sig = true;
+				$('#brake').addClass('activated');		
+				brake_keys.push(Math.round(chassis.p.x));
+			}
 		}
 	});
 	$("#acc").on("touchstart",function(event){
 		event.preventDefault();
-		if($("#acc").hasClass("enabled")){
-			acc_sig = true;
-			start_race = tap_start;
-			$('#acc').addClass('activated');
-			acc_keys.push(Math.round(chassis.p.x));
+		if (!isJqmGhostClick(event)){
+			if($("#acc").hasClass("enabled")){
+				acc_sig = true;
+				start_race = tap_start;
+				$('#acc').addClass('activated');
+				acc_keys.push(Math.round(chassis.p.x));
+			}
 		}
 	});
 	$("#acc").mousedown(function(event){
 		event.preventDefault();
-		if($("#acc").hasClass("enabled")){
-			acc_sig = true;
-			start_race = tap_start;
-			$('#acc').addClass('activated');
-			acc_keys.push(Math.round(chassis.p.x));
+		if (!isJqmGhostClick(event)){
+			if($("#acc").hasClass("enabled")){
+				acc_sig = true;
+				start_race = tap_start;
+				$('#acc').addClass('activated');
+				acc_keys.push(Math.round(chassis.p.x));
+			}
 		}
 	});
 	
 	$("#brake").on("touchend",function(event){
 		event.preventDefault();
-		if($("#brake").hasClass("enabled")){
-			brake_sig = false;
-			$('#brake').removeClass('activated');
-			motor1.rate = 0;
-			motor2.rate = 0;
-			wheel1.setAngVel(0);
-			wheel2.setAngVel(0);
-			//wheel1.v_limit = Infinity;
-			//wheel2.v_limit = Infinity;
-			wheel1.setMoment(wheel1moment);
-			wheel2.setMoment(wheel2moment);
-			brake_sig = false;
-			acc_sig = false;
-			brake_keys.push(Math.round(chassis.p.x));
+		if (!isJqmGhostClick(event)){
+			if($("#brake").hasClass("enabled")){
+				brake_sig = false;
+				$('#brake').removeClass('activated');
+				motor1.rate = 0;
+				motor2.rate = 0;
+				wheel1.setAngVel(0);
+				wheel2.setAngVel(0);
+				//wheel1.v_limit = Infinity;
+				//wheel2.v_limit = Infinity;
+				wheel1.setMoment(wheel1moment);
+				wheel2.setMoment(wheel2moment);
+				brake_sig = false;
+				acc_sig = false;
+				brake_keys.push(Math.round(chassis.p.x));
+			}
 		}
 	});
 	$("#brake").mouseup(function(event){
 		event.preventDefault();
-		if($("#brake").hasClass("enabled")){
-			brake_sig = false;
-			$('#brake').removeClass('activated');
-			motor1.rate = 0;
-			motor2.rate = 0;
-			wheel1.setAngVel(0);
-			wheel2.setAngVel(0);
-			//wheel1.v_limit = Infinity;
-			//wheel2.v_limit = Infinity;
-			wheel1.setMoment(wheel1moment);
-			wheel2.setMoment(wheel2moment);
-			brake_sig = false;
-			acc_sig = false;
-			brake_keys.push(Math.round(chassis.p.x));
+		if (!isJqmGhostClick(event)){
+			if($("#brake").hasClass("enabled")){
+				brake_sig = false;
+				$('#brake').removeClass('activated');
+				motor1.rate = 0;
+				motor2.rate = 0;
+				wheel1.setAngVel(0);
+				wheel2.setAngVel(0);
+				//wheel1.v_limit = Infinity;
+				//wheel2.v_limit = Infinity;
+				wheel1.setMoment(wheel1moment);
+				wheel2.setMoment(wheel2moment);
+				brake_sig = false;
+				acc_sig = false;
+				brake_keys.push(Math.round(chassis.p.x));
+			}
 		}
 	});
 	$("#acc").on("touchend",function(event){
 		event.preventDefault();
-		if($("#acc").hasClass("enabled")){
-			acc_sig = false;
-			$('#acc').removeClass('activated');
-			motor1.rate = 0;
-			motor2.rate = 0;
-			wheel1.setAngVel(0);
-			wheel2.setAngVel(0);
-			//wheel1.v_limit = Infinity;
-			//wheel2.v_limit = Infinity;
-			wheel1.setMoment(wheel1moment);
-			wheel2.setMoment(wheel2moment);
-			brake_sig = false;
-			acc_sig = false;
-			acc_keys.push(Math.round(chassis.p.x));
+		if (!isJqmGhostClick(event)){
+			if($("#acc").hasClass("enabled")){
+				acc_sig = false;
+				$('#acc').removeClass('activated');
+				motor1.rate = 0;
+				motor2.rate = 0;
+				wheel1.setAngVel(0);
+				wheel2.setAngVel(0);
+				//wheel1.v_limit = Infinity;
+				//wheel2.v_limit = Infinity;
+				wheel1.setMoment(wheel1moment);
+				wheel2.setMoment(wheel2moment);
+				brake_sig = false;
+				acc_sig = false;
+				acc_keys.push(Math.round(chassis.p.x));
+			}
 		}
 	});
 	$("#acc").mouseup(function(event){
 		event.preventDefault();
-		if($("#acc").hasClass("enabled")){
-			acc_sig = false;
-			$('#acc').removeClass('activated');
-			motor1.rate = 0;
-			motor2.rate = 0;
-			wheel1.setAngVel(0);
-			wheel2.setAngVel(0);
-			//wheel1.v_limit = Infinity;
-			//wheel2.v_limit = Infinity;
-			wheel1.setMoment(wheel1moment);
-			wheel2.setMoment(wheel2moment);
-			brake_sig = false;
-			acc_sig = false;
-			acc_keys.push(Math.round(chassis.p.x));
+		if (!isJqmGhostClick(event)){
+			if($("#acc").hasClass("enabled")){
+				acc_sig = false;
+				$('#acc').removeClass('activated');
+				motor1.rate = 0;
+				motor2.rate = 0;
+				wheel1.setAngVel(0);
+				wheel2.setAngVel(0);
+				//wheel1.v_limit = Infinity;
+				//wheel2.v_limit = Infinity;
+				wheel1.setMoment(wheel1moment);
+				wheel2.setMoment(wheel2moment);
+				brake_sig = false;
+				acc_sig = false;
+				acc_keys.push(Math.round(chassis.p.x));
+			}
 		}
 	});
 	$("#ok").on("tap",function(event){
 		event.preventDefault();
-		$("#messagebox").hide();
-		$("#scorebox").hide();
-		$("#review").hide();
-		restart();
+		if (!isJqmGhostClick(event)){
+			$("#messagebox").hide();
+			$("#scorebox").hide();
+			$("#review").hide();
+			restart();
+		}
 	});
 	$("#restart").on("tap",function(event){
 		event.preventDefault();
-		$("#messagebox").hide();
-		$("#scorebox").hide();
-		$("#review").hide();
-		restart();
+		if (!isJqmGhostClick(event)){
+			$("#messagebox").hide();
+			$("#scorebox").hide();
+			$("#review").hide();
+			restart();
+		}
 	});
 	$("#review").on("tap",function(event){
 		event.preventDefault();
-		if(!historyDrawn){drawHistory();historyDrawn=true;}
-		$("#history").show();
+		if (!isJqmGhostClick(event)){
+			if(!historyDrawn){drawHistory();historyDrawn=true;}
+			$("#history").show();
+		}
 	});
 	$("#history").on("tap",function(event){
 		event.preventDefault();
-		$("#history").hide();
+		if (!isJqmGhostClick(event)){
+			$("#history").hide();
+		}
 	});
 	
 	
 	$("#StartScreen").on("tap", function(event){
 		event.preventDefault();
-		if ($(window).width()>$(window).height()){
-			$("#StartScreen").hide(500, function(){
-				$("#brake").removeClass("locked");
-				$("#acc").removeClass("locked");
-				tap_start = 1;
-				start_race = DPon;
-				wheel1moment = Jw1;
-				wheel2moment = Jw2;
-				wheel1.setMoment(wheel1moment);
-				wheel2.setMoment(wheel2moment);
-				getBestScore();
-			});
-		}
-		else{
-			$('#landscape').show();
-			lockScroll();
+		if (!isJqmGhostClick(event)){
+			if ($(window).width()>$(window).height()){
+				$("#StartScreen").hide(500, function(){
+					$("#brake").removeClass("locked");
+					$("#acc").removeClass("locked");
+					tap_start = 1;
+					start_race = DPon;
+					wheel1moment = Jw1;
+					wheel2moment = Jw2;
+					wheel1.setMoment(wheel1moment);
+					wheel2.setMoment(wheel2moment);
+					getBestScore();
+				});
+			}
+			else{
+				$('#landscape').show();
+				lockScroll();
+			}
 		}
 	});
 	
 	$("#designbutton").on("tap", function(){
-		$("#design").show();
-		initialize_design();
+		if (!isJqmGhostClick(event)){
+			$("#design").show();
+			initialize_design();
+		}
 	});
 	$("#designed").on("tap", function(){
-		$("#design").hide();
-		$("#canvas_gear").empty();
-		restart();
+		if (!isJqmGhostClick(event)){
+			$("#design").hide();
+			$("#canvas_gear").empty();
+			restart();
+		}
 	});	
 });
 
