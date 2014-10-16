@@ -24,11 +24,12 @@ function user(username, password){
 			d.id = response.id;
 			d.name = response.name;
 			d.bestscore = response.bestscore;
+			
 			if (d.bestscore>0){
-				$("#myscore").html("My Best Score: "+ Math.round(d.bestscore/1000/3600*1000)/1000 + "kWh");
+				$("#myscore").html("My Best Score: "+ (100-(d.bestscore/3600/1000/max_batt*100)) + "%");
 			}
 			else{
-				$("#myscore").html("My Best Score: --kWh");
+				$("#myscore").html("My Best Score: --%");
 			}
 		}
 	});
@@ -335,8 +336,7 @@ scene.prototype.update = function (dt) {
 		}*/
 		battstatus = 100-(consumption/3600/1000/max_batt*100);
 		document.getElementById("battvalue").style.width= battstatus + "%";
-		
-    	$('#batttext').html(Math.round(consumption/1000/3600*1000)/1000 + "kWh used");
+    	$('#batttext').html(battstatus + "%");
 
 		/////////////////////Motor Control/////////////////////////////////
 		if (brake_sig) {
@@ -395,7 +395,7 @@ scene.prototype.update = function (dt) {
 //    	}
     	battstatus = 100-(consumption/3600/1000/max_batt*100);
 		document.getElementById("battvalue").style.width= battstatus + "%";
-    	$('#batttext').html(Math.round(consumption/1000/3600*1000)/1000 + "kWh used");
+    	$('#batttext').html(battstatus + "%");
         $("#speedval").html('Speed: 0mph');
         $("#effval").html("Motor Efficiency: "+"--%");
     };
