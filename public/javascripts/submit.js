@@ -7,7 +7,7 @@ function submitResult(c){
 		c = Math.round(c);
 		$.post('/getscore',{'score':c}, function(data){
 			ranking_percentage = Math.round(parseInt(data[0].count)/total_num_user*100)||0;
-			$("#textmessage").html("You saved "+ (100-(c/3600/1000/max_batt*100)) + 
+			$("#textmessage").html("You saved "+ Math.round(100-(c/3600/1000/max_batt*100)) + 
 					" % of energy, that's better than "+ ranking_percentage + "% of plays!");
 			// show top 5 scores
 			$("#scorebox").empty();
@@ -18,10 +18,10 @@ function submitResult(c){
 				for(var i=0;i<Math.min(5,score.length);i++){
 					if (count<=5){
 						if (score[i]<c || addedyou){
-							$("#scorebox").append("<div class='score'>"+(count)+". " + (100-(score[i]/3600/1000/max_batt*100)) + "%<\div>");
+							$("#scorebox").append("<div class='score'>"+(count)+". " + Math.round(100-(score[i]/3600/1000/max_batt*100)) + "%<\div>");
 						}
 						else{
-							$("#scorebox").append("<div class='score'>"+(count)+". " + (100-(c/3600/1000/max_batt*100)) + "% (YOU)<\div>");
+							$("#scorebox").append("<div class='score'>"+(count)+". " + Math.round(100-(c/3600/1000/max_batt*100)) + "% (YOU)<\div>");
 							ranking_scoreboard = count;
 							addedyou = true;
 						}
@@ -29,7 +29,7 @@ function submitResult(c){
 					}
 				}
 				if(score.length<5 && !addedyou){
-					$("#scorebox").append("<div class='score'>"+(score.length+1)+". " + (100-(c/3600/1000/max_batt*100)) + "% (YOU)<\div>");
+					$("#scorebox").append("<div class='score'>"+(score.length+1)+". " + Math.round(100-(c/3600/1000/max_batt*100)) + "% (YOU)<\div>");
 				}			
 			}
 

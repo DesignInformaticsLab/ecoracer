@@ -26,7 +26,7 @@ function user(username, password){
 			d.bestscore = response.bestscore;
 			
 			if (d.bestscore>0){
-				$("#myscore").html("My Best Score: "+ (100-(d.bestscore/3600/1000/max_batt*100)) + "%");
+				$("#myscore").html("My Best Score: "+ Math.round(100-(d.bestscore/3600/1000/max_batt*100)) + "%");
 			}
 			else{
 				$("#myscore").html("My Best Score: --%");
@@ -334,7 +334,7 @@ scene.prototype.update = function (dt) {
 		if (isCharging && (chassis.p.x > (lastCharingX+200))){
 			isCharging = false;
 		}*/
-		battstatus = 100-(consumption/3600/1000/max_batt*100);
+		battstatus = Math.round(100-(consumption/3600/1000/max_batt*100));
 		document.getElementById("battvalue").style.width= battstatus + "%";
     	$('#batttext').html(battstatus + "%");
 
@@ -393,7 +393,7 @@ scene.prototype.update = function (dt) {
 //    	else{
 //    		cv.strokeText("Go!",scene_width/2-buttonR/3, scene_height/2+buttonR/3);
 //    	}
-    	battstatus = 100-(consumption/3600/1000/max_batt*100);
+    	battstatus = Math.round(100-(consumption/3600/1000/max_batt*100));
 		document.getElementById("battvalue").style.width= battstatus + "%";
     	$('#batttext').html(battstatus + "%");
         $("#speedval").html('Speed: 0mph');

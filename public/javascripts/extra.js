@@ -133,7 +133,7 @@ function restart(){
 	$("#history").html("");
 	$.post('/getUser', {'username':this.username, 'password':this.password}, function(response){
 		U.bestscore = response.bestscore;
-		$("#myscore").html("My Best Score: "+ (100-(U.bestscore/3600/1000/max_batt*100)) + "%");
+		$("#myscore").html("My Best Score: "+ Math.round(100-(U.bestscore/3600/1000/max_batt*100)) + "%");
 	});
 }
 
