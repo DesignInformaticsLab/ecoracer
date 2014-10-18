@@ -352,6 +352,7 @@ scene.prototype.update = function (dt) {
 			else if (wheel1.w>3){
 				motor1.rate = 2*Math.min(wheel1.w,2)*max_rate1;
 				motor2.rate = 2*Math.min(wheel1.w,2)*max_rate1;
+                consumption = -1*updateConsumption(-1*consumption);
 				$("#effval").html("Motor Efficiency: "+"--%"); motor2eff = 0;
 			}
 			else{motor1.rate=0; motor2.rate = 0; wheel1.setAngVel(0); wheel2.setAngVel(0);}
