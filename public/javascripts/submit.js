@@ -18,10 +18,10 @@ function submitResult(c){
 				for(var i=0;i<Math.min(5,score.length);i++){
 					if (count<=5){
 						if (score[i]<c || addedyou){
-							$("#scorebox").append("<div class='score'>"+(count)+". " + Math.round(100-(score[i]/3600/1000/max_batt*100)) + "%<\div>");
+							$("#scorebox").append("<div class='score'>"+(count)+". " + Math.round(1000-(score[i]/3600/1000/max_batt*1000))/10 + "%<\div>");
 						}
 						else{
-							$("#scorebox").append("<div class='score'>"+(count)+". " + Math.round(100-(c/3600/1000/max_batt*100)) + "% (YOU)<\div>");
+							$("#scorebox").append("<div class='score'>"+(count)+". " + Math.round(1000-(c/3600/1000/max_batt*1000))/10 + "% (YOU)<\div>");
 							ranking_scoreboard = count;
 							addedyou = true;
 						}
@@ -29,7 +29,7 @@ function submitResult(c){
 					}
 				}
 				if(score.length<5 && !addedyou){
-					$("#scorebox").append("<div class='score'>"+(score.length+1)+". " + Math.round(100-(c/3600/1000/max_batt*100)) + "% (YOU)<\div>");
+					$("#scorebox").append("<div class='score'>"+(score.length+1)+". " + Math.round(1000-(c/3600/1000/max_batt*1000))/10 + "% (YOU)<\div>");
 				}			
 			}
 
@@ -49,7 +49,7 @@ function submitResult(c){
 		$("#scorebox").append("TOP SCORES");
 		if(typeof score !== "undefined"){
 			for(var i=0;i<Math.min(5,score.length);i++){
-				$("#scorebox").append("<div class='score'>"+(i)+". " + (100-(score[i]/3600/1000/max_batt*100)) + "%<\div>");
+				$("#scorebox").append("<div class='score'>"+(i)+". " + Math.round(1000-(score[i]/3600/1000/max_batt*1000))/10 + "%<\div>");
 			}
 		}
 		// post results
