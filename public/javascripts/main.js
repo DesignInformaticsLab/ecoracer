@@ -434,6 +434,15 @@ $(document).on("pageinit",function(event){
 			}
 		}
 	});
+	$(document).keypress(function(e) {
+		if(!U){// if on login page
+		    if(e.which == 13) {// log in
+		    	if ($('#username')[0].value!='username'){
+					U = new user($('#username')[0].value, $('#password')[0].value);
+				}
+		    }			
+		}
+	});
 	
 	$("#brake").addClass("enabled");
 	$("#acc").addClass("enabled");
