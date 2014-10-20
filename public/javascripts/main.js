@@ -442,15 +442,19 @@ $(document).on("pageinit",function(event){
 		if($("#brake").hasClass("enabled")){
 			brake_sig = true;
 			$('#brake').addClass('activated');		
-			brake_keys.push(Math.round(chassis.p.x));
+			if(Math.round(chassis.p.x)!=brake_keys[brake_keys.length-1]){
+				brake_keys.push(Math.round(chassis.p.x));
+			}
 		}
 	});
 	$("#brake").mousedown(function(event){
 		event.preventDefault();
 		if($("#brake").hasClass("enabled")){
 			brake_sig = true;
-			$('#brake').addClass('activated');		
-			brake_keys.push(Math.round(chassis.p.x));
+			$('#brake').addClass('activated');
+			if(Math.round(chassis.p.x)!=brake_keys[brake_keys.length-1]){
+				brake_keys.push(Math.round(chassis.p.x));
+			}
 		}
 	});
 	$("#acc").on("touchstart",function(event){
@@ -459,7 +463,9 @@ $(document).on("pageinit",function(event){
 			acc_sig = true;
 			start_race = tap_start;
 			$('#acc').addClass('activated');
-			acc_keys.push(Math.round(chassis.p.x));
+			if(Math.round(chassis.p.x)!=acc_keys[acc_keys.length-1]){
+				acc_keys.push(Math.round(chassis.p.x));
+			}
 		}
 	});
 	$("#acc").mousedown(function(event){
@@ -468,7 +474,9 @@ $(document).on("pageinit",function(event){
 			acc_sig = true;
 			start_race = tap_start;
 			$('#acc').addClass('activated');
-			acc_keys.push(Math.round(chassis.p.x));
+			if(Math.round(chassis.p.x)!=acc_keys[acc_keys.length-1]){
+				acc_keys.push(Math.round(chassis.p.x));
+			}
 		}
 	});
 	
@@ -487,7 +495,9 @@ $(document).on("pageinit",function(event){
 			wheel2.setMoment(wheel2moment);
 			brake_sig = false;
 			acc_sig = false;
-			brake_keys.push(Math.round(chassis.p.x));
+			if(Math.round(chassis.p.x)!=brake_keys[brake_keys.length-1]){
+				brake_keys.push(Math.round(chassis.p.x));
+			}
 		}
 	});
 	$("#brake").mouseup(function(event){
@@ -505,7 +515,9 @@ $(document).on("pageinit",function(event){
 			wheel2.setMoment(wheel2moment);
 			brake_sig = false;
 			acc_sig = false;
-			brake_keys.push(Math.round(chassis.p.x));
+			if(Math.round(chassis.p.x)!=brake_keys[brake_keys.length-1]){
+				brake_keys.push(Math.round(chassis.p.x));
+			}
 		}
 	});
 	$("#acc").on("touchend",function(event){
@@ -523,7 +535,9 @@ $(document).on("pageinit",function(event){
 			wheel2.setMoment(wheel2moment);
 			brake_sig = false;
 			acc_sig = false;
-			acc_keys.push(Math.round(chassis.p.x));
+			if(Math.round(chassis.p.x)!=acc_keys[acc_keys.length-1]){
+				acc_keys.push(Math.round(chassis.p.x));
+			}
 		}
 	});
 	$("#acc").mouseup(function(event){
@@ -541,7 +555,9 @@ $(document).on("pageinit",function(event){
 			wheel2.setMoment(wheel2moment);
 			brake_sig = false;
 			acc_sig = false;
-			acc_keys.push(Math.round(chassis.p.x));
+			if(Math.round(chassis.p.x)!=acc_keys[acc_keys.length-1]){
+				acc_keys.push(Math.round(chassis.p.x));
+			}
 		}
 	});
 	$("#ok").on("tap",function(event){

@@ -663,7 +663,7 @@ function lockScroll()
 var lastTapTime;
 function isJqmGhostClick(event) {
     var currTapTime = new Date().getTime();
-    if(lastTapTime == null || currTapTime > (lastTapTime + 200)) {
+    if(lastTapTime == null || currTapTime > (lastTapTime + 500)) {
         lastTapTime = currTapTime;
         return false;
     }
