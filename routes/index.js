@@ -79,7 +79,7 @@ router.post('/signup', function(req, res) {
     var hash = bcrypt.hashSync(req.body.password, salt);
     var query = client.query("INSERT INTO ecoracer_users_me250_table (name, pass) VALUES ($1,$2)", [req.body.username, hash]);
     query.on('error', handle_error.bind(this, res));
-    res.status(202).send("User Created");
+    query.on('end', function(result){res.status(202).send("User Created");});
     done();
   });
 });
@@ -129,20 +129,18 @@ router.post('/adddata', function(req, res) {
     pg.connect(connection, function(err, client, done) {
         if(err) res.send("Could not connect to DB: " + err);
         
-        client.query('INSERT INTO ecoracer_games_me250_table (userid, score, keys, time, finaldrive, ranking_percentage, ranking_scoreboard) VALUES ($1, $2, $3, now(), $4, $5, $6)',
+        var insert_query = client.query('INSERT INTO ecoracer_games_me250_table (userid, score, keys, time, finaldrive, ranking_percentage, ranking_scoreboard) VALUES ($1, $2, $3, now(), $4, $5, $6)',
             [
 //             req.headers['x-forwarded-for'] || 
 //             req.connection.remoteAddress || 
 //             req.socket.remoteAddress ||
 //             req.connection.socket.remoteAddress, 
 ////			'',
-             req.body.userid, req.body.score, req.body.keys, req.body.finaldrive, req.body.ranking_percentage, req.body.ranking_scoreboard], 
-            function(err, result) {
-        		done();
-                if(err) { 
-                	console.error(err); res.send("Error " + err);
-                }
-        });
+             req.body.userid, req.body.score, req.body.keys, req.body.finaldrive, req.body.ranking_percentage, req.body.ranking_scoreboard]);
+       
+        insert_query.on('err', handle_error.bind(this, err));
+        insert_query.on('end', function(result){res.status(202).send("Accepted data");});
+        done();
     });
 });
 
