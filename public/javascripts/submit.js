@@ -189,7 +189,7 @@ function plot(d,i){
 				        .attr("y", padding/2)
 				        .attr("text-anchor", "middle")  
 				        .style("font-size", "14px") 
-				        .text(d.score+" from ip: " + d.id + " with finaldrive: " + d.finaldrive);
+				        .text(d.score+" from user: " + d.userid + " with finaldrive: " + d.finaldrive);
 }
 
 function drawHistory(){
