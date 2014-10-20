@@ -101,6 +101,25 @@ function plot(d,i){
 	var acc = data.acc;
 	var brake = data.brake;
 	
+	// fix double click issue
+	if (acc[1]==acc[0]){//data corrupted by double clicks
+		acc_copy = [];
+		brake_copy = [];
+		for(j=0;j<acc.length;j++){
+			if ((j+2)%2==0){
+				acc_copy.push(acc[j]);
+			}
+		}
+		for(j=0;j<brake.length;j++){
+			if ((j+2)%2==0){
+				brake_copy.push(brake[j]);
+			}
+		}
+		acc = acc_copy;
+		brake = brake_copy;
+	}
+	
+	
 	var total_distance = 909*20; // *** change this to an equation
 	var accData = [];
 	for (j=0;j<Math.floor(acc.length/2);j++){
