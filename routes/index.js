@@ -56,11 +56,11 @@ router.post('/getUser', function(req, res) {
         best_score.on('err', handle_error.bind(this, err));
         best_score.on('row', function(res) { rv.bestscore = res.score; });
         client.once('drain', function() {
+          done();
           res.status(202).send(rv);
         });
       }
     });
-    done();
   });
 });
 
@@ -103,10 +103,12 @@ router.get('/bestscore', function(req, res) {
 		total_num_user.on('row', function(res) { rv.total_num_user = res.total_num_user; });		
 		
         client.once('drain', function() {
+          done();
 //          console.log('drained...');
           res.status(202).send(rv);
         });
-	});	
+	});
+	
 });
 
 /* GET all game data. for debug only */
@@ -136,10 +138,10 @@ router.post('/adddata', function(req, res) {
 ////			'',
              req.body.userid, req.body.score, req.body.keys, req.body.finaldrive, req.body.ranking_percentage, req.body.ranking_scoreboard], 
             function(err, result) {
+        		done();
                 if(err) { 
                 	console.error(err); res.send("Error " + err);
                 }
-                done();
         });
     });
 });
@@ -147,7 +149,7 @@ router.post('/adddata', function(req, res) {
 /* GET user ranking. */
 router.post('/getscore', function(req, res) {
     pg.connect(connection, function(err, client, done) {
-        if(err) res.send("Could not connect to DB: " + err);
+        if(err) res.status(500).send("Could not connect to DB: " + err);
         var current_score = req.body.score;
         var worse = 0;
     	var queryText = 'SELECT COUNT(*) FROM ecoracer_games_me250_table WHERE score > ' + current_score;
