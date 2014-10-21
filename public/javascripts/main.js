@@ -415,6 +415,9 @@ var brake_keys = [];
 //	event.preventDefault();
 //});
 $(document).on("pageinit",function(event){
+	if($.isEmptyObject(U)){
+		$( "body" ).pagecontainer( "change", "#regpage" );
+	}
 	
 	$("#register").on('tap', function(event){
 		event.preventDefault();
