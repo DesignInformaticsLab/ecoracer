@@ -35,15 +35,18 @@ router.post('/getUser', function(req, res) {
     });
     query.on('end', function(result) {
       if(result.rows.length === 0) {
+    	done();
 	    console.log("Error: User does not exist");
         res.send("");
       } else if(!bcrypt.compareSync(req.body.password, result.rows[0].pass)) {
+    	done();
     	console.log("Error: Incorrect password");
         res.send("");
       } else if(result.rowCount > 1) {
         //this should really never happen, login code
         //should take care of it and we should be getting
         //a unique user ID here
+    	done();
     	console.log("Error: duplicate users"); 
         res.status(403).send("Error: duplicate users");
       } else {

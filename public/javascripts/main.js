@@ -18,6 +18,7 @@ function user(username, password){
 		if(response === ""){
 			$("#message").html("User doesn't exist or password wrong.");
 			setTimeout(function() { $("#message").html(""); }, 1500);
+			U = null;
 		}
 		else{
 			$( "body" ).pagecontainer( "change", "#homepage" );
@@ -424,7 +425,11 @@ $(document).on("pageinit",function(event){
 							U = new user();
 						});
 			}			
-		}			
+		}
+		else{
+			$("#message").html("Username cannot be empty...");
+			setTimeout(function() { $("#message").html(""); showRobots();}, 1500);
+		}	
 	});
 	$("#login").on('tap', function(event){
 		event.preventDefault();
@@ -433,12 +438,20 @@ $(document).on("pageinit",function(event){
 				U = new user($('#username')[0].value, $('#password')[0].value);
 			}
 		}
+		else{
+			$("#message").html("Username cannot be empty...");
+			setTimeout(function() { $("#message").html(""); showRobots();}, 1500);
+		}
 	});
 	$(document).keypress(function(e) {
 		if(!U){// if on login page
 		    if(e.which == 13) {// log in
-		    	if ($('#username')[0].value!='username'){
+		    	if ($('#username')[0].value!='username' && $('#username')[0].value!=''){
 					U = new user($('#username')[0].value, $('#password')[0].value);
+				}
+				else{
+					$("#message").html("Username cannot be empty...");
+					setTimeout(function() { $("#message").html(""); showRobots();}, 1500);
 				}
 		    }			
 		}
