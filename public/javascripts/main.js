@@ -32,6 +32,7 @@ function user(username, password){
 			else{
 				$("#myscore").html("My Best Score: --%");
 			}
+			drawLandscape();
 		}
 	});
 }
@@ -53,7 +54,7 @@ var scene = function(){
 	
 	
 	$('#canvasbg')[0].width = scene_width;
-	$('#canvasbg')[0].height = scene_height;
+	$('#canvasbg')[0].height = 40;
 	
 	var addBar = function(pos)
 	{
@@ -155,12 +156,9 @@ var scene = function(){
 	wheel2.w_limit = speed_limit/wheel1.shapeList[0].r*1.5; // (experimental)
 	motorbar1.w_limit = wheel1.w_limit;
 	motorbar2.w_limit = wheel2.w_limit;
-
-	
 };
 
 scene.prototype = Object.create(__ENVIRONMENT__.prototype);
-
 
 scene.prototype.update = function (dt) {
     var steps = 1;
@@ -419,9 +417,32 @@ $(document).on("pageinit",function(event){
 		$( "body" ).pagecontainer( "change", "#regpage" );
 	}
 	
+	$.post("/getBestUser", {}, function(response){
+		if(response.length==1){
+			$("#title").html('EcoRacer (current winner: '+response[0]+')' );
+		}
+	});
+	
+	drawLandscape = function(){
+		// draw the landscape
+		var canvas = document.getElementById("canvasbg");
+		var ctx = canvas.getContext('2d');
+		ctx.lineWidth = 2;
+		ctx.strokeStyle = "rgba(0,0,0, 1)";
+		ctx.beginPath();
+		ctx.moveTo(0,39);
+		for (var i=1;i<data.length;i++){
+			ctx.lineTo(i/(data.length-1)*scene_width,39-data[i]/100*39);
+		}
+		ctx.stroke();
+		ctx.closePath();
+	};
+
+	
 	$("#register").on('tap', function(event){
 		event.preventDefault();
-		if ($('#username')[0].value!='username' && $('#username')[0].value!=''){
+		if ($('#username')[0].value!='username' && $('#username')[0].value!=''
+			&& $('#password')[0].value!='password' && $('#password')[0].value!=''){
 			if (!isJqmGhostClick(event)){
 				$.post('/signup', {'username': $('#username')[0].value, 'password': $('#password')[0].value}, 
 						function(response){
@@ -647,6 +668,11 @@ $(document).on("pageinit",function(event){
 			initialize_design();
 		}
 	});
+	$("#resetbutton").on("tap",function(event){
+		if (!isJqmGhostClick(event)){
+			restart();
+		}
+	});
 	$("#designed").on("tap", function(){
 		if (!isJqmGhostClick(event)){
 			$("#design").hide();
@@ -669,6 +695,6 @@ $(window).resize(function(){
 	$("#wrapper").width(scene_width);
 	$("#wrapper").height(scene_height);
 	$('#canvasbg')[0].width = scene_width;
-	$('#canvasbg')[0].height = scene_height;
+	$('#canvasbg')[0].height = 40;
 	w = demo.width = demo.canvas.width = scene_width;
 });

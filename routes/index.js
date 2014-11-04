@@ -19,6 +19,27 @@ router.get('/register', function(req, res) {
 	res.render('index');
 });
 
+/* GET best user. */
+router.post('/getBestUser', function(req, res) {
+	var rv = [];
+	pg.connect(connection, function(err, client, done) {
+	    if(err) {
+	      handle_error(res, err);
+	      done();
+	      return;
+	    }
+	    var name_query = client.query("SELECT ecoracer_users_me250_table.name FROM ecoracer_games_me250_table " +
+	    "LEFT JOIN ecoracer_users_me250_table ON ecoracer_games_me250_table.userid = ecoracer_users_me250_table.id " +
+	    "WHERE ecoracer_games_me250_table.score > 0 ORDER BY ecoracer_games_me250_table.score ASC LIMIT 1 ");
+	    name_query.on('err', handle_error.bind(this, res));
+		name_query.on('row', function(row, res) {rv.push(row.name);});
+		client.once('drain', function() {
+	          done();
+	          res.status(202).send(rv);
+	    });
+	});	
+});
+
 /* GET user. */
 router.post('/getUser', function(req, res) {
   var rv = {};
@@ -97,10 +118,11 @@ router.get('/bestscore', function(req, res) {
 		      return;
 	    }
 		rv.bestscore = [];
+		rv.finaldrive = [];
 		rv.total_num_user = 0;
-		var best_score_all = client.query("SELECT score FROM ecoracer_games_me250_table WHERE score>0 ORDER BY score ASC LIMIT 5");
+		var best_score_all = client.query("SELECT score, finaldrive FROM ecoracer_games_me250_table WHERE score>0 ORDER BY score ASC LIMIT 5");
 		best_score_all.on('err', handle_error.bind(this, err));
-		best_score_all.on('row', function(res) { rv.bestscore.push(res.score); });
+		best_score_all.on('row', function(row, res) { rv.bestscore.push(row.score); rv.finaldrive.push(row.finaldrive); });
 		var total_num_user = client.query("SELECT COUNT(*) AS total_num_user FROM ecoracer_games_me250_table WHERE score>0");
 		total_num_user.on('err', handle_error.bind(this, err));
 		total_num_user.on('row', function(res) { rv.total_num_user = res.total_num_user; });		

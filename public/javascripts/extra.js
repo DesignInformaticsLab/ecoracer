@@ -117,6 +117,8 @@ function restart(){
 	wheel2.setMoment(wheel2moment);
 	$("#brake").addClass("enabled");
 	$("#acc").addClass("enabled");
+	$("#messagebox").hide();
+	$("#scorebox").hide();
 	$("#timer").show();
 	demo.run();
 	counter = 0;
@@ -131,6 +133,9 @@ function restart(){
 	motor2eff = 0;
 	car_posOld = 0;
 	$("#history").html("");
+	var pBar = document.getElementById("pbar");
+	pBar.value = 0;
+	drawLandscape();
 	$.post('/getUser', {'username':this.username, 'password':this.password}, function(response){
 		U.bestscore = response.bestscore;
 		$("#myscore").html("My Best Score: "+ Math.round(1000-(U.bestscore/3600/1000/max_batt*1000))/10 + "%");
