@@ -1,3 +1,5 @@
+var max_batt = 0.55; // Change this value
+
 function submitResult(c){
 	// get date
 	var date = new Date();
