@@ -194,7 +194,7 @@ router.get('/results', function(req, res) {
 });
 router.post('/getresults', function(req, res) {
   pg.connect(connection, function(err, client, done) {
-	    client.query('SELECT * FROM ecoracer_games_me250_table', function(err, result) {
+	    client.query('SELECT * FROM ecoracer_games_me250_table WHERE score > 0 ORDER BY score ASC LIMIT 10', function(err, result) {
 	      done();
 	      if (err)
 	       { console.error(err); res.send("Error " + err); }

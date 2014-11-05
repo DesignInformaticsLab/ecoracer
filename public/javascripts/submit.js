@@ -191,7 +191,7 @@ function plot(d,i){
 				        .attr("y", padding/2)
 				        .attr("text-anchor", "middle")  
 				        .style("font-size", "14px") 
-				        .text(d.score+" from user: " + d.userid + " with finaldrive: " + d.finaldrive);
+				        .text(Math.round(1000-(d.score/3600/1000/max_batt*1000))/10+" from user: " + d.userid + " with finaldrive: " + d.finaldrive);
 }
 
 function drawHistory(){
