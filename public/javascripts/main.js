@@ -371,7 +371,7 @@ scene.prototype.update = function (dt) {
 			$("#effval").html("Motor Efficiency: "+Math.round(motor2eff*100)+'%');
 		}
 		else {
-			$("#effval").html("Motor Efficiency: "+"--%"); motor2eff = 0;
+			$("#effval").html("Motor Efficiency: "+"--%"); motor2eff = 0;motor1.rate = 0;motor2.rate = 0;
 		}
 	////////////////////////////////////////////////////////////////////////////
 	
