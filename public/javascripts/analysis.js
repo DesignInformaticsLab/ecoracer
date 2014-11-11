@@ -1,41 +1,9 @@
-var U;
 var scene_width = $(window).width();
 var scene_height = $(window).height();
-$("#StartScreen").width(scene_width);
-$("#StartScreen").height(scene_height);
 $("#wrapper").width(scene_width);
 $("#wrapper").height(scene_height);
 
 var __ENVIRONMENT__ = defineSpace("canvas1", scene_width, scene_heightx);
-
-/****************************************** USER **********************************************************/
-function user(username, password){
-	var d = this;
-	this.username = username||$('#username')[0].value||default_username;// only for development
-	this.password = password||$('#password')[0].value||default_password;
-	
-	$.post('/getUser', {'username':this.username, 'password':this.password}, function(response){
-		if(response === ""){
-			$("#message").html("User doesn't exist or password wrong.");
-			setTimeout(function() { $("#message").html(""); }, 1500);
-			U = null;
-		}
-		else{
-			$( "body" ).pagecontainer( "change", "#homepage" );
-			d.id = response.id;
-			d.name = response.name;
-			d.bestscore = response.bestscore;
-			
-			if (d.bestscore>0){
-				$("#myscore").html("My Best Score: "+ Math.round(1000-(d.bestscore/3600/1000/max_batt*1000))/10 + "%");
-			}
-			else{
-				$("#myscore").html("My Best Score: --%");
-			}
-			drawLandscape();
-		}
-	});
-}
 
 /****************************************** GAME **********************************************************/
 var scene = function(){
@@ -176,7 +144,6 @@ scene.prototype.update = function (dt) {
     if(chassis.p.y<0){
     	demo.stop();
     	start_race = 0;
-    	messagebox("Oops...",false);
     }
     if(start_race == 1){
     	$("#speedval").html("Speed: "+vehSpeed + 'mph');
@@ -209,12 +176,6 @@ scene.prototype.update = function (dt) {
 			acc_sig = false;
 	    	//$('#runner').runner('stop');
 	    	start_race = 0;
-	    	if (!battempty){
-	    		messagebox("Congratulations!",true);
-	    	}
-	    	else{
-	    		messagebox("Good job but try to save battery!",false);
-	    	}
 	    }
 	    /////////////////////////////////
 
@@ -223,7 +184,6 @@ scene.prototype.update = function (dt) {
 	    	demo.stop();
 	    	//$('#runner').runner('stop');
 	    	start_race = 0;
-	    	messagebox("Can't go back! Please restart.",false);
 	    }
 	    if (cTime>timeout){
 			motor1.rate = 0;
@@ -238,18 +198,15 @@ scene.prototype.update = function (dt) {
 			acc_sig = false;
 	    	//$('#runner').runner('stop');
 	    	start_race = 0;
-	    	messagebox("Time out! Please restart.",false);
 	    }
 	    if (chassis.rot.x < 0){
 	    	//$('#runner').runner('stop');
 	    	start_race = 0;
-	    	messagebox("The driver is too drunk!",false);
 	    }
 	    if (battstatus < 0.01){
 	    	battempty = true;
 	    	if ((Math.abs(chassis.vx)<=2) && (car_pos<maxdist)){
 	    		start_race = 0;
-		    	messagebox("The battery is messed up!",false);
 	    	}
 	    }
 	    else {
@@ -258,14 +215,14 @@ scene.prototype.update = function (dt) {
 		
 	    
 /////////////////////////////DP simulation //////////////////////////////////////////
-        if (DPon && (car_pos <= maxdist)){
-		    if (car_pos<=DP_x[indx+1]){
-	        	if (DP_comm[indx]==1){
+        if (control && (car_pos <= maxdist)){
+		    if (car_pos<=control_x[indx+1]){
+	        	if (control_comm[indx]==1){
 	    	    	acc_sig = true;
 	    	    	brake_sig = false;
 
 	        	}
-	        	else if(DP_comm[indx]==0){
+	        	else if(control_comm[indx]==0){
 	        		acc_sig = false;
 	        		brake_sig = false;
 	        		motor1.rate = 0;
@@ -346,22 +303,51 @@ scene.prototype.update = function (dt) {
 };
 
 //Run
+var start_race = true;
+var DPon = true;
+//var DP_x = new Float64Array([0,210,215,230,245,255,295,305,330,335,345,350,385,410,415,420,475,480,540,545,845,850,860, 950]);
+var DP_x = new Float64Array([0,210,215,230,245,255,295,305,330,335,345,350,385,410,415,420,475,480,540,545,845,850,860, 950]);
+var DP_comm = new Float64Array([1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,-1,0,-1,-1]);
+var DP_fr = 18;
+var user;
+var user_fr;
+var user_x;
+var user_comm;
+//for now, just use the best player at 11.09.2014
+//{"acc":[179,2375,2768,5794,11352,12419],"brake":[15599,16044,17102]}
+user = false;
+user_fr = 18;
+//var x = [179,2375,2768,5794,11352,12419,  15599,16044,17102,  909*20];
+var x = [179,2375+20,2768,5794,11352,12419,  15599,16044,17102+20,  909*20];
+user_x = [];
+$.each(x,function(i,d){
+	var a = Math.round(d*px2m); //-9.03
+	a = a -9;
+	user_x.push(a);});
+user_comm = [1,0,1,0,1,0,-1,0,-1,-1];
+
+if (user){
+	var control = user;
+	var control_x = user_x;
+	var control_comm = user_comm;
+	var fr = user_fr;	
+}
+else if (DPon){
+	var control = DPon;
+	var control_x = DP_x;
+	var control_comm = DP_comm;
+	var fr = DP_fr;		
+}
+		
+
 demo = new scene();
 demo.run();
-var acc_keys = [];
-var brake_keys = [];
 
 $(document).on("pageinit",function(event){
-	if($.isEmptyObject(U)){
-		$( "body" ).pagecontainer( "change", "#regpage" );
-	}
-	
-	$.post("/getBestUser", {}, function(response){
-		if(response.length==1){
-			$("#title").html('EcoRacer (current winner: '+response[0]+')' );
-		}
-	});
-	
+	wheel1moment = Jw1;
+	wheel2moment = Jw2;
+	wheel1.setMoment(wheel1moment);
+	wheel2.setMoment(wheel2moment);
 	drawLandscape = function(){
 		// draw the landscape
 		var canvas = document.getElementById("canvasbg");
@@ -376,249 +362,33 @@ $(document).on("pageinit",function(event){
 		ctx.stroke();
 		ctx.closePath();
 	};
-
+	drawLandscape();
 	
-	$("#register").on('tap', function(event){
-		event.preventDefault();
-		if ($('#username')[0].value!='username' && $('#username')[0].value!=''
-			&& $('#password')[0].value!='password' && $('#password')[0].value!=''){
-			if (!isJqmGhostClick(event)){
-				$.post('/signup', {'username': $('#username')[0].value, 'password': $('#password')[0].value}, 
-						function(response){
-							U = new user();
-						});
-			}			
-		}
-		else{
-			$("#message").html("Username cannot be empty...");
-			setTimeout(function() { $("#message").html(""); showRobots();}, 1500);
-		}	
-	});
-	$("#login").on('tap', function(event){
-		event.preventDefault();
-		if ($('#username')[0].value!='username'){
-			if (!isJqmGhostClick(event)){
-				U = new user($('#username')[0].value, $('#password')[0].value);
-			}
-		}
-		else{
-			$("#message").html("Username cannot be empty...");
-			setTimeout(function() { $("#message").html(""); showRobots();}, 1500);
-		}
-	});
-	$(document).keypress(function(e) {
-		if(!U){// if on login page
-		    if(e.which == 13) {// log in
-		    	if ($('#username')[0].value!='username' && $('#username')[0].value!=''){
-					U = new user($('#username')[0].value, $('#password')[0].value);
-				}
-				else{
-					$("#message").html("Username cannot be empty...");
-					setTimeout(function() { $("#message").html(""); showRobots();}, 1500);
-				}
-		    }			
-		}
-	});
-	
-	$("#brake").addClass("enabled");
-	$("#acc").addClass("enabled");
-	$("#brake").on("touchstart",function(event){
-		event.preventDefault();
-		if($("#brake").hasClass("enabled")){
-			brake_sig = true;
-			$('#brake').addClass('activated');		
-			if(Math.round(chassis.p.x)!=brake_keys[brake_keys.length-1]){
-				brake_keys.push(Math.round(chassis.p.x));
-			}
-		}
-	});
-	$("#brake").mousedown(function(event){
-		event.preventDefault();
-		if($("#brake").hasClass("enabled")){
-			brake_sig = true;
-			$('#brake').addClass('activated');
-			if(Math.round(chassis.p.x)!=brake_keys[brake_keys.length-1]){
-				brake_keys.push(Math.round(chassis.p.x));
-			}
-		}
-	});
-	$("#acc").on("touchstart",function(event){
-		event.preventDefault();
-		if($("#acc").hasClass("enabled")){
-			acc_sig = true;
-			start_race = tap_start;
-			$('#acc').addClass('activated');
-			if(Math.round(chassis.p.x)!=acc_keys[acc_keys.length-1]){
-				acc_keys.push(Math.round(chassis.p.x));
-			}
-		}
-	});
-	$("#acc").mousedown(function(event){
-		event.preventDefault();
-		if($("#acc").hasClass("enabled")){
-			acc_sig = true;
-			start_race = tap_start;
-			$('#acc').addClass('activated');
-			if(Math.round(chassis.p.x)!=acc_keys[acc_keys.length-1]){
-				acc_keys.push(Math.round(chassis.p.x));
-			}
-		}
-	});
-	
-	$("#brake").on("touchend",function(event){
-		event.preventDefault();
-		if($("#brake").hasClass("enabled")){
-			brake_sig = false;
-			$('#brake').removeClass('activated');
-			motor1.rate = 0;
-			motor2.rate = 0;
-			wheel1.setAngVel(0);
-			wheel2.setAngVel(0);
-			//wheel1.v_limit = Infinity;
-			//wheel2.v_limit = Infinity;
-			wheel1.setMoment(wheel1moment);
-			wheel2.setMoment(wheel2moment);
-			brake_sig = false;
-			acc_sig = false;
-			if(Math.round(chassis.p.x)!=brake_keys[brake_keys.length-1]){
-				brake_keys.push(Math.round(chassis.p.x));
-			}
-		}
-	});
-	$("#brake").mouseup(function(event){
-		event.preventDefault();
-		if($("#brake").hasClass("enabled")){
-			brake_sig = false;
-			$('#brake').removeClass('activated');
-			motor1.rate = 0;
-			motor2.rate = 0;
-			wheel1.setAngVel(0);
-			wheel2.setAngVel(0);
-			//wheel1.v_limit = Infinity;
-			//wheel2.v_limit = Infinity;
-			wheel1.setMoment(wheel1moment);
-			wheel2.setMoment(wheel2moment);
-			brake_sig = false;
-			acc_sig = false;
-			if(Math.round(chassis.p.x)!=brake_keys[brake_keys.length-1]){
-				brake_keys.push(Math.round(chassis.p.x));
-			}
-		}
-	});
-	$("#acc").on("touchend",function(event){
-		event.preventDefault();
-		if($("#acc").hasClass("enabled")){
-			acc_sig = false;
-			$('#acc').removeClass('activated');
-			motor1.rate = 0;
-			motor2.rate = 0;
-			wheel1.setAngVel(0);
-			wheel2.setAngVel(0);
-			//wheel1.v_limit = Infinity;
-			//wheel2.v_limit = Infinity;
-			wheel1.setMoment(wheel1moment);
-			wheel2.setMoment(wheel2moment);
-			brake_sig = false;
-			acc_sig = false;
-			if(Math.round(chassis.p.x)!=acc_keys[acc_keys.length-1]){
-				acc_keys.push(Math.round(chassis.p.x));
-			}
-		}
-	});
-	$("#acc").mouseup(function(event){
-		event.preventDefault();
-		if($("#acc").hasClass("enabled")){
-			acc_sig = false;
-			$('#acc').removeClass('activated');
-			motor1.rate = 0;
-			motor2.rate = 0;
-			wheel1.setAngVel(0);
-			wheel2.setAngVel(0);
-			//wheel1.v_limit = Infinity;
-			//wheel2.v_limit = Infinity;
-			wheel1.setMoment(wheel1moment);
-			wheel2.setMoment(wheel2moment);
-			brake_sig = false;
-			acc_sig = false;
-			if(Math.round(chassis.p.x)!=acc_keys[acc_keys.length-1]){
-				acc_keys.push(Math.round(chassis.p.x));
-			}
-		}
-	});
-	$("#ok").on("tap",function(event){
-		event.preventDefault();
-		if (!isJqmGhostClick(event)){
-			$("#messagebox").hide();
-			$("#scorebox").hide();
-			$("#review").hide();
-			restart();
-		}
-	});
-	$("#restart").on("tap",function(event){
-		event.preventDefault();
-		if (!isJqmGhostClick(event)){
-			$("#messagebox").hide();
-			$("#scorebox").hide();
-			$("#review").hide();
-			restart();
-		}
-	});
-	$("#review").on("tap",function(event){
-		event.preventDefault();
-		if (!isJqmGhostClick(event)){
-			if(!historyDrawn){drawHistory();historyDrawn=true;}
-			$("#history").show();
-		}
-	});
-	$("#history").on("tap",function(event){
-		event.preventDefault();
-		if (!isJqmGhostClick(event)){
-			$("#history").hide();
-		}
-	});
-	
-	
-	$("#StartScreen").on("tap", function(event){
-		event.preventDefault();
-		if (!isJqmGhostClick(event)){
-			if ($(window).width()>$(window).height()){
-				$("#StartScreen").hide(500, function(){
-					$("#brake").removeClass("locked");
-					$("#acc").removeClass("locked");
-					tap_start = 1;
-					start_race = DPon;
-					wheel1moment = Jw1;
-					wheel2moment = Jw2;
-					wheel1.setMoment(wheel1moment);
-					wheel2.setMoment(wheel2moment);
-					getBestScore();
-				});
-			}
-			else{
-				$('#landscape').show();
-				lockScroll();
-			}
-		}
-	});
-	
-	$("#designbutton").on("tap", function(){
-		if (!isJqmGhostClick(event)){
-			$("#design").show();
-			initialize_design();
-		}
-	});
-	$("#resetbutton").on("tap",function(event){
-		if (!isJqmGhostClick(event)){
-			restart();
-		}
-	});
-	$("#designed").on("tap", function(){
-		if (!isJqmGhostClick(event)){
-			$("#design").hide();
-			$("#canvas_gear").empty();
-			restart();
-		}
-	});	
+//	$.post('/getresults',{'n':1}, function(data){
+//		user = true;
+//		var d = $.parseJSON(data[0].keys);
+//		var acc = d.acc;
+//		var brake = d.brake;
+//		user_fr = d.finaldrive;
+//		// fix double click issue
+//		if (acc[1]==acc[0]){//data corrupted by double clicks
+//			acc_copy = [];
+//			brake_copy = [];
+//			for(j=0;j<acc.length;j++){
+//				if ((j+2)%2==0){
+//					acc_copy.push(acc[j]);
+//				}
+//			}
+//			for(j=0;j<brake.length;j++){
+//				if ((j+2)%2==0){
+//					brake_copy.push(brake[j]);
+//				}
+//			}
+//			acc = acc_copy;
+//			brake = brake_copy;
+//		}
+//		// convert to the same format as for DP
+//	});	
 });
 
 demo.canvas.style.position = "absolute";
@@ -629,8 +399,6 @@ demo.canvas.style.left = "0px";
 $(window).resize(function(){
 	scene_width = $(window).width();
 	scene_height = $(window).height();
-	$("#StartScreen").width(scene_width);
-	$("#StartScreen").height(scene_height);
 	$("#wrapper").width(scene_width);
 	$("#wrapper").height(scene_height);
 	$('#canvasbg')[0].width = scene_width;

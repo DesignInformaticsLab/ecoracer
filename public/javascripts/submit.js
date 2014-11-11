@@ -78,13 +78,38 @@ function getBestScore(){
 var userData;
 function getAllResults(){
 	var d, i;
-	$.post('/getresults',{}, function(data){
+	$.post('/getresults',{'n':10}, function(data){
 		userData = data;
+		
+		// plot individual plays
 		for(i=0;i<data.length;i++){
 			d = data[i];
 			$("#results").append("<div class=data id=data"+i+"></div>");
 			plot(d,i);
 		}
+		
+		// plot individual convergence
+		var p = [];
+		var best_p = [];
+		var score = 0;
+		for(i=0;i<data.length;i++){
+			d = data[i];
+			if(d.score<0){score = 0;}
+			else{score = Math.round(1000-(d.score/3600/1000/max_batt*1000))/10;}
+			if(typeof best_p[d.userid] != 'undefined'){
+				if (score>best_p[d.userid]){
+					best_p[d.userid] = score;
+					p[d.userid].push(score);
+				}
+				else{p[d.userid].push(best_p[d.userid]);}
+			}
+			else{
+				best_p[d.userid] = score;
+				p[d.userid] = [];
+				p[d.userid].push(score);
+			}
+		}
+		plot_convergence(p);
 	});	
 }
 
@@ -195,6 +220,98 @@ function plot(d,i){
 				        .style("font-size", "14px") 
 				        .text(Math.round(1000-(d.score/3600/1000/max_batt*1000))/10+" from user: " + d.userid + " with finaldrive: " + d.finaldrive);
 }
+
+function plot_convergence(p){
+	var padding = 20;//px
+	var svg_length = $("#convergence").width();//px
+	var svg_height = $("#convergence").height();//px
+	var max_play = 50;// maximum number of plays
+	var upper_bound = 45;
+	var optimal_score = 43.8;
+	
+	var data = [];
+	for (var i=0;i<p.length;i++){
+		if(typeof p[i] != 'undefined'){
+			data[i] = [];
+			for (j=0;j<p[i].length;j++){
+				data[i].push({"x": j+1, "y": p[i][j]});
+			}			
+		}
+	}
+	data[data.length] = [];
+	data[data.length-1].push({"x": 1, "y": optimal_score});
+	data[data.length-1].push({"x": max_play, "y": optimal_score});
+	
+	var lineFunction = d3.svg.line()
+	    .x(function(d) { return d.x/max_play*(svg_length-padding*2)+padding; })
+	    .y(function(d) { return (1-d.y/upper_bound)*(svg_height-padding*2)+padding; })
+	    .interpolate("linear");
+	var xScale = d3.scale.linear()
+	    .domain([0, max_play])
+	    .range([padding, svg_length-padding]);
+	var yScale = d3.scale.linear()
+		.domain([0, 1])
+		.range([svg_height-padding, padding]);
+	
+	var xAxis = d3.svg.axis()
+		.scale(xScale)
+		.orient("bottom")
+		.ticks(50);
+	var yAxis = d3.svg.axis()
+		.scale(yScale)
+		.orient("left")
+		.ticks(10);
+	
+	var svgContainer = d3.select("#convergence").append("svg")
+	    .attr("width", svg_length)
+	    .attr("height", svg_height);
+	
+	// plot user performance
+	var color = d3.scale.category20();
+	for (var i=0;i<data.length-1;i++){
+		if(typeof data[i] != 'undefined'){
+			svgContainer.append("path")
+			.attr("d", lineFunction(data[i]))
+			.attr("stroke", color(i))
+		    .attr("stroke-width", 2)
+		    .attr("fill", "none");
+		}
+	}
+	// plot optimal score
+	svgContainer.append("path")
+	.attr("d", lineFunction(data[i]))
+	.attr("stroke", 'black')
+    .attr("stroke-width", 2)
+    .attr("stroke-dasharray", ("3, 3"))
+    .attr("fill", "none");
+	
+	
+	
+	svgContainer.append("g")
+		.attr("transform", "translate(0," + (svg_height - padding) + ")")
+	    .attr("class", "x axis")
+		.style("font-size", "6px") 
+	    .call(xAxis);
+	svgContainer.append("g")
+		.attr("transform", "translate(" + padding +",0)")
+	    .attr("class", "y axis")
+		.style("font-size", "6px") 
+	    .call(yAxis);
+	    
+	svgContainer.append("text")
+	    .attr("x", svg_length/2-padding)             
+	    .attr("y", padding/2)
+	    .attr("text-anchor", "middle")  
+	    .style("font-size", "14px") 
+	    .text("Performance of All Players");	
+	
+	
+}
+
+
+
+
+
 
 function drawHistory(){
 	

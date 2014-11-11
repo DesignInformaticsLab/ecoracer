@@ -14,7 +14,6 @@ var motor2eff = 0;
 
 var acc_sig = false;
 var brake_sig = false;
-var DPon = false;
 
 //************************************************///
 var vehSpeed = 0;
@@ -23,10 +22,6 @@ var save_v = [];
 var save_eff = [];
 var car_posOld = 0;
 //**************************************************///
-
-var DP_x = new Float64Array([0,210,215,230,245,255,295,305,330,335,345,350,385,410,415,420,475,480,540,545,845,850,860, 950]);
-var DP_comm = new Float64Array([1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,-1,0,-1,-1]);
-
 
 var fric = 2.8;
 var timeout = 36; // 30s
@@ -73,11 +68,12 @@ var m2m = 500; // 1 mass in game to 500 kg
 var t2t = 1; // 1 time step == 1/120 second
 var fr = 10; // final drive ratio
 
-if (DPon){
-	fr = 18;
-}
-
 var pi = Math.PI;
+
+//var DPon = true;
+//var DP_x = new Float64Array([0,210,215,230,245,255,295,305,330,335,345,350,385,410,415,420,475,480,540,545,845,850,860, 950]);
+//var DP_comm = new Float64Array([1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,-1,0,-1,-1]);
+//var fr = 18;
 
 function messagebox(msg, win){
 	$("#messagebox").show();

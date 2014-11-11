@@ -1,40 +1,171 @@
-var U;
 var scene_width = $(window).width();
 var scene_height = $(window).height();
-$("#StartScreen").width(scene_width);
-$("#StartScreen").height(scene_height);
 $("#wrapper").width(scene_width);
 $("#wrapper").height(scene_height);
 
 var __ENVIRONMENT__ = defineSpace("canvas1", scene_width, scene_heightx);
 
-/****************************************** USER **********************************************************/
-function user(username, password){
-	var d = this;
-	this.username = username||$('#username')[0].value||default_username;// only for development
-	this.password = password||$('#password')[0].value||default_password;
+/****************************************** ALGORITHM **********************************************************/
+function ga(){
+	this.pop_size = 10;
+	var step = 10;
+	this.n_var = 900/step;// at the starting loc, one should always acc
+	this.iter = 0;
+	this.no_improvement = 0;
+	this.max_iter = 100;
+	this.max_no_improvement = 20;
+}
+ga.prototype.run = function(){
+	this.initial();
+	this.fitness = [];
+	this.bestfitness = [];
+	this.calculate_fitness();
+	while (true){
+		this.parentselection();
+		this.crossover();
+		this.mutation();
+		this.pop.push(this.elite_pop.concatenate(this.cross_pop).concatenate(this.mutate_pop));
+		this.iter+=1;
+		this.calculate_fitness();
+		if(this.converge()){
+			break;
+		}
+	}
+}
+ga.prototype.initial = function(){
+	// primitive initial population
+	this.pop = [];
+	var pop = [];
+	for(var i=0;i<this.pop_size;i++){
+		var g = [];
+		for(var j=0;j<this.n_var;j++){
+			var a = 0;
+			var r = Math.random();
+			if (r<1/3){a=-1;}
+			else if(r>2/3){a=1;}
+			g.push(a);
+		}
+		pop.push(g);
+	}
+	this.pop.push(pop);
+};
+ga.prototype.parentselection = function(){
+	var elite_rate = 0.2;
+	var cross_rate = 0.6;
+	var mutate_rate = 0.2;
+	var n_elite = Math.round(this.pop_size*elite_rate);
+	var n_cross = Math.round(this.pop_size*cross_rate);
+	var n_mutate = Math.round(this.pop_size*mutate_rate);
 	
-	$.post('/getUser', {'username':this.username, 'password':this.password}, function(response){
-		if(response === ""){
-			$("#message").html("User doesn't exist or password wrong.");
-			setTimeout(function() { $("#message").html(""); }, 1500);
-			U = null;
-		}
-		else{
-			$( "body" ).pagecontainer( "change", "#homepage" );
-			d.id = response.id;
-			d.name = response.name;
-			d.bestscore = response.bestscore;
-			
-			if (d.bestscore>0){
-				$("#myscore").html("My Best Score: "+ Math.round(1000-(d.bestscore/3600/1000/max_batt*1000))/10 + "%");
+	var f = this.fitness[this.iter].slice(0);
+	sortWithIndeces(f);
+	this.elite_pop = this.pop[f.sortIndices.slice(0,n_elite)];
+	this.non_elite_pop = this.pop[f.sortIndices.slice(n_elite)];
+	this.non_elite_pop = shuffle(this.non_elite_pop);
+	this.cross_pop = this.non_elite_pop.slice(0,n_cross);
+	this.mutate_pop = this.non_elite_pop.slice(n_cross);
+};
+ga.prototype.crossover = function(){
+	var new_cross_pop = [];
+	for(var i=0;i<this.n_cross/2;i++){
+		var p1,p2,c1,c2,split_point;
+		p1 = this.cross_pop[i*2];
+		p2 = this.cross_pop[i*2+1];
+		split_point = Math.ceil(Math.random()*this.n_var);
+		c1 = p1.slice(0,split_point).concatenate(p2.slice(split_point));
+		c2 = p2.slice(0,split_point).concatenate(p1.slice(split_point));
+		new_cross_pop.push(c1);
+		new_cross_pop.push(c2);
+	}
+	this.cross_pop = new_cross_pop.slice(0);
+};
+ga.prototype.mutation = function(){
+	var mutation_rate = 0.5/Math.sqrt(this.iter);
+	for(var i=0;i<this.n_mutate;i++){
+		for(var j=0;j<this.n_var;j++){
+			if(Math.random()<mutation_rate){
+				var c = $([-1,0,1]).not(this.mutate_pop[i][j]).get();
+				var r = Math.random();
+				if (r<0.5){this.mutate_pop[i][j] = c[0];}
+				else {this.mutate_pop[i][j] = c[1];}
 			}
-			else{
-				$("#myscore").html("My Best Score: --%");
-			}
-			drawLandscape();
 		}
-	});
+	}
+};
+ga.prototype.calculate_fitness = function(){
+	var x = this.pop[this.iter].slice(0);
+	this.fitness.push([]);
+	for(var i=0;i<this.pop_size;i++){
+		this.fitness[this.iter].push(run_game(this.pop[this.iter][i]));
+	}
+	this.bestfitness.push(this.fitness[this.iter].sort(function(a, b){return b-a})[0]);
+}
+ga.converge = function(){
+	// criterion 1: max iter
+	if (this.iter>this.max_iter){
+		return true;
+	}
+	// criterion 2: no improvement
+	if (this.bestfitness[this.iter]==this.bestfitness[this.iter-1]){
+		this.no_improvement += 1;
+	}
+	else {
+		this.no_improvement = 0;
+	}
+	if (this.no_improvement > this.max_no_improvement){
+		return true;
+	}
+	return false;
+}
+
+
+var state = [];
+for (var i=1;i<=90;i++){
+	state.push(i*10);
+}
+state.push(950);
+
+function run_game(control){
+	// reset the game
+	consumption = 0;
+	battstatus = 100;
+	if(typeof demo != 'undefined'){demo.stop();}
+	demo = new scene();
+	demo.canvas.style.position = "absolute";
+	demo.canvas.style.left = "0px";
+	
+	wheel1moment = Jw1;
+	wheel2moment = Jw2;
+	wheel1.setMoment(wheel1moment);
+	wheel2.setMoment(wheel2moment);
+	$("#timer").show();
+	
+	counter = 0;
+	vehSpeed = 0;
+	motor2eff = 0;
+	car_posOld = 0;
+	var pBar = document.getElementById("pbar");
+	pBar.value = 0;
+	drawLandscape();
+
+	// set new input
+	control.push(-1);// put brake at 950
+	
+	//Run
+	var start_race = true;
+	demo.run();
+	
+	//Wait
+	while (start_race){
+		setTimeout(
+				  function() 
+				  {
+				    //do something special
+				  }, 1000);
+	}
+	
+	var score =  Math.round(1000-(consumption/3600/1000/max_batt*1000))/10 + (car_pos9-900)/9 - (timeout-cTime)/timeout*100; //higher is better
+	return score;
 }
 
 /****************************************** GAME **********************************************************/
@@ -176,16 +307,10 @@ scene.prototype.update = function (dt) {
     if(chassis.p.y<0){
     	demo.stop();
     	start_race = 0;
-    	messagebox("Oops...",false);
     }
     if(start_race == 1){
     	$("#speedval").html("Speed: "+vehSpeed + 'mph');
-    	if(acc_sig && !battempty){
-        	$("#effval").html("Motor Efficiency: "+Math.round(motor2eff*100)+'%');
-    	}
-    	else{
-        	$("#effval").html("Motor Efficiency: "+'--%');
-    	}
+
         counter+=1;
         ////// Save Results /////////////
         if (car_pos >= car_posOld+10){
@@ -209,12 +334,6 @@ scene.prototype.update = function (dt) {
 			acc_sig = false;
 	    	//$('#runner').runner('stop');
 	    	start_race = 0;
-	    	if (!battempty){
-	    		messagebox("Congratulations!",true);
-	    	}
-	    	else{
-	    		messagebox("Good job but try to save battery!",false);
-	    	}
 	    }
 	    /////////////////////////////////
 
@@ -223,7 +342,6 @@ scene.prototype.update = function (dt) {
 	    	demo.stop();
 	    	//$('#runner').runner('stop');
 	    	start_race = 0;
-	    	messagebox("Can't go back! Please restart.",false);
 	    }
 	    if (cTime>timeout){
 			motor1.rate = 0;
@@ -238,18 +356,15 @@ scene.prototype.update = function (dt) {
 			acc_sig = false;
 	    	//$('#runner').runner('stop');
 	    	start_race = 0;
-	    	messagebox("Time out! Please restart.",false);
 	    }
 	    if (chassis.rot.x < 0){
 	    	//$('#runner').runner('stop');
 	    	start_race = 0;
-	    	messagebox("The driver is too drunk!",false);
 	    }
 	    if (battstatus < 0.01){
 	    	battempty = true;
 	    	if ((Math.abs(chassis.vx)<=2) && (car_pos<maxdist)){
 	    		start_race = 0;
-		    	messagebox("The battery is messed up!",false);
 	    	}
 	    }
 	    else {
@@ -257,15 +372,14 @@ scene.prototype.update = function (dt) {
 	    }
 		
 	    
-/////////////////////////////DP simulation //////////////////////////////////////////
-        if (DPon && (car_pos <= maxdist)){
-		    if (car_pos<=DP_x[indx+1]){
-	        	if (DP_comm[indx]==1){
+///////////////////////////// use control //////////////////////////////////////////
+        if (car_pos <= maxdist){
+		    if (car_pos<=state[indx+1]){
+	        	if (control[indx]==1){
 	    	    	acc_sig = true;
 	    	    	brake_sig = false;
-
 	        	}
-	        	else if(DP_comm[indx]==0){
+	        	else if(control[indx]==0){
 	        		acc_sig = false;
 	        		brake_sig = false;
 	        		motor1.rate = 0;
@@ -304,13 +418,11 @@ scene.prototype.update = function (dt) {
 				motor1.rate = 1*Math.max(wheel1.w,-1.5)*max_rate1;
 				motor2.rate = 1*Math.max(wheel1.w,-1.5)*max_rate1;
 				consumption = updateConsumption(consumption);
-				$("#effval").html("Motor Efficiency: "+Math.round(motor2eff*100)+'%');
 			}
 			else if (wheel1.w>3){
 				motor1.rate = 2*Math.min(wheel1.w,2)*max_rate1;
 				motor2.rate = 2*Math.min(wheel1.w,2)*max_rate1;
                 consumption = -1*updateConsumption(-1*consumption);
-				$("#effval").html("Motor Efficiency: "+"--%"); motor2eff = 0;
 			}
 			else{motor1.rate=0; motor2.rate = 0; wheel1.setAngVel(0); wheel2.setAngVel(0);}
 			if (wheel_speed>1){
@@ -326,10 +438,9 @@ scene.prototype.update = function (dt) {
 			if(motor2.rate>max_rate1){motor2.rate=max_rate1;}
 			if(motor1.rate>max_rate1){motor1.rate=max_rate1;}
 			consumption = updateConsumption(consumption);
-			$("#effval").html("Motor Efficiency: "+Math.round(motor2eff*100)+'%');
 		}
 		else {
-			$("#effval").html("Motor Efficiency: "+"--%"); motor2eff = 0;motor1.rate = 0;motor2.rate = 0;
+			motor2eff = 0;motor1.rate = 0;motor2.rate = 0;
 		}
 	////////////////////////////////////////////////////////////////////////////
 	
@@ -340,28 +451,11 @@ scene.prototype.update = function (dt) {
 		document.getElementById("battvalue").style.width= battstatus + "%";
     	$('#batttext').html(battstatus + "%");
         $("#speedval").html('Speed: 0mph');
-        $("#effval").html("Motor Efficiency: "+"--%");
     };
 
 };
 
-//Run
-demo = new scene();
-demo.run();
-var acc_keys = [];
-var brake_keys = [];
-
 $(document).on("pageinit",function(event){
-	if($.isEmptyObject(U)){
-		$( "body" ).pagecontainer( "change", "#regpage" );
-	}
-	
-	$.post("/getBestUser", {}, function(response){
-		if(response.length==1){
-			$("#title").html('EcoRacer (current winner: '+response[0]+')' );
-		}
-	});
-	
 	drawLandscape = function(){
 		// draw the landscape
 		var canvas = document.getElementById("canvasbg");
@@ -376,264 +470,40 @@ $(document).on("pageinit",function(event){
 		ctx.stroke();
 		ctx.closePath();
 	};
-
 	
-	$("#register").on('tap', function(event){
-		event.preventDefault();
-		if ($('#username')[0].value!='username' && $('#username')[0].value!=''
-			&& $('#password')[0].value!='password' && $('#password')[0].value!=''){
-			if (!isJqmGhostClick(event)){
-				$.post('/signup', {'username': $('#username')[0].value, 'password': $('#password')[0].value}, 
-						function(response){
-							U = new user();
-						});
-			}			
-		}
-		else{
-			$("#message").html("Username cannot be empty...");
-			setTimeout(function() { $("#message").html(""); showRobots();}, 1500);
-		}	
-	});
-	$("#login").on('tap', function(event){
-		event.preventDefault();
-		if ($('#username')[0].value!='username'){
-			if (!isJqmGhostClick(event)){
-				U = new user($('#username')[0].value, $('#password')[0].value);
-			}
-		}
-		else{
-			$("#message").html("Username cannot be empty...");
-			setTimeout(function() { $("#message").html(""); showRobots();}, 1500);
-		}
-	});
-	$(document).keypress(function(e) {
-		if(!U){// if on login page
-		    if(e.which == 13) {// log in
-		    	if ($('#username')[0].value!='username' && $('#username')[0].value!=''){
-					U = new user($('#username')[0].value, $('#password')[0].value);
-				}
-				else{
-					$("#message").html("Username cannot be empty...");
-					setTimeout(function() { $("#message").html(""); showRobots();}, 1500);
-				}
-		    }			
-		}
-	});
-	
-	$("#brake").addClass("enabled");
-	$("#acc").addClass("enabled");
-	$("#brake").on("touchstart",function(event){
-		event.preventDefault();
-		if($("#brake").hasClass("enabled")){
-			brake_sig = true;
-			$('#brake').addClass('activated');		
-			if(Math.round(chassis.p.x)!=brake_keys[brake_keys.length-1]){
-				brake_keys.push(Math.round(chassis.p.x));
-			}
-		}
-	});
-	$("#brake").mousedown(function(event){
-		event.preventDefault();
-		if($("#brake").hasClass("enabled")){
-			brake_sig = true;
-			$('#brake').addClass('activated');
-			if(Math.round(chassis.p.x)!=brake_keys[brake_keys.length-1]){
-				brake_keys.push(Math.round(chassis.p.x));
-			}
-		}
-	});
-	$("#acc").on("touchstart",function(event){
-		event.preventDefault();
-		if($("#acc").hasClass("enabled")){
-			acc_sig = true;
-			start_race = tap_start;
-			$('#acc').addClass('activated');
-			if(Math.round(chassis.p.x)!=acc_keys[acc_keys.length-1]){
-				acc_keys.push(Math.round(chassis.p.x));
-			}
-		}
-	});
-	$("#acc").mousedown(function(event){
-		event.preventDefault();
-		if($("#acc").hasClass("enabled")){
-			acc_sig = true;
-			start_race = tap_start;
-			$('#acc').addClass('activated');
-			if(Math.round(chassis.p.x)!=acc_keys[acc_keys.length-1]){
-				acc_keys.push(Math.round(chassis.p.x));
-			}
-		}
-	});
-	
-	$("#brake").on("touchend",function(event){
-		event.preventDefault();
-		if($("#brake").hasClass("enabled")){
-			brake_sig = false;
-			$('#brake').removeClass('activated');
-			motor1.rate = 0;
-			motor2.rate = 0;
-			wheel1.setAngVel(0);
-			wheel2.setAngVel(0);
-			//wheel1.v_limit = Infinity;
-			//wheel2.v_limit = Infinity;
-			wheel1.setMoment(wheel1moment);
-			wheel2.setMoment(wheel2moment);
-			brake_sig = false;
-			acc_sig = false;
-			if(Math.round(chassis.p.x)!=brake_keys[brake_keys.length-1]){
-				brake_keys.push(Math.round(chassis.p.x));
-			}
-		}
-	});
-	$("#brake").mouseup(function(event){
-		event.preventDefault();
-		if($("#brake").hasClass("enabled")){
-			brake_sig = false;
-			$('#brake').removeClass('activated');
-			motor1.rate = 0;
-			motor2.rate = 0;
-			wheel1.setAngVel(0);
-			wheel2.setAngVel(0);
-			//wheel1.v_limit = Infinity;
-			//wheel2.v_limit = Infinity;
-			wheel1.setMoment(wheel1moment);
-			wheel2.setMoment(wheel2moment);
-			brake_sig = false;
-			acc_sig = false;
-			if(Math.round(chassis.p.x)!=brake_keys[brake_keys.length-1]){
-				brake_keys.push(Math.round(chassis.p.x));
-			}
-		}
-	});
-	$("#acc").on("touchend",function(event){
-		event.preventDefault();
-		if($("#acc").hasClass("enabled")){
-			acc_sig = false;
-			$('#acc').removeClass('activated');
-			motor1.rate = 0;
-			motor2.rate = 0;
-			wheel1.setAngVel(0);
-			wheel2.setAngVel(0);
-			//wheel1.v_limit = Infinity;
-			//wheel2.v_limit = Infinity;
-			wheel1.setMoment(wheel1moment);
-			wheel2.setMoment(wheel2moment);
-			brake_sig = false;
-			acc_sig = false;
-			if(Math.round(chassis.p.x)!=acc_keys[acc_keys.length-1]){
-				acc_keys.push(Math.round(chassis.p.x));
-			}
-		}
-	});
-	$("#acc").mouseup(function(event){
-		event.preventDefault();
-		if($("#acc").hasClass("enabled")){
-			acc_sig = false;
-			$('#acc').removeClass('activated');
-			motor1.rate = 0;
-			motor2.rate = 0;
-			wheel1.setAngVel(0);
-			wheel2.setAngVel(0);
-			//wheel1.v_limit = Infinity;
-			//wheel2.v_limit = Infinity;
-			wheel1.setMoment(wheel1moment);
-			wheel2.setMoment(wheel2moment);
-			brake_sig = false;
-			acc_sig = false;
-			if(Math.round(chassis.p.x)!=acc_keys[acc_keys.length-1]){
-				acc_keys.push(Math.round(chassis.p.x));
-			}
-		}
-	});
-	$("#ok").on("tap",function(event){
-		event.preventDefault();
-		if (!isJqmGhostClick(event)){
-			$("#messagebox").hide();
-			$("#scorebox").hide();
-			$("#review").hide();
-			restart();
-		}
-	});
-	$("#restart").on("tap",function(event){
-		event.preventDefault();
-		if (!isJqmGhostClick(event)){
-			$("#messagebox").hide();
-			$("#scorebox").hide();
-			$("#review").hide();
-			restart();
-		}
-	});
-	$("#review").on("tap",function(event){
-		event.preventDefault();
-		if (!isJqmGhostClick(event)){
-			if(!historyDrawn){drawHistory();historyDrawn=true;}
-			$("#history").show();
-		}
-	});
-	$("#history").on("tap",function(event){
-		event.preventDefault();
-		if (!isJqmGhostClick(event)){
-			$("#history").hide();
-		}
-	});
-	
-	
-	$("#StartScreen").on("tap", function(event){
-		event.preventDefault();
-		if (!isJqmGhostClick(event)){
-			if ($(window).width()>$(window).height()){
-				$("#StartScreen").hide(500, function(){
-					$("#brake").removeClass("locked");
-					$("#acc").removeClass("locked");
-					tap_start = 1;
-					start_race = DPon;
-					wheel1moment = Jw1;
-					wheel2moment = Jw2;
-					wheel1.setMoment(wheel1moment);
-					wheel2.setMoment(wheel2moment);
-					getBestScore();
-				});
-			}
-			else{
-				$('#landscape').show();
-				lockScroll();
-			}
-		}
-	});
-	
-	$("#designbutton").on("tap", function(){
-		if (!isJqmGhostClick(event)){
-			$("#design").show();
-			initialize_design();
-		}
-	});
-	$("#resetbutton").on("tap",function(event){
-		if (!isJqmGhostClick(event)){
-			restart();
-		}
-	});
-	$("#designed").on("tap", function(){
-		if (!isJqmGhostClick(event)){
-			$("#design").hide();
-			$("#canvas_gear").empty();
-			restart();
-		}
-	});	
+	GA = new ga(); // run ga
+//	GA.run();
 });
-
-demo.canvas.style.position = "absolute";
-demo.canvas.style.left = "0px";
-
-
 
 $(window).resize(function(){
 	scene_width = $(window).width();
 	scene_height = $(window).height();
-	$("#StartScreen").width(scene_width);
-	$("#StartScreen").height(scene_height);
 	$("#wrapper").width(scene_width);
 	$("#wrapper").height(scene_height);
 	$('#canvasbg')[0].width = scene_width;
 	$('#canvasbg')[0].height = 40;
 	w = demo.width = demo.canvas.width = scene_width;
 });
+
+/****************************************** UTILITY **********************************************************/
+function sortWithIndeces(toSort) {
+	  for (var i = 0; i < toSort.length; i++) {
+	    toSort[i] = [toSort[i], i];
+	  }
+	  toSort.sort(function(left, right) {
+	    return left[0] < right[0] ? -1 : 1;
+	  });
+	  toSort.sortIndices = [];
+	  for (var j = 0; j < toSort.length; j++) {
+	    toSort.sortIndices.push(toSort[j][1]);
+	    toSort[j] = toSort[j][0];
+	  }
+	  return toSort;
+}
+
+//+ Jonas Raoni Soares Silva
+//@ http://jsfromhell.com/array/shuffle [v1.0]
+function shuffle(o){ //v1.0
+  for(var j, x, i = o.length; i; j = Math.floor(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
+  return o;
+};

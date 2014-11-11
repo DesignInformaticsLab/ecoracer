@@ -1,0 +1,23 @@
+extends layout
+block content
+  #landscape. 
+    Rotate Device to Landscape
+  div#homepage(data-role='page')
+    #wrapper
+      #data
+        #car_progress
+          progress(id='pbar',max='100',value='0')
+        #battshape
+          #battcap
+          #outer
+            #battvalue.inner
+        #batttext.battcons
+        #mot1.motor1T
+        #mot2.motor2T
+        #speedval
+        #effval
+        #myscore
+      canvas(id='canvasbg')
+      canvas(id='canvas1')
+      #timer
+  script(type='text/javascript',src='/javascripts/analysis.js')
