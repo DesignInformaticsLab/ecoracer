@@ -76,7 +76,7 @@ function getBestScore(){
 }
 
 var userData;
-function getAllResults(){
+function getResults(){
 	var d, i;
 	$.post('/getresults',{'n':10}, function(data){
 		userData = data;
@@ -87,6 +87,13 @@ function getAllResults(){
 			$("#results").append("<div class=data id=data"+i+"></div>");
 			plot(d,i);
 		}
+	});	
+}
+
+function getAllPerformance(){
+	var d, i;
+	$.post('/getperformance',{'n':2408}, function(data){
+		userData = data;
 		
 		// plot individual convergence
 		var p = [];
@@ -112,6 +119,7 @@ function getAllResults(){
 		plot_convergence(p);
 	});	
 }
+
 
 $(".data").on('tap', function(){
 	var id = parseInt($(this).id.slice(4));

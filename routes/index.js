@@ -215,4 +215,16 @@ router.post('/getresults', function(req, res) {
 	  });
 });
 
+router.post('/getperformance', function(req, res) {
+	  pg.connect(connection, function(err, client, done) {
+		    client.query('SELECT userid, score FROM ecoracer_games_me250_table ORDER BY id ASC', function(err, result) {
+		      done();
+		      if (err)
+		       { console.error(err); res.send("Error " + err); }
+		      else
+		       { res.send( result.rows ); }
+		    });
+		  });
+	});
+
 module.exports = router;
