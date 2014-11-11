@@ -233,7 +233,7 @@ function plot_convergence(p){
 	var padding = 20;//px
 	var svg_length = $("#convergence").width();//px
 	var svg_height = $("#convergence").height();//px
-	var max_play = 50;// maximum number of plays
+	var max_play = 500;// maximum number of plays
 	var upper_bound = 45;
 	var optimal_score = 43.8;
 	
