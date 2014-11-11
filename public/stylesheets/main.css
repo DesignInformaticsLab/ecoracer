@@ -639,10 +639,8 @@ path {
 
 #convergence {
     position: relative;
-    width: 80%;
+    width: 300%;
     height: 400px;
-    margin-left:10%;
-	margin-right:10%;
 	margin-top:20px;
 	margin-bottom:20px;
 }
