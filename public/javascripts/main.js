@@ -256,35 +256,6 @@ scene.prototype.update = function (dt) {
 	    	battempty = false;
 	    }
 		
-	    
-/////////////////////////////DP simulation //////////////////////////////////////////
-        if (DPon && (car_pos <= maxdist)){
-		    if (car_pos<=DP_x[indx+1]){
-	        	if (DP_comm[indx]==1){
-	    	    	acc_sig = true;
-	    	    	brake_sig = false;
-
-	        	}
-	        	else if(DP_comm[indx]==0){
-	        		acc_sig = false;
-	        		brake_sig = false;
-	        		motor1.rate = 0;
-	        		motor2.rate = 0;
-	        		//wheel1.v_limit = Infinity;
-	        		//wheel2.v_limit = Infinity;
-	        		wheel1.setMoment(wheel1moment);
-	        		wheel2.setMoment(wheel2moment);
-	        	}
-	        	else{
-	    			brake_sig = true;
-	    			acc_sig = false;
-	        	}
-	        }
-	        else{
-	    		indx = indx+1;
-	        }
-		};
-	    
 		fricImpl = -1*fric*(chassis.m + wheel1.m + wheel2.m + motorbar1.m + motorbar2.m)*wheel1.shapeList[0].r/tstep*wheel1.w/(Math.abs(wheel1.w)+0.0001);
 		wheel1.w += fricImpl*wheel1.i_inv;
 		wheel2.w += fricImpl*wheel2.i_inv;

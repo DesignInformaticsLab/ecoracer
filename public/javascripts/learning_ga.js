@@ -6,127 +6,245 @@ $("#wrapper").height(scene_height);
 var __ENVIRONMENT__ = defineSpace("canvas1", scene_width, scene_heightx);
 
 /****************************************** ALGORITHM **********************************************************/
-function ga(){
-	this.pop_size = 10;
-	var step = 10;
-	this.n_var = 900/step;// at the starting loc, one should always acc
-	this.iter = 0;
-	this.no_improvement = 0;
-	this.max_iter = 100;
-	this.max_no_improvement = 20;
+var pop_size = 10;
+var step = 10;
+var n_var = 800/step;// at the starting loc, one should always acc
+var iter = 0;
+var no_improvement = 0;
+var max_iter = 100;
+var max_no_improvement = 20;
+var fitness = [];
+var bestfitness = [];
+var pop = [];
+var elite_rate = 0.2;
+var cross_rate = 0.6;
+var mutate_rate = 0.2;
+var n_elite = Math.round(pop_size*elite_rate);
+var n_cross = Math.round(pop_size*cross_rate);
+var n_mutate = Math.round(pop_size*mutate_rate);
+var fitness_sorted = [];
+var ini_acc = [1,1,1,1,1,1,1,1,1,1];
+
+function run(){
+	initial();
+	calculate_fitness(iterate);
 }
-ga.prototype.run = function(){
-	this.initial();
-	this.fitness = [];
-	this.bestfitness = [];
-	this.calculate_fitness();
-	while (true){
-		this.parentselection();
-		this.crossover();
-		this.mutation();
-		this.pop.push(this.elite_pop.concatenate(this.cross_pop).concatenate(this.mutate_pop));
-		this.iter+=1;
-		this.calculate_fitness();
-		if(this.converge()){
-			break;
-		}
-	}
-}
-ga.prototype.initial = function(){
+function initial(){
 	// primitive initial population
-	this.pop = [];
-	var pop = [];
-	for(var i=0;i<this.pop_size;i++){
-		var g = [];
-		for(var j=0;j<this.n_var;j++){
+	var p = [];
+	for(var i=0;i<pop_size;i++){
+		var g = []
+		for(var j=10;j<n_var;j++){
 			var a = 0;
 			var r = Math.random();
 			if (r<1/3){a=-1;}
 			else if(r>2/3){a=1;}
 			g.push(a);
 		}
-		pop.push(g);
+		p.push(g);
 	}
-	this.pop.push(pop);
+	pop.push(p);
 };
-ga.prototype.parentselection = function(){
-	var elite_rate = 0.2;
-	var cross_rate = 0.6;
-	var mutate_rate = 0.2;
-	var n_elite = Math.round(this.pop_size*elite_rate);
-	var n_cross = Math.round(this.pop_size*cross_rate);
-	var n_mutate = Math.round(this.pop_size*mutate_rate);
-	
-	var f = this.fitness[this.iter].slice(0);
+function iterate(){
+	if(converge()){
+		//***do some data saving
+	}
+	plot_status();
+	parentselection();
+	crossover();
+	mutation();
+	pop.push(elite_pop.concat(cross_pop).concat(mutate_pop));
+	iter+=1;
+	calculate_fitness(iterate);
+};
+function parentselection(){
+	var f = fitness[iter].slice(0);
 	sortWithIndeces(f);
-	this.elite_pop = this.pop[f.sortIndices.slice(0,n_elite)];
-	this.non_elite_pop = this.pop[f.sortIndices.slice(n_elite)];
-	this.non_elite_pop = shuffle(this.non_elite_pop);
-	this.cross_pop = this.non_elite_pop.slice(0,n_cross);
-	this.mutate_pop = this.non_elite_pop.slice(n_cross);
+	var elite_pop_id = f.sortIndices.slice(0,n_elite);
+	elite_pop = []; $.each(elite_pop_id, function(i,eid){elite_pop.push(pop[iter][eid]);});
+	var non_elite_pop_id = f.sortIndices.slice(n_elite);
+	non_elite_pop = []; $.each(non_elite_pop_id, function(i,eid){non_elite_pop.push(pop[iter][eid]);});
+	non_elite_pop = shuffle(non_elite_pop);
+	cross_pop = non_elite_pop.slice(0,n_cross);
+	mutate_pop = non_elite_pop.slice(n_cross);
 };
-ga.prototype.crossover = function(){
+function crossover(){
 	var new_cross_pop = [];
-	for(var i=0;i<this.n_cross/2;i++){
+	for(var i=0;i<n_cross/2;i++){
 		var p1,p2,c1,c2,split_point;
-		p1 = this.cross_pop[i*2];
-		p2 = this.cross_pop[i*2+1];
-		split_point = Math.ceil(Math.random()*this.n_var);
-		c1 = p1.slice(0,split_point).concatenate(p2.slice(split_point));
-		c2 = p2.slice(0,split_point).concatenate(p1.slice(split_point));
+		p1 = cross_pop[i*2];
+		p2 = cross_pop[i*2+1];
+		split_point = Math.ceil(Math.random()*n_var);
+		c1 = p1.slice(0,split_point).concat(p2.slice(split_point));
+		c2 = p2.slice(0,split_point).concat(p1.slice(split_point));
 		new_cross_pop.push(c1);
 		new_cross_pop.push(c2);
 	}
-	this.cross_pop = new_cross_pop.slice(0);
+	cross_pop = new_cross_pop.slice(0);
 };
-ga.prototype.mutation = function(){
-	var mutation_rate = 0.5/Math.sqrt(this.iter);
-	for(var i=0;i<this.n_mutate;i++){
-		for(var j=0;j<this.n_var;j++){
+function mutation(){
+	var mutation_rate = 0.5/Math.sqrt(iter+1);
+	for(var i=0;i<n_mutate;i++){
+		for(var j=0;j<n_var;j++){
 			if(Math.random()<mutation_rate){
-				var c = $([-1,0,1]).not(this.mutate_pop[i][j]).get();
+				var c = $([-1,0,1]).not([mutate_pop[i][j]]).get();
 				var r = Math.random();
-				if (r<0.5){this.mutate_pop[i][j] = c[0];}
-				else {this.mutate_pop[i][j] = c[1];}
+				if (r<0.5){mutate_pop[i][j] = c[0];}
+				else {mutate_pop[i][j] = c[1];}
 			}
 		}
 	}
 };
-ga.prototype.calculate_fitness = function(){
-	var x = this.pop[this.iter].slice(0);
-	this.fitness.push([]);
-	for(var i=0;i<this.pop_size;i++){
-		this.fitness[this.iter].push(run_game(this.pop[this.iter][i]));
+function calculate_fitness(callback){
+	var x = pop[iter].slice(0);
+	fitness.push([]);
+	
+	var f2 = function(i){
+		fitness[iter].push(SCORE);
+		i += 1;
+		if(i<pop_size){
+			run_game(pop[iter][i], i, f2);
+		}
+		else{
+			fitness_sorted = fitness[iter].slice(0);
+			bestfitness.push(fitness_sorted.sort(function(a, b){return b-a})[0]);
+			// recursively call iterate
+			if (typeof(callback) == 'function') {
+		        callback();
+		    }
+		}
 	}
-	this.bestfitness.push(this.fitness[this.iter].sort(function(a, b){return b-a})[0]);
-}
-ga.converge = function(){
+	if (iter==0){
+		run_game(pop[iter][0], 0, f2);
+	}
+	else{
+		fitness[iter].push(fitness_sorted[0]);
+		fitness[iter].push(fitness_sorted[1]);
+		run_game(pop[iter][2], 2, f2);
+	}
+};
+function converge(){
 	// criterion 1: max iter
-	if (this.iter>this.max_iter){
+	if (iter>max_iter){
 		return true;
 	}
 	// criterion 2: no improvement
-	if (this.bestfitness[this.iter]==this.bestfitness[this.iter-1]){
-		this.no_improvement += 1;
+	if (bestfitness[iter]==bestfitness[iter-1]){
+		no_improvement += 1;
 	}
 	else {
-		this.no_improvement = 0;
+		no_improvement = 0;
 	}
-	if (this.no_improvement > this.max_no_improvement){
+	if (no_improvement > max_no_improvement){
 		return true;
 	}
 	return false;
-}
+};
+
+function plot_status(){
+	$("#statusplot").html("");
+	var padding = 40;//px
+	var svg_length = $("#statusplot").width();//px
+	var svg_height = $("#statusplot").height();//px
+	var num_play = iter+1;
+	var upper_bound = 45, lower_bound = -150, range = upper_bound-lower_bound;
+	
+	var optimal_score = 43.8;
+	
+	var data = [];
+	for (var i=0;i<fitness.length;i++){
+		if(typeof fitness[i] != 'undefined'){
+			for (j=0;j<fitness[i].length;j++){
+				data.push({"x": i+1, "y": fitness[i][j]});
+			}			
+		}
+	}
+	bm = [];
+	bm.push({"x": 1, "y": optimal_score});
+	bm.push({"x": num_play, "y": optimal_score});
+	
+	var lineFunction = d3.svg.line()
+	    .x(function(d) { return d.x/num_play*(svg_length-padding*2)+padding; })
+	    .y(function(d) { return (1-(d.y-lower_bound)/range)*(svg_height-padding*2)+padding; })
+	    .interpolate("linear");
+	var xScale = d3.scale.linear()
+	    .domain([0, num_play])
+	    .range([padding, svg_length-padding]);
+	var yScale = d3.scale.linear()
+		.domain([lower_bound, upper_bound])
+		.range([svg_height-padding, padding]);
+	
+	var xAxis = d3.svg.axis()
+		.scale(xScale)
+		.orient("bottom")
+		.ticks(Math.min(50,num_play));
+	var yAxis = d3.svg.axis()
+		.scale(yScale)
+		.orient("left")
+		.ticks(10);
+	
+	var svgContainer = d3.select("#statusplot").append("svg")
+	    .attr("width", svg_length)
+	    .attr("height", svg_height);
+	
+	// plot user performance
+//	var color = d3.scale.category20();
+//	svgContainer.append("path")
+//		.attr("d", lineFunction(data))
+//		.attr("stroke", 'black')
+//	    .attr("stroke-width", 2)
+//	    .attr("fill", "none");
+	
+	
+	var xMap = function(d){
+    	return d.x/num_play*(svg_length-padding*2)+padding;
+    };
+	var yMap = function(d){
+    	return (1-(d.y-lower_bound)/range)*(svg_height-padding*2)+padding;
+    };
+	svgContainer.selectAll(".dot")
+	    .data(data)
+	    .enter().append("circle")
+	    .attr("class", "dot")
+	    .attr("r", 5)
+	    .attr("cx", xMap)
+	    .attr("cy", yMap)
+    
+	svgContainer.append("path")
+		.attr("d", lineFunction(bm))
+		.attr("stroke", 'black')
+	    .attr("stroke-dasharray", ("3, 3"))
+	    .attr("stroke-width", 2)
+	    .attr("fill", "none");
+	svgContainer.append("g")
+		.attr("transform", "translate(0," + (svg_height - padding) + ")")
+	    .attr("class", "x axis")
+		.style("font-size", "6px") 
+	    .call(xAxis);
+	svgContainer.append("g")
+		.attr("transform", "translate(" + padding +",0)")
+	    .attr("class", "y axis")
+		.style("font-size", "6px") 
+	    .call(yAxis);
+	    
+	svgContainer.append("text")
+	    .attr("x", svg_length/2-padding)             
+	    .attr("y", padding/2)
+	    .attr("text-anchor", "middle")  
+	    .style("font-size", "14px") 
+	    .text("Learning Performance");	
+};
 
 
 var state = [];
 for (var i=1;i<=90;i++){
 	state.push(i*10);
 }
-state.push(950);
-
-function run_game(control){
+var control;
+SCORE = 0;
+function run_game(c, i, callback){
 	// reset the game
+	control = ini_acc.concat(c);
 	consumption = 0;
 	battstatus = 100;
 	if(typeof demo != 'undefined'){demo.stop();}
@@ -148,25 +266,38 @@ function run_game(control){
 	pBar.value = 0;
 	drawLandscape();
 
-	// set new input
-	control.push(-1);// put brake at 950
+	indx = 0;
 	
 	//Run
-	var start_race = true;
-	demo.run();
-	
-	//Wait
-	while (start_race){
-		setTimeout(
-				  function() 
-				  {
-				    //do something special
-				  }, 1000);
-	}
-	
-	var score =  Math.round(1000-(consumption/3600/1000/max_batt*1000))/10 + (car_pos9-900)/9 - (timeout-cTime)/timeout*100; //higher is better
-	return score;
+	start_race = true;
+    demo.running = true;
+    var lastTime = 0;
+    var step = function (time) {
+        demo.step(time - lastTime);
+        lastTime = time;
+        if (start_race) {
+            requestAnimationFrame(step);
+        }
+        else{
+        	SCORE =  (Math.round(1000-(consumption/3600/1000/max_batt*1000))/10)*(car_pos9-900>0) + (car_pos9-900)/9 - (timeout-cTime+1)/timeout*100; //higher is better
+        	$.post('/adddata_learning',{
+				   'score':SCORE,
+				   'keys':JSON.stringify(control),
+				   'finaldrive':fr,
+				   'iteration':iter});	
+
+        	if (typeof(callback) == 'function') {
+                callback(i);
+            }
+        }
+    };
+    step(0);
 }
+
+
+
+
+
 
 /****************************************** GAME **********************************************************/
 var scene = function(){
@@ -306,18 +437,15 @@ scene.prototype.update = function (dt) {
     
     if(chassis.p.y<0){
     	demo.stop();
-    	start_race = 0;
+    	start_race = false;
     }
-    if(start_race == 1){
+    if(start_race){
     	$("#speedval").html("Speed: "+vehSpeed + 'mph');
 
         counter+=1;
         ////// Save Results /////////////
         if (car_pos >= car_posOld+10){
 			car_posOld = car_pos;
-			save_x.push(car_pos);
-			save_v.push(vehSpeed);
-			save_eff.push(Math.round(motor2eff*100));
 		}
 	    //////////// Success ////////////
         
@@ -333,7 +461,7 @@ scene.prototype.update = function (dt) {
 			brake_sig = false;
 			acc_sig = false;
 	    	//$('#runner').runner('stop');
-	    	start_race = 0;
+	    	start_race = false;
 	    }
 	    /////////////////////////////////
 
@@ -341,7 +469,7 @@ scene.prototype.update = function (dt) {
 	    if ((chassis.p.x<10)){
 	    	demo.stop();
 	    	//$('#runner').runner('stop');
-	    	start_race = 0;
+	    	start_race = false;
 	    }
 	    if (cTime>timeout){
 			motor1.rate = 0;
@@ -355,16 +483,16 @@ scene.prototype.update = function (dt) {
 			brake_sig = false;
 			acc_sig = false;
 	    	//$('#runner').runner('stop');
-	    	start_race = 0;
+	    	start_race = false;
 	    }
 	    if (chassis.rot.x < 0){
 	    	//$('#runner').runner('stop');
-	    	start_race = 0;
+	    	start_race = false;
 	    }
 	    if (battstatus < 0.01){
 	    	battempty = true;
 	    	if ((Math.abs(chassis.vx)<=2) && (car_pos<maxdist)){
-	    		start_race = 0;
+	    		start_race = false;
 	    	}
 	    }
 	    else {
@@ -375,7 +503,7 @@ scene.prototype.update = function (dt) {
 ///////////////////////////// use control //////////////////////////////////////////
         if (car_pos <= maxdist){
 		    if (car_pos<=state[indx+1]){
-	        	if (control[indx]==1){
+	        	if (control[indx]>0){
 	    	    	acc_sig = true;
 	    	    	brake_sig = false;
 	        	}
@@ -471,8 +599,7 @@ $(document).on("pageinit",function(event){
 		ctx.closePath();
 	};
 	
-	GA = new ga(); // run ga
-//	GA.run();
+	run();
 });
 
 $(window).resize(function(){
@@ -491,7 +618,7 @@ function sortWithIndeces(toSort) {
 	    toSort[i] = [toSort[i], i];
 	  }
 	  toSort.sort(function(left, right) {
-	    return left[0] < right[0] ? -1 : 1;
+	    return left[0] > right[0] ? -1 : 1;
 	  });
 	  toSort.sortIndices = [];
 	  for (var j = 0; j < toSort.length; j++) {
