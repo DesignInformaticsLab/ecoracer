@@ -557,7 +557,7 @@ $(document).on("pageinit",function(event){
 					$("#brake").removeClass("locked");
 					$("#acc").removeClass("locked");
 					tap_start = 1;
-					start_race = DPon;
+					start_race = 1;
 					wheel1moment = Jw1;
 					wheel2moment = Jw2;
 					wheel1.setMoment(wheel1moment);
