@@ -1,0 +1,70 @@
+extends layout
+block content
+  #landscape. 
+    Rotate Device to Landscape
+  div#regpage(data-role='page')
+    #message
+    #regframe
+      #title.
+        ecoRacer 
+      #subtitle.
+        (v0.01)
+      #inputframe
+        input(id='username', type='text', value='username', name='username', onfocus="if(this.value=='username') {this.value='';}", onblur="if(this.value=='') {this.value='username';}")
+        input(id='password', type='text', value='password', name='password', onfocus="this.type='password'; if(this.value=='password') {this.value='';}" onblur="if(this.value=='') {this.type='text';         this.value='password';}")
+      #login.button.
+        LOGIN
+      #register.button.
+        REGISTER
+  div#homepage(data-role='page')
+    #StartScreen
+      h1 EcoRacer
+      h2 *** You only have 36 seconds to get out... ***
+      h2 *** So beat other drivers by using LESS battery energy! ***
+      h2 *** Tap to start ***
+      #BrakeText
+        h2 Your brake!
+      #AccText
+        h2 Your throttle!
+
+    #wrapper
+      #data
+        #car_progress
+          progress(id='pbar',max='100',value='0')
+        #battshape
+          #battcap
+          #outer
+            #battvalue.inner
+        #batttext.battcons
+        #mot1.motor1T
+        #mot2.motor2T
+        #speedval
+        #effval
+        #myscore
+      canvas(id='canvasbg')
+      canvas(id='canvas1')
+      #brake-container
+        #brake.round-button.locked.
+          B
+      #acc-container
+        #acc.round-button.locked.
+          A
+      #timer
+      #messagebox
+        #textmessage
+        #ok.
+          OK
+        #restart.
+          TRY AGAIN
+        #review.
+          STATS
+      #scorebox
+      #history
+      #designbutton.round-button
+      #resetbutton.round-button
+    #design
+      #finaldrive
+        #finaldrivetext
+        #canvas_gear
+      #designed.round-button
+  script(type='text/javascript',src='/javascripts/main.js')

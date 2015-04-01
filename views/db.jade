@@ -1,0 +1,8 @@
+extends layout
+
+block content
+  script(type='text/javascript').
+    $.getJSON('/db', function(response) {
+      a = response;
+    });
+  
