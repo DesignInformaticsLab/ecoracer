@@ -42,8 +42,8 @@ function generate_policy(w, s, d, t, v){
 }
 
 function run(){
-	//initial();
-	initial_with_user();
+	initial();
+	//initial_with_user();
 }
 function initial_with_user(){
 	$.ajax({
@@ -395,7 +395,7 @@ function run_game(input, callback){
 				   'finaldrive':fr,
 				   'iteration':iter,
 //				   'method':'user_model_1_1',
-				   'method':'longtrack_data_user_model_1', // ego: normal ego algoirthm;  player_parameter: to rerun all players using the parametric control model
+				   'method':'longtrack_data_no_user_5', // ego: normal ego algoirthm;  player_parameter: to rerun all players using the parametric control model
 				   // user_model_1 is based on plays with performance better than 0, and uses the 9 control parameter fit, one-class svm,
 				   // plays with negative simulated scores are removed, so as those with parameter values greater than 10
 

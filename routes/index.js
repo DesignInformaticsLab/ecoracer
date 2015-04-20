@@ -3,8 +3,8 @@ var bcrypt = require('bcrypt-nodejs');
 var router = express.Router();
 var pg = require('pg');
 
-var connection = "postgres://postgres:KVTWN78mpostgres@localhost:5432/postgres"; //postgres is the local server
-var connection_online = process.env.DATABASE_URL || "postgres://postgres:KVTWN78mpostgres@localhost:5432/idetc2014"; //idetc2014 is a backup from the online game before 11.27.2014
+var connection = "postgres://postgres:GWC464doi@localhost:5432/postgres"; //postgres is the local server
+var connection_online = process.env.DATABASE_URL || "postgres://postgres:GWC464doi@localhost:5432/idetc2014"; //idetc2014 is a backup from the online game before 11.27.2014
 function handle_error(res, err) {
 	  console.error(err);
 	  res.status(500).send("Error " + err);
