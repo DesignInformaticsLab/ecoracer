@@ -26,15 +26,31 @@ function generate_policy(w, s, d, t, v){
 	s_ = s;
 	d_ = d/900;
 	t_ = (t+1)/36;
-	d_t = d_/t_;
+	//d_t = d_/t_;
 	v_ = v/80;
 	
-	p_acc = (1 + w[0]*s_ + w[1]*d_ + w[2]*t_ + w[3]*v_ + w[4]*d_t + w[5]*s_*v_ + w[6]*s_*d_ + w[7]*d_*d_ + w[8]*d_*d_*d_)/3;
-	p_brk = (1 - (w[0]*s_ + w[1]*d_ + w[2]*t_ + w[3]*v_ + w[4]*d_t + w[5]*s_*v_ + w[6]*s_*d_ + w[7]*d_*d_ + w[8]*d_*d_*d_))/3;
-	
-	if (p_acc>0.5){return 1;}
-	else if(p_brk>0.5){return -1;}
+	//p_acc = (1 + w[0]*s_ + w[1]*d_ + w[2]*t_ + w[3]*v_ + w[4]*d_t + w[5]*s_*v_ + w[6]*s_*d_ + w[7]*d_*d_ + w[8]*d_*d_*d_)/3;
+	//p_brk = (1 - (w[0]*s_ + w[1]*d_ + w[2]*t_ + w[3]*v_ + w[4]*d_t + w[5]*s_*v_ + w[6]*s_*d_ + w[7]*d_*d_ + w[8]*d_*d_*d_))/3;
+
+    //use a single layered neural network
+    var IW = w.slice(0,16);
+    var b1 = w.slice(16,20);
+    var LW = w.slice(20,24);
+    var b2 = w.slice(24,25);
+
+    var a1 = new Array(4);
+    a1[0] = tansig(IW[0]*s+IW[4]*d_+IW[8]*t_+IW[12]*v_+b1[0]);
+    a1[1] = tansig(IW[1]*s+IW[5]*d_+IW[9]*t_+IW[13]*v_+b1[1]);
+    a1[2] = tansig(IW[2]*s+IW[6]*d_+IW[10]*t_+IW[14]*v_+b1[2]);
+    a1[3] = tansig(IW[3]*s+IW[7]*d_+IW[11]*t_+IW[15]*v_+b1[3]);
+    var a2 = a1[0]*LW[0]+a1[1]*LW[1]+a1[2]*LW[2]+a1[3]*LW[3]+b2[0];
+
+    if (a2>0.5){return 1;}
+	else if(a2<-0.5){return -1;}
 	else {return 0;}
+}
+function tansig(x){
+    return 2.0/(1+Math.exp(-2*x))-1;
 }
 
 function run(){
@@ -158,7 +174,7 @@ function sample(){
 function ego_obj(x){
 	var y_min = best_obj[iter];
 	var y_hat = kriging(x);
-	var s = Math.sqrt(mse(x))*sigma();
+	var s = mse(x)*sigma();
 	return (y_min-y_hat)*Phi((y_min-y_hat)/s)+s*phi((y_min-y_hat)/s);
 }
 function sigma(){
@@ -359,12 +375,12 @@ function run_game(input, callback){
 				   'replay_score':player_score,
 				   'keys':JSON.stringify(w),
 				   'finaldrive':fr,
-				   'database':'ecoracer_rerun_parameters'},
+				   'database':'ecoracer_rerun_parameters_neuralnet'},
 				   function(){
 			        	if (typeof(callback) == 'function') {
 			                callback();
 			            }
-				   });	
+				   });
         }
     };
     step(0);
@@ -927,7 +943,7 @@ var simulate_parameterized_user = function(id){
 };
 var parameter_simulation_data;
 var read_parameter_simulation_results = function(){
-	$.post('/read_rerunplayer_parameters', {'database':'ecoracer_rerun_parameters'}, function(res){
+	$.post('/read_rerunplayer_parameters', {'database':'ecoracer_rerun_parameters_neuralnet'}, function(res){
 		parameter_simulation_data = res.data;
 	})
 }
