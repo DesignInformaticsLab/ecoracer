@@ -20,7 +20,7 @@ var best_obj = [];
 var model = {'R':[],'b':[],'X':[],'y':[], 'r':[], 'R_y':[], 'y_b':[]};
 var range = 3; // range of the control parameter space
 var user_model = {'X':[], 'n':0, 'w':[], 'b':0, 'gamma':0};
-var multitrack = 1;
+var multitrack = 5;
 
 
 function generate_policy(w, s, d, t, v){
@@ -42,12 +42,12 @@ function generate_policy(w, s, d, t, v){
 }
 
 function run(){
-	initial();
-	//initial_with_user();
+	//initial();
+	initial_with_user();
 }
 function initial_with_user(){
 	$.ajax({
-	    url: "/data/player_model_500.json", // player_model_500 is for the first 500 games, player_model_1000 for the first 1000 games
+	    url: "/data/player_model_500.json",
 	    dataType: "text",
 	    success: function(data) {
 	    	data = JSON.parse(data);
@@ -395,7 +395,7 @@ function run_game(input, callback){
 				   'finaldrive':fr,
 				   'iteration':iter,
 //				   'method':'user_model_1_1',
-				   'method':'original_data_no_user_5', // ego: normal ego algoirthm;  player_parameter: to rerun all players using the parametric control model
+				   'method':'longtrack_data_user_model500_5', // ego: normal ego algoirthm;  player_parameter: to rerun all players using the parametric control model
 				   // user_model_1 is based on plays with performance better than 0, and uses the 9 control parameter fit, one-class svm,
 				   // plays with negative simulated scores are removed, so as those with parameter values greater than 10
 
@@ -410,8 +410,9 @@ function run_game(input, callback){
 
                    // longtrack_data_no_user is a new game (long track) without using user model
                    // longtrack_data_user_model is a new game (long track) with using user model
+                   // longtrack_data_user_model500 is a new game (long track) with using user model trained with the first 500 plays
+                   // longtrack_data_EGO use EGO results from the original game to play longtrack
 
-                   // original_data_user_model_500(1000) is the original game with using user model from the first 500(1000) plays
 				   //NOTE for all future runs, change the last method digit to indicate the experiment ID!!!
 
 				   'database':'ecoracer_learning_ego_table'},
