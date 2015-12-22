@@ -176,6 +176,7 @@ scene.prototype.update = function (dt) {
 			acc_sig = false;
 	    	//$('#runner').runner('stop');
 	    	start_race = 0;
+	    	__SCORE__ = consumption;
 	    }
 	    /////////////////////////////////
 
@@ -215,7 +216,7 @@ scene.prototype.update = function (dt) {
 		
 	    
 /////////////////////////////DP simulation //////////////////////////////////////////
-        if (control && (car_pos <= maxdist)){
+        if (car_pos <= maxdist){
 		    if (car_pos<=control_x[indx+1]){
 	        	if (control_comm[indx]==1){
 	    	    	acc_sig = true;
@@ -225,12 +226,12 @@ scene.prototype.update = function (dt) {
 	        	else if(control_comm[indx]==0){
 	        		acc_sig = false;
 	        		brake_sig = false;
-	        		motor1.rate = 0;
-	        		motor2.rate = 0;
+//	        		motor1.rate = 0;
+//	        		motor2.rate = 0;
 	        		//wheel1.v_limit = Infinity;
 	        		//wheel2.v_limit = Infinity;
-	        		wheel1.setMoment(wheel1moment);
-	        		wheel2.setMoment(wheel2moment);
+//	        		wheel1.setMoment(wheel1moment);
+//	        		wheel2.setMoment(wheel2moment);
 	        	}
 	        	else{
 	    			brake_sig = true;
@@ -240,6 +241,18 @@ scene.prototype.update = function (dt) {
 	        else{
 	    		indx = indx+1;
 	        }
+		    
+		    if (cTime - just_now > 0.01){
+		    	var d = 900-car_pos9;
+	        	var t = timeout-cTime;
+	        	var v = vehSpeed;
+	        	var ind = Math.floor(car_pos9/10)+1;
+	        	var s = data[ind+1]>data[ind]? 1:-1;
+	        	if(data[ind+1] == data[ind]){s=0;}
+	        	
+	        	CONTROL_DATA.push([s,d,t,v,control_comm[indx]]);
+		    	just_now = cTime;
+		    }
 		};
 	    
 		fricImpl = -1*fric*(chassis.m + wheel1.m + wheel2.m + motorbar1.m + motorbar2.m)*wheel1.shapeList[0].r/tstep*wheel1.w/(Math.abs(wheel1.w)+0.0001);
@@ -302,68 +315,106 @@ scene.prototype.update = function (dt) {
 
 };
 
-//Run
-var start_race = true;
-var DPon = true;
-//var DP_x = new Float64Array([0,210,215,230,245,255,295,305,330,335,345,350,385,410,415,420,475,480,540,545,845,850,860, 950]);
-var DP_x = new Float64Array([0,210,215,230,245,255,295,305,330,335,345,350,385,410,415,420,475,480,540,545,845,850,860, 950]);
-var DP_comm = new Float64Array([1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,-1,0,-1,-1]);
-var DP_fr = 18;
-var user;
-var user_fr;
-var user_x;
-var user_comm;
-//for now, just use the best player at 11.09.2014
-//{"acc":[179,2375,2768,5794,11352,12419],"brake":[15599,16044,17102]}
-user = false;
-user_fr = 18;
-//var x = [179,2375,2768,5794,11352,12419,  15599,16044,17102,  909*20];
-var x = [179,2375+20,2768,5794,11352,12419,  15599,16044,17102+20,  909*20];
-user_x = [];
-$.each(x,function(i,d){
-	var a = Math.round(d*px2m); //-9.03
-	a = a -9;
-	user_x.push(a);});
-user_comm = [1,0,1,0,1,0,-1,0,-1,-1];
-
-if (user){
-	var control = user;
-	var control_x = user_x;
-	var control_comm = user_comm;
-	var fr = user_fr;	
-}
-else if (DPon){
-	var control = DPon;
-	var control_x = DP_x;
-	var control_comm = DP_comm;
-	var fr = DP_fr;		
-}
-		
-
-demo = new scene();
-demo.run();
-
-$(document).on("pageinit",function(event){
-	wheel1moment = Jw1;
-	wheel2moment = Jw2;
-	wheel1.setMoment(wheel1moment);
-	wheel2.setMoment(wheel2moment);
-	drawLandscape = function(){
-		// draw the landscape
-		var canvas = document.getElementById("canvasbg");
-		var ctx = canvas.getContext('2d');
-		ctx.lineWidth = 2;
-		ctx.strokeStyle = "rgba(0,0,0, 1)";
-		ctx.beginPath();
-		ctx.moveTo(0,39);
-		for (var i=1;i<data.length;i++){
-			ctx.lineTo(i/(data.length-1)*scene_width,39-data[i]/100*39);
-		}
-		ctx.stroke();
-		ctx.closePath();
-	};
-	drawLandscape();
+var control_x, control_comm, fr, __CONTROL_DATA__, __SCORE__, just_now;
+var run_game = function(setting, callback){
+	//Run
+	if (typeof setting.DP != 'undefined'){
+		var DP_x = new Float64Array([0,210,215,230,245,255,295,305,330,335,345,350,385,410,415,420,475,480,540,545,845,850,860, 950]);
+		var DP_comm = new Float64Array([1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,-1,0,-1,-1]);
+		var DP_fr = 18;	
+		control_x = DP_x;
+		control_comm = DP_comm;
+		fr = DP_fr;	
+	}
+	else{
+		// the best player on 11.09.2014
+		// {"acc":[179,2375,2768,5794,11352,12419],"brake":[15599,16044,17102]}
+		// user_fr = 18;
+		// var x = [179,2375,2768,5794,11352,12419,  15599,16044,17102,  909*20];
+		var data = alluser_control[setting.game_id];
+		var user_fr = data.fr;
+		var user_x = []; var user_comm = [];
+		$.each(data.x,function(i,d){
+			var a = Math.round(d*px2m); //-9.03
+//			a = a -9; //dont do this since user_x is compared to car_pos rather than car_pos9
+			user_x.push(a);
+			user_comm.push(data.sig[i]);
+		});
+//		user_x.push(909*20*px2m-9); // brake in the end
+//		user_comm.push(-1);
+		control_x = user_x;
+		control_comm = user_comm;
+		fr = user_fr;	
+	}
+	CONTROL_DATA = [];
 	
+	if (control_x.length>0){
+		consumption = 0;
+		battstatus = 100;
+		if(typeof demo != 'undefined'){demo.stop();}
+		demo = new scene();
+		demo.canvas.style.position = "absolute";
+		demo.canvas.style.left = "0px";
+
+		wheel1moment = Jw1;
+		wheel2moment = Jw2;
+		wheel1.setMoment(wheel1moment);
+		wheel2.setMoment(wheel2moment);
+		$("#timer").show();
+		
+		counter = 0;
+		vehSpeed = 0;
+		motor2eff = 0;
+		car_posOld = 0;
+		var pBar = document.getElementById("pbar");
+		pBar.value = 0;
+		drawLandscape();
+		c = 0;
+		just_now = -0.5;
+		
+		indx = 0;
+		
+		//Run
+		start_race = true;
+	    demo.running = true;
+	    var lastTime = 0;
+	    var step = function (time) {
+	        demo.step(time - lastTime);
+	        lastTime = time;
+	        if (start_race) {
+	            requestAnimationFrame(step);
+	        }
+	        else{
+	        	SCORE =  (Math.round(1000-(consumption/3600/1000/max_batt*1000))/10)*(car_pos9-900>=0) + (car_pos9-900)/9; //higher is better
+	        	$.post('/store_analysis_data',{'database': 'ecoracer_analysis', 'control_data':JSON.stringify(CONTROL_DATA),
+	        		'score':SCORE, 'consumption':Math.round(consumption)},function(){
+//	            	ALL_CONTROL_DATA.push(CONTROL_DATA);
+//	            	ALL_SCORE.push(SCORE);
+//	            	ALL_CONSUMPTION.push(consumption);
+	            	
+	            	if (typeof(callback) == 'function') {
+	                    callback();
+	                }        		
+	        	})
+	        }
+	    };
+	    step(0);		
+	}
+	else{
+		SCORE =  -1; //higher is better
+    	$.post('/store_analysis_data',{'database': 'ecoracer_analysis', 'control_data':JSON.stringify(CONTROL_DATA),
+    		'score':SCORE, 'consumption':0},function(){
+//        	ALL_CONTROL_DATA.push(CONTROL_DATA);
+//        	ALL_SCORE.push(SCORE);
+//        	ALL_CONSUMPTION.push(consumption);
+        	
+        	if (typeof(callback) == 'function') {
+                callback();
+            }        		
+    	})
+	}
+
+    
 //	$.post('/getresults',{'n':1}, function(data){
 //		user = true;
 //		var d = $.parseJSON(data[0].keys);
@@ -389,11 +440,13 @@ $(document).on("pageinit",function(event){
 //		}
 //		// convert to the same format as for DP
 //	});	
-});
-
-demo.canvas.style.position = "absolute";
-demo.canvas.style.left = "0px";
-
+}
+var allconverteddata;
+var readconvertedresults = function(){
+	$.post('/read_analysis_data', {'database':'ecoracer_analysis'}, function(data) {
+	    	allconverteddata = data;
+	    });
+};
 
 
 $(window).resize(function(){
@@ -405,3 +458,47 @@ $(window).resize(function(){
 	$('#canvasbg')[0].height = 40;
 	w = demo.width = demo.canvas.width = scene_width;
 });
+
+var drawLandscape = function(){
+	// draw the landscape
+	var canvas = document.getElementById("canvasbg");
+	var ctx = canvas.getContext('2d');
+	ctx.lineWidth = 2;
+	ctx.strokeStyle = "rgba(0,0,0, 1)";
+	ctx.beginPath();
+	ctx.moveTo(0,39);
+	for (var i=1;i<data.length;i++){
+		ctx.lineTo(i/(data.length-1)*scene_width,39-data[i]/100*39);
+	}
+	ctx.stroke();
+	ctx.closePath();
+};
+
+var allresults;
+var getallresults = function(){
+	$.post('/getallresults',function(res){
+		allresults = res;
+	})
+};
+var alluser_control;
+var getalluser_control = function(){$.ajax({
+	    url: "/data/alluser_control.json",
+	    //force to handle it as text
+	    dataType: "text",
+	    success: function(data) {
+	    	alluser_control = $.parseJSON(data).alluser_control;
+	    }
+	});
+};
+
+// replay games using original player control signals
+var CONTROL_DATA, SCORE;
+var id = 0;
+var simulate_user = function(id){
+	run_game({'game_id':id}, function(){
+		id++;
+		if(id<alluser_control.length){
+			simulate_user(id);
+		}		
+	});
+};
