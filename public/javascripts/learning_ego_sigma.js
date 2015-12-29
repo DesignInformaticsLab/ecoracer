@@ -20,7 +20,7 @@ var n_var = 30+1; // 30 pcs for control + 1 design
 var iter = 0;
 var max_iter = 200;
 var obj_set = [];
-var sample_size = 5;
+var sample_size = 1;
 var sample_set = [];
 
 var sigma_inv = []; // learning a covariance of the solution space
@@ -37,9 +37,10 @@ var model = {'R':[],'b':[],'X':[],'y':[], 'r':[], 'R_y':[], 'y_b':[]};
 var user_model = {'X':[], 'n':0, 'w':[], 'b':0, 'gamma':0};
 var multitrack = 1;
 
-var basis_url = "/data/p2_ICA_transform.json";
-var parameter_url = "/data/p2_slsqp_sigma.json";
-var range_url = "data/p2_range_transform.json";
+var basis_url = "/data/p2_ICA_transform.json"; // from all players
+var parameter_url = "/data/p2_slsqp_sigma.json"; // from best player 2
+var range_url = "data/p2_range_transform.json"; // from best player 2
+var initial_guess_url = "data/mix_scaled_p2_0.txt"; // from best player 2
 
 function generate_policy(x){ // in DETC2016, this is a one-time calculation for each play
     // x is the low-dim control
@@ -95,15 +96,16 @@ function initial_with_learned_sigma(){
                    sigma_inv[i] = 0; // remove small values
                }
             });
-            // random initial sample set
-            for(var i=0;i<sample_size;i++){
-                var g = [Math.random()]; // for final drive ratio
-                for(var j=1;j<n_var;j++){
-                    var r = Math.random()*2-1; // search in [-1,1]
-                    g.push(r);
-                }
-                sample_set.push(g);
-            }
+
+            //// random initial sample set
+            //for(var i=0;i<sample_size;i++){
+            //    var g = [Math.random()]; // for final drive ratio
+            //    for(var j=1;j<n_var;j++){
+            //        var r = Math.random()*2-1; // search in [-1,1]
+            //        g.push(r);
+            //    }
+            //    sample_set.push(g);
+            //}
 
 
             //// the following initial point is for debug only
@@ -141,10 +143,63 @@ function initial_with_learned_sigma(){
             //    ];
             //sample_set.push(g);
 
+            // use a given initial guess from recorded plays
+            $.ajax({
+                url: initial_guess_url,
+                dataType: "text",
+                success: function(data) {
+                    data = JSON.parse(data);
+                    sanmple_set.push([0].concat(data));
+
+                    $.ajax({
+                        url: basis_url,
+                        dataType: "text",
+                        success: function (data) {
+                            data = JSON.parse(data);
+                            basis = data.mix; // for ICA only
+                            bias = data.mean; // for ICA mean
+
+                            $.ajax({
+                                url: range_url,
+                                dataType: "text",
+                                success: function (data) {
+                                    data = JSON.parse(data);
+                                    transform_bias = data.min;
+                                    transform_scale = data.range;
+
+                                    calculate_obj(sample_set, iterate);
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        }
+    });
+}
+function initial(){
+    //// random initial sample set
+    //for(var i=0;i<sample_size;i++){
+    //    var g = [Math.random()];
+    //    for(var j=1;j<n_var;j++){
+    //        var r = (Math.random()-0.5)*2;
+    //        g.push(r);
+    //    }
+    //    sample_set.push(g);
+    //}
+
+    // use a given initial guess from recorded plays
+    $.ajax({
+        url: initial_guess_url,
+        dataType: "text",
+        success: function(data) {
+            data = JSON.parse(data);
+            sanmple_set.push([0].concat(data));
+
             $.ajax({
                 url: basis_url,
                 dataType: "text",
-                success: function(data) {
+                success: function (data) {
                     data = JSON.parse(data);
                     basis = data.mix; // for ICA only
                     bias = data.mean; // for ICA mean
@@ -164,18 +219,6 @@ function initial_with_learned_sigma(){
             });
         }
     });
-}
-function initial(){
-    // random initial sample set
-    for(var i=0;i<sample_size;i++){
-        var g = [Math.random()];
-        for(var j=1;j<n_var;j++){
-            var r = (Math.random()-0.5)*2;
-            g.push(r);
-        }
-        sample_set.push(g);
-    }
-    calculate_obj(sample_set, iterate);
 };
 
 function iterate(){
