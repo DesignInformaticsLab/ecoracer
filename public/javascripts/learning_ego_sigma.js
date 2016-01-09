@@ -20,7 +20,7 @@ var n_var = 30+1; // 30 pcs for control + 1 design
 var iter = 0;
 var max_iter = 200;
 var obj_set = [];
-var sample_size = 1;
+var sample_size = 2;
 var sample_set = [];
 
 var sigma_inv = []; // learning a covariance of the solution space
@@ -37,17 +37,19 @@ var model = {'R':[],'b':[],'X':[],'y':[], 'r':[], 'R_y':[], 'y_b':[]};
 var user_model = {'X':[], 'n':0, 'w':[], 'b':0, 'gamma':0};
 var multitrack = 1;
 
+// NOTE: Thurston's files have gear ratio as the last element, this code assumes that it's the first
+// so I changed all the following files manually when necessary.
 var basis_url = "/data/p2_ICA_transform.json"; // from all players
 var parameter_url = "/data/p2_slsqp_sigma.json"; // from best player 2
 var range_url = "data/p2_range_transform.json"; // from best player 2
-var initial_guess_url = "data/mix_scaled_p2_0.txt"; // from best player 2
+var initial_guess_url = "data/mix_scaled_p2_init.txt"; // from best player 2
 
 function generate_policy(x){ // in DETC2016, this is a one-time calculation for each play
     // x is the low-dim control
     // AI*x is the control signal in the distance space
 
     var y = transform(x.slice(1,31)); // inverse transform the variables before applying to the basis
-    fr = Math.floor(x[0]*31)+10;
+    fr = Math.floor((x[0]+1)/2*30)+10; // fr ranges from -1 to 1
 
     // create a zero vector
     control_signal = Array(basis.length);
@@ -148,8 +150,12 @@ function initial_with_learned_sigma(){
                 url: initial_guess_url,
                 dataType: "text",
                 success: function(data) {
-                    data = JSON.parse(data);
-                    sanmple_set.push([0].concat(data));
+                    var res = data.split(" ");
+                    $.each(res, function(i,e){
+                       res[i] = Number(e);
+                    });
+                    sample_set.push(res.slice(0,res.length/2));
+                    sample_set.push(res.slice(res.length/2,res.length));
 
                     $.ajax({
                         url: basis_url,
@@ -1086,11 +1092,11 @@ GA.prototype.crossover = function(){
 GA.prototype.mutation = function(){
     var mutation_rate = 1.0/Math.sqrt(Math.sqrt(this.iter+1));
     for(var i=0;i<this.n_mutate;i++){
-        if(Math.random()<mutation_rate){
-            this.mutate_pop[i][0] += (Math.random()-0.5)*0.2;
-            this.mutate_pop[i][0] = Math.min(Math.max(this.mutate_pop[i][0], 0), 1);
-        }
-        for(var j=1;j<n_var;j++){
+        //if(Math.random()<mutation_rate){
+        //    this.mutate_pop[i][0] += (Math.random()-0.5)*0.2;
+        //    this.mutate_pop[i][0] = Math.min(Math.max(this.mutate_pop[i][0], 0), 1);
+        //}
+        for(var j=0;j<n_var;j++){
             if(Math.random()<mutation_rate){
                 this.mutate_pop[i][j] += (Math.random()-0.5)*0.2;
                 this.mutate_pop[i][j] = Math.min(Math.max(this.mutate_pop[i][j],-1),1); // explore within [-1, 1]
