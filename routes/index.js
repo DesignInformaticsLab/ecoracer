@@ -3,7 +3,7 @@ var bcrypt = require('bcrypt-nodejs');
 var router = express.Router();
 var pg = require('pg');
 
-var connection = process.env.DATABASE_URL || "postgres://postgres:KVTWN78mpostgres@localhost:5432/postgres";
+var connection = process.env.DATABASE_URL || "postgres://postgres:54093960@localhost:5432/postgres";
 function handle_error(res, err) {
 	  console.error(err);
 	  res.status(500).send("Error " + err);
@@ -27,6 +27,11 @@ router.get('/analysis', function(req, res) {
 /* GET learning. */
 router.get('/learning', function(req, res) {
 	res.render('learning');
+});
+
+/* GET learning. */
+router.get('/policysynthesis', function(req, res) {
+    res.render('policysynthesis');
 });
 
 
@@ -256,3 +261,37 @@ router.post('/adddata_learning', function(req, res) {
 });
 
 module.exports = router;
+
+
+/* POST sars data. */
+router.post('/adddata_sars', function(req, res) {
+    var database = "ecoracer_learning_ps_table";
+
+    pg.connect(connection, function(err, client, done) {
+        if(err) res.send("Could not connect to DB: " + err);
+        //id SERIAL,
+        //    speed_ini REAL,
+        //    time_ini REAL,
+        //    slope_ini REAL,
+        //    distance_ini REAL,
+        //    act INTEGER,
+        //    reward REAL,
+        //    speed_end REAL,
+        //    time_end REAL,
+        //    slope_end REAL,
+        //    distance_end REAL,
+        //    winning boolean,
+        //    used boolean,
+        var insert_query = client.query('INSERT INTO '+database+' (speed_ini, time_ini, slope_ini, distance_ini,' +
+            'act, reward, speed_end, time_end, slope_end, distance_end, winning, used) VALUES ($1, $2, $3, $4,' +
+            '$5, $6, $7, $8, $9, $10, $11, $12)',
+            [req.body.speed_ini, req.body.time_ini, req.body.slope_ini, req.body.distance_ini,
+             req.body.act, req.body.reward, req.body.speed_end, req.body.time_end,
+             req.body.slope_end, req.body.distance_end, req.body.winning, req.body.used]);
+
+        insert_query.on('err', handle_error.bind(this, err));
+        insert_query.on('end', function(result){res.status(202).send("Accepted data");});
+        done();
+    });
+
+})

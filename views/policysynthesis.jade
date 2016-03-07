@@ -1,0 +1,41 @@
+//
+   Created by p2admin on 3/7/2016.
+
+doctype html
+html(lang="en")
+   head
+      title= EcoRacer
+      link(rel='stylesheet', href='/stylesheets/main.css')
+      link(rel='stylesheet', href='/stylesheets/jquery.mobile-1.4.3.min.css')
+      script(type='text/javascript',src='/javascripts/thirdparty/jquery-1.10.2.min.js')
+      script(type='text/javascript',src='/javascripts/thirdparty/jquery.mobile-1.4.3.min.js')
+      script(type='text/javascript',src='/javascripts/thirdparty/d3.min.js')
+      script(type='text/javascript',src='/javascripts/thirdparty/numericjs.js')
+      script(type='text/javascript',src='/javascripts/cp.js')
+      script(type='text/javascript',src='/javascripts/extra.js')
+      meta(name='viewport', content='width=1280, user-scalable=no')
+   body
+      #landscape.
+         Rotate Device to Landscape
+      div#homepage(data-role='page')
+         #wrapper
+            #data
+               #car_progress
+                  progress(id='pbar',max='100',value='0')
+               #battshape
+                  #battcap
+                  #outer
+                     #battvalue.inner
+               #batttext.battcons
+               #mot1.motor1T
+               #mot2.motor2T
+               #speedval
+               #effval
+               #myscore
+            canvas(id='canvasbg')
+            canvas(id='canvas1')
+            #timer
+         #status
+            #now
+            #statusplot
+      script(type='text/javascript',src='/javascripts/record_states.js') //to record sars from players
