@@ -1,7 +1,8 @@
 /**
  * Created by p2admin on 3/7/2016.
  */
-// This code records "sars" from existing plays
+    // This code runs the policy synthesis algorithm modified from the paper:
+    // Dyanmics Terrain Traversal Skills Using Reinforcement Learning
 var scene_width = $(window).width();
 var scene_height = $(window).height();
 $("#wrapper").width(scene_width);
@@ -10,324 +11,192 @@ $("#wrapper").height(scene_height);
 var __ENVIRONMENT__ = defineSpace("canvas1", scene_width, scene_heightx);
 
 /****************************************** ALGORITHM **********************************************************/
-var sample_size = 2;
-var sample_set = [];
-
-var basis = []; // learned principal components from all players
-var bias = []; // ica means
-var transform_bias = [];
-var transform_scale = [];
-
-var control_signal = [];
-var fr;
-
+// Game related
+var fr = 18;
 var cTime;
 var vehSpeed;
-
-var best_obj = [];
 var multitrack = 1;
 
-// NOTE: Thurston's files have gear ratio as the last element, this code assumes that it's the first
-// so I changed all the following files manually when necessary.
-var basis_url = "/data/p2_ICA_transform.json"; // from all players
-var parameter_url = "/data/p2_slsqp_sigma.json"; // from best player 2
-var range_url = "data/p2_range_transform.json"; // from best player 2
-var initial_guess_url = "data/mix_scaled_p2_init.txt"; // from best player 2
+// Reinforcement learning related
+var epsilon = 0.1;
+var alpha = 0.5;
+var iter = 0;
+var max_iter = 10; // number of exploration
+var act = 0;
 
-function generate_policy(x){ // in DETC2016, this is a one-time calculation for each play
-    // x is the low-dim control
-    // AI*x is the control signal in the distance space
+function start_exploration(){
+    // initialize the game
+    initialize();
 
-    var y = transform(x.slice(1,31)); // inverse transform the variables before applying to the basis
-    fr = Math.floor((x[0]+1)/2*30)+10; // fr ranges from -1 to 1
-
-    // create a zero vector
-    control_signal = Array(basis.length);
-    $.each(control_signal, function(i,s){
-        control_signal[i] = bias[i];
-    });
-    $.each(basis, function(i,row){ // i = 0..~18k
-        $.each(row, function(j,e){ // j = 0..29
-            //if (sigma_inv[j]>0) { // only consider non-zero sigma_inv related variables
-            control_signal[i] += e*y[j];
-            //}
-        });
-        if (control_signal[i]>=0.5){
-            control_signal[i] = 1;
-        }
-        else if (control_signal[i]<=-0.5){
-            control_signal[i] = -1;
-        }
-        else {
-            control_signal[i] = 0;
-        }
-    });
-}
-
-function transform(x){ // inverse transform from [-1,1] to original reduced space
-    var y = Array(x.length);
-    $.each(x, function(i,s){
-        y[i] = (x[i]-transform_bias[i])/transform_scale[i];
-    });
-    return y;
-}
-
-function run(){
-    initial();
-}
-function initial(){
-    $.ajax({
-        url: initial_guess_url,
-        dataType: "text",
-        success: function(data) {
-            var res = data.split(" ");
-            $.each(res, function(i,e){
-                res[i] = Number(e);
-            });
-            sample_set.push(res.slice(0,res.length/2));
-            sample_set.push(res.slice(res.length/2,res.length));
-
-            $.ajax({
-                url: basis_url,
-                dataType: "text",
-                success: function (data) {
-                    data = JSON.parse(data);
-                    basis = data.mix; // for ICA only
-                    bias = data.mean; // for ICA mean
-
-                    $.ajax({
-                        url: range_url,
-                        dataType: "text",
-                        success: function (data) {
-                            data = JSON.parse(data);
-                            transform_bias = data.min;
-                            transform_scale = data.range;
-
-                            calculate_obj(sample_set);
-                        }
-                    });
+    var explore = function(epsilon){
+        // get current state
+        var s = get_current_state();
+        // get action
+        $.post('get_action', {
+            'speed':s[0],
+            'distance':s[1],
+            'time':s[2],
+            'slope':s[3]
+            }, function(res){
+                approximate_policy(res);
+                // do epsilon-greedy
+                var u = Math.random();
+                if (u<(1-epsilon)){
+                    // use a
                 }
-            });
+                else{
+                    // do exploration, i.e., randomly pick the other two
+                    if (act==-1){
+                        act = Math.random()>0.5? 0:1;
+                    }
+                    else if(act==0){
+                        act = Math.random()>0.5? -1:1;
+                    }
+                    else{
+                        act = Math.random()>0.5? -1:0;
+                    }
+                }
+                // step game with action
+                step(function(){
+                    if (start_race==false){
+                        if (iter<max_iter) {
+                            iter += 1;
+                            start_exploration();
+                        }
+                    }
+                    else{
+                        explore(epsilon);
+                    }
+                });
+        });
+    };
+    explore(epsilon);
+}
+
+function approximate_policy(res){
+    // do majority vote
+    var vote = [0,0,0]; // count the votes for the three actions -1, 0, 1
+    $.each(res, function(i,r){
+        if (r.act==-1){
+            vote[0] += 1;
+        }
+        else if(r.act==0){
+            vote[1] += 1;
+        }
+        else if(r.act==1){
+            vote[2] += 1;
         }
     });
+    var a_set = [-1,0,1];
+    var vote_sorted = sortWithIndeces(vote,'dsc');
+    act =  a_set[vote_sorted.sortIndices[0]];
 }
 
-function calculate_obj(set, callback){
-    var x = set.slice(0);
-    var id = 1;
-    var f2 = function(i){
-        if(id<sample_size){
-            run_game(x[id], f2);
-            id += 1;
-        }
-        else{
-            // recursively call iterate
-            if (typeof(callback) == 'function') {
+function get_current_state(){
+    var speed = vehSpeed;
+    var distance = 900*multitrack-car_pos9;
+    var time = timeout-cTime;
+    var ind = Math.floor(car_pos9/10)+1;
+    var slope = data[ind+1]>data[ind]? 1:-1;
+    if(data[ind+1] == data[ind]){slope_ini=0;}
+    return [speed, distance, time, slope];
+}
+
+function initialize() {
+    consumption = 0;
+    battstatus = 100;
+    if (typeof demo != 'undefined') {
+        demo.stop();
+    }
+    demo = new scene();
+    demo.canvas.style.position = "absolute";
+    demo.canvas.style.left = "0px";
+
+    wheel1moment = Jw1;
+    wheel2moment = Jw2;
+    wheel1.setMoment(wheel1moment);
+    wheel2.setMoment(wheel2moment);
+    $("#timer").show();
+
+    // initial states
+    cTime = 0;
+    con1 = 0; con2 = 0;
+    car_pos = Math.round(chassis.p.x * px2m); //-9.03
+    car_pos9 = car_pos - 9;
+    counter = 0;
+    vehSpeed = 0;
+    motor2eff = 0;
+    car_posOld = 0;
+    var pBar = document.getElementById("pbar");
+    pBar.value = 0;
+    drawLandscape();
+    start_race = true;
+    demo.running = true;
+}
+
+function step(callback){
+    //Run
+    var speed_ini = vehSpeed;
+    var distance_ini = 900*multitrack-car_pos9;
+    var time_ini = timeout-cTime;
+    var ind = Math.floor(car_pos9/10)+1;
+    var slope_ini = data[ind+1]>data[ind]? 1:-1;
+    if(data[ind+1] == data[ind]){slope_ini=0;}
+    demo.step();
+
+    if (start_race) {
+        var speed_end = vehSpeed;
+        var distance_end = 900*multitrack-car_pos9;
+        var time_end = timeout-cTime;
+        var ind = Math.floor(car_pos9/10)+1;
+        var slope_end = data[ind+1]>data[ind]? 1:-1;
+        if(data[ind+1] == data[ind]){slope_ini=0;}
+        var reward = -((con1 + con2)/3600./1000./max_batt) + ((car_pos9-900*multitrack)/900>=0); //lower is better
+
+        $.post('/adddata_sars',{
+                'speed_ini':speed_ini,
+                'time_ini':time_ini,
+                'slope_ini':slope_ini,
+                'distance_ini':distance_ini,
+                'act':act,
+                'reward':reward,
+                'speed_end':speed_end,
+                'time_end':time_end,
+                'slope_end':slope_end,
+                'distance_end':distance_end,
+                'winning':false, // ego: normal ego algoirthm;  player_parameter: to rerun all players using the parametric control model
+                'used':true},
+            function(){
                 callback();
-            }
-        }
-    };
-    run_game(x[0], f2);
-};
-
-function converge(){
-    // criterion 1: max iter
-    if (iter>max_iter){
-        return true;
+            });
     }
-    return false;
-};
+    else{
+        var speed_end = vehSpeed;
+        var distance_end = 900*multitrack-car_pos9;
+        var time_end = timeout-cTime;
+        var ind = Math.floor(car_pos9/10)+1;
+        var slope_end = data[ind+1]>data[ind]? 1:-1;
+        if(data[ind+1] == data[ind]){slope_ini=0;}
+        var reward = -((con1 + con2)/3600./1000./max_batt) + ((car_pos9-900*multitrack)/900>=0); //lower is better
 
-function plot_status(){
-    $("#statusplot").html("");
-    var padding = 40;//px
-    var svg_length = $("#statusplot").width();//px
-    var svg_height = $("#statusplot").height();//px
-    var num_play = iter+sample_size;
-    var upper_bound = 45, lower_bound = -100, range = upper_bound-lower_bound;
 
-    var optimal_score = 43.8;
-
-    var data = [];
-    for (var i=0;i<best_obj.length;i++){
-        data.push({"x": i+sample_size, "y": -best_obj[i]}); // convert minimization to maximization
+        $.post('/adddata_sars',{
+                'speed_ini':speed_ini,
+                'time_ini':time_ini,
+                'slope_ini':slope_ini,
+                'distance_ini':distance_ini,
+                'act':act,
+                'reward':reward,
+                'speed_end':speed_end,
+                'time_end':time_end,
+                'slope_end':slope_end,
+                'distance_end':distance_end,
+                'winning':false, // ego: normal ego algoirthm;  player_parameter: to rerun all players using the parametric control model
+                'used':true},
+            function(){
+                callback();
+            });
     }
-    bm = [];
-    bm.push({"x": sample_size, "y": optimal_score});
-    bm.push({"x": iter+sample_size, "y": optimal_score});
-
-    var lineFunction = d3.svg.line()
-        .x(function(d) { return (d.x-sample_size)/(iter+1e-6)*(svg_length-padding*2)+padding; })
-        .y(function(d) { return (1-(d.y-lower_bound)/range)*(svg_height-padding*2)+padding; })
-        .interpolate("linear");
-    var xScale = d3.scale.linear()
-        .domain([sample_size, sample_size+iter])
-        .range([padding, svg_length-padding]);
-    var yScale = d3.scale.linear()
-        .domain([lower_bound, upper_bound])
-        .range([svg_height-padding, padding]);
-
-    var xAxis = d3.svg.axis()
-        .scale(xScale)
-        .orient("bottom")
-        .ticks(Math.min(50,iter));
-    var yAxis = d3.svg.axis()
-        .scale(yScale)
-        .orient("left")
-        .ticks(10);
-
-    var svgContainer = d3.select("#statusplot").append("svg")
-        .attr("width", svg_length)
-        .attr("height", svg_height);
-
-//	 plot user performance
-    svgContainer.append("path")
-        .attr("d", lineFunction(data))
-        .attr("stroke", 'black')
-        .attr("stroke-width", 2)
-        .attr("fill", "none");
-
-    svgContainer.append("path")
-        .attr("d", lineFunction(bm))
-        .attr("stroke", 'black')
-        .attr("stroke-dasharray", ("3, 3"))
-        .attr("stroke-width", 2)
-        .attr("fill", "none");
-    svgContainer.append("g")
-        .attr("transform", "translate(0," + (svg_height - padding) + ")")
-        .attr("class", "x axis")
-        .style("font-size", "6px")
-        .call(xAxis);
-    svgContainer.append("g")
-        .attr("transform", "translate(" + padding +",0)")
-        .attr("class", "y axis")
-        .style("font-size", "6px")
-        .call(yAxis);
-
-    svgContainer.append("text")
-        .attr("x", svg_length/2-padding)
-        .attr("y", padding/2)
-        .attr("text-anchor", "middle")
-        .style("font-size", "14px")
-        .text("Learning Performance");
-};
-
-var w;
-var c = 0;
-var SCORE = 0;
-function run_game(input, callback){
-    // generate control policy for given variable values
-    generate_policy(input);
-    fr = 18; // fix it to the optimal one for policy synthesis
-
-    if (!not_gonna_run()){ // run the game only if it is going to run
-        // reset the game
-        consumption = 0;
-        battstatus = 100;
-        if(typeof demo != 'undefined'){demo.stop();}
-        demo = new scene();
-        demo.canvas.style.position = "absolute";
-        demo.canvas.style.left = "0px";
-
-        wheel1moment = Jw1;
-        wheel2moment = Jw2;
-        wheel1.setMoment(wheel1moment);
-        wheel2.setMoment(wheel2moment);
-        $("#timer").show();
-
-        // initial states
-        cTime = 0;
-        con1 = 0; con2 = 0;
-        car_pos = Math.round(chassis.p.x*px2m); //-9.03
-        car_pos9 = car_pos-9;
-        counter = 0;
-        vehSpeed = 0;
-        motor2eff = 0;
-        car_posOld = 0;
-        var pBar = document.getElementById("pbar");
-        pBar.value = 0;
-        drawLandscape();
-        c = 0;
-
-        indx = 0;
-
-        //Run
-        start_race = true;
-        demo.running = true;
-        var step = function () {
-            var speed_ini = vehSpeed;
-            var distance_ini = 900*multitrack-car_pos9;
-            var time_ini = timeout-cTime;
-            var ind = Math.floor(car_pos9/10)+1;
-            var slope_ini = data[ind+1]>data[ind]? 1:-1;
-            if(data[ind+1] == data[ind]){slope_ini=0;}
-            var act = control_signal[Math.round(chassis.p.x)];
-            act = typeof(act)=='undefined'? 0:act;
-            demo.step();
-
-            if (start_race) {
-                var speed_end = vehSpeed;
-                var distance_end = 900*multitrack-car_pos9;
-                var time_end = timeout-cTime;
-                var ind = Math.floor(car_pos9/10)+1;
-                var slope_end = data[ind+1]>data[ind]? 1:-1;
-                if(data[ind+1] == data[ind]){slope_ini=0;}
-                var reward = -((con1 + con2)/3600./1000./max_batt) + ((car_pos9-900*multitrack)/900>=0); //lower is better
-
-                $.post('/adddata_sars',{
-                        'speed_ini':speed_ini,
-                        'time_ini':time_ini,
-                        'slope_ini':slope_ini,
-                        'distance_ini':distance_ini,
-                        'act':act,
-                        'reward':reward,
-                        'speed_end':speed_end,
-                        'time_end':time_end,
-                        'slope_end':slope_end,
-                        'distance_end':distance_end,
-                        'winning':false, // ego: normal ego algoirthm;  player_parameter: to rerun all players using the parametric control model
-                        'used':true},
-                    function(){
-                        step(0);
-                    });
-            }
-            else{
-                var speed_end = vehSpeed;
-                var distance_end = 900*multitrack-car_pos9;
-                var time_end = timeout-cTime;
-                var ind = Math.floor(car_pos9/10)+1;
-                var slope_end = data[ind+1]>data[ind]? 1:-1;
-                if(data[ind+1] == data[ind]){slope_ini=0;}
-                var reward = -((con1 + con2)/3600./1000./max_batt) + ((car_pos9-900*multitrack)/900>=0); //lower is better
-
-
-                $.post('/adddata_sars',{
-                        'speed_ini':speed_ini,
-                        'time_ini':time_ini,
-                        'slope_ini':slope_ini,
-                        'distance_ini':distance_ini,
-                        'act':act,
-                        'reward':reward,
-                        'speed_end':speed_end,
-                        'time_end':time_end,
-                        'slope_end':slope_end,
-                        'distance_end':distance_end,
-                        'winning':false, // ego: normal ego algoirthm;  player_parameter: to rerun all players using the parametric control model
-                        'used':true},
-                    function(){
-                        callback();
-                    });
-            }
-        };
-        step(0);
-    }
-}
-function not_gonna_run(){
-    var start_location = 9/px2m;
-    if (control_signal[start_location]<1){
-        return true;
-    }
-    else return false;
 }
 
 /****************************************** GAME **********************************************************/
@@ -530,13 +399,7 @@ scene.prototype.update = function (dt) {
 ///////////////////////////// use control //////////////////////////////////////////
         if (car_pos <= maxdist){
 
-            //var d = 900*multitrack-car_pos9;
-            //var t = timeout-cTime;
-            //var v = vehSpeed;
-            //var ind = Math.floor(car_pos9/10)+1;
-            //var s = data[ind+1]>data[ind]? 1:-1;
-            //if(data[ind+1] == data[ind]){s=0;}
-            c = control_signal[Math.round(chassis.p.x)];
+            c = act;
 
             if (c>0){
                 acc_sig = true;
@@ -627,10 +490,6 @@ var drawLandscape = function(){
     ctx.stroke();
     ctx.closePath();
 };
-
-$(document).on("pageinit",function(event){
-//	run();
-});
 
 $(window).resize(function(){
     scene_width = $(window).width();

@@ -293,5 +293,21 @@ router.post('/adddata_sars', function(req, res) {
         insert_query.on('end', function(result){res.status(202).send("Accepted data");});
         done();
     });
+});
 
-})
+/* READ sars data close to the query state. */
+router.post('/get_action', function(req, res) {
+    var database = "ecoracer_learning_ps_table";
+    pg.connect(connection, function(err, client, done) {
+        var distance = req.body.distance;
+        var time = req.body.time;
+        client.query('SELECT * FROM '+database+' WHERE @(distance_ini - $1)<5 AND @(time_ini -$2)<1',
+            [distance, time], function(err, result) {
+            done();
+            if (err)
+            { console.error(err); res.send("Error " + err); }
+            else
+            { res.send( result.rows ); }
+        });
+    });
+});
