@@ -112,13 +112,13 @@ function initial(){
     });
 }
 
+var iter = 1;
 function calculate_obj(set, callback){
     var x = set.slice(0);
-    var id = 1;
     var f2 = function(i){
-        if(id<sample_size){
-            run_game(x[id], f2);
-            id += 1;
+        if(iter<sample_size){
+            run_game(x[iter], f2);
+            iter += 1;
         }
         else{
             // recursively call iterate
@@ -285,11 +285,14 @@ function run_game(input, callback){
                         'time_end':time_end,
                         'slope_end':slope_end,
                         'distance_end':distance_end,
-                        'winning':false, // ego: normal ego algoirthm;  player_parameter: to rerun all players using the parametric control model
-                        'used':true},
-                    function(){
-                        step(0);
-                    });
+                        'winning':false, // will be modified by value iteration
+                        'used':true, // in case there are too many data entries and things get slow
+                        'initial': true, // if this data entry belongs to the initial set
+                        'playID': iter // ID for tracking with play this data comes from
+                        },
+                        function(){
+                            step(0);
+                        });
             }
             else{
                 var speed_end = vehSpeed;
@@ -312,11 +315,13 @@ function run_game(input, callback){
                         'time_end':time_end,
                         'slope_end':slope_end,
                         'distance_end':distance_end,
-                        'winning':false, // ego: normal ego algoirthm;  player_parameter: to rerun all players using the parametric control model
-                        'used':true},
-                    function(){
-                        callback();
-                    });
+                        'winning':false, // will be modified by value iteration
+                        'used':true, // in case there are too many data entries and things get slow
+                        'initial': true, // if this data entry belongs to the initial set
+                        'playID': iter}, // ID for tracking with play this data comes from
+                        function(){
+                            callback();
+                        });
             }
         };
         step(0);

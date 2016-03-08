@@ -13,5 +13,7 @@ CREATE TABLE ecoracer_learning_ps_table(
   distance_end REAL,
   winning boolean,
   used boolean,
+  initial boolean,
+  playID INTEGER,
   PRIMARY KEY(id)
 );

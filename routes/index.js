@@ -283,11 +283,11 @@ router.post('/adddata_sars', function(req, res) {
         //    winning boolean,
         //    used boolean,
         var insert_query = client.query('INSERT INTO '+database+' (speed_ini, time_ini, slope_ini, distance_ini,' +
-            'act, reward, speed_end, time_end, slope_end, distance_end, winning, used) VALUES ($1, $2, $3, $4,' +
-            '$5, $6, $7, $8, $9, $10, $11, $12)',
+            'act, reward, speed_end, time_end, slope_end, distance_end, winning, used, initial, playID) VALUES ($1, $2, $3, $4,' +
+            '$5, $6, $7, $8, $9, $10, $11, $12, $13, $14)',
             [req.body.speed_ini, req.body.time_ini, req.body.slope_ini, req.body.distance_ini,
              req.body.act, req.body.reward, req.body.speed_end, req.body.time_end,
-             req.body.slope_end, req.body.distance_end, req.body.winning, req.body.used]);
+             req.body.slope_end, req.body.distance_end, req.body.winning, req.body.used, req.body.initial, req.body.playID]);
 
         insert_query.on('err', handle_error.bind(this, err));
         insert_query.on('end', function(result){res.status(202).send("Accepted data");});

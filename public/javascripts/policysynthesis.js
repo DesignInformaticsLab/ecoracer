@@ -164,8 +164,11 @@ function step(callback){
                 'time_end':time_end,
                 'slope_end':slope_end,
                 'distance_end':distance_end,
-                'winning':false, // ego: normal ego algoirthm;  player_parameter: to rerun all players using the parametric control model
-                'used':true},
+                'winning':false, // will be modified by value iteration
+                'used':true, // in case there are too many data entries and things get slow
+                'initial': true, // if this data entry belongs to the initial set
+                'playID': iter // ID for tracking with play this data comes from
+            },
             function(){
                 callback();
             });
@@ -179,7 +182,6 @@ function step(callback){
         if(data[ind+1] == data[ind]){slope_ini=0;}
         var reward = -((con1 + con2)/3600./1000./max_batt) + ((car_pos9-900*multitrack)/900>=0); //lower is better
 
-
         $.post('/adddata_sars',{
                 'speed_ini':speed_ini,
                 'time_ini':time_ini,
@@ -191,8 +193,11 @@ function step(callback){
                 'time_end':time_end,
                 'slope_end':slope_end,
                 'distance_end':distance_end,
-                'winning':false, // ego: normal ego algoirthm;  player_parameter: to rerun all players using the parametric control model
-                'used':true},
+                'winning':false, // will be modified by value iteration
+                'used':true, // in case there are too many data entries and things get slow
+                'initial': true, // if this data entry belongs to the initial set
+                'playID': iter // ID for tracking with play this data comes from
+            },
             function(){
                 callback();
             });
