@@ -17,3 +17,16 @@ CREATE TABLE ecoracer_learning_ps_table(
   playID INTEGER,
   PRIMARY KEY(id)
 );
+
+DROP TABLE ecoracer_learning_ps_value_table;
+CREATE TABLE ecoracer_learning_ps_value_table(
+  id SERIAL,
+  speed REAL,
+  ctime REAL,
+  slope REAL,
+  distance REAL,
+  v REAL,
+  p boolean,
+  PRIMARY KEY(id)
+);
+

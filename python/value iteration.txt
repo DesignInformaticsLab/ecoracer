@@ -7,8 +7,8 @@ conn = psycopg2.connect("dbname=postgres user=postgres")
 cur = conn.cursor()
 cur.execute("SELECT * from ecoracer_learning_ps_table;")
 psdb = cur.fetchall()
-
-cur.execute("SELECT count(*) from ecoracer_learning_ps_table;")
+#this could be reduced reading times for exploration
+cur.execute("SELECT count(*) from ecoracer_learning_ps_table where id>0;")
 init_state_size = cur.fetchall()[0][0]
 
 ## define class for state
@@ -36,6 +36,7 @@ class Tuple:
 #         self.initial = db_data[13]
 #         self.playID = db_data[14]
 
+# tuples for both human demonstration and exploration
 tuples = []
 for dbdata in psdb: 
     tuples.append(Tuple(dbdata))
@@ -53,21 +54,41 @@ sigma = 100
 VP = {}
 for tuplei in tuples:
     VP[tuplei.state_ini] = [0,False]
+    VP[tuplei.state_end] = [0,False]
 
 # looping for value iteration
+cnt = 0;
 while True:
     for tuplei in tuples:
 #         tuplei.myprint()
         # PROBLEM HERE! v_prim don't know, should be state_end after action
-        V_prim = VP[tuplei.state_ini][0];
-        V = VP[tuplei.state_ini][1];
+        V_prim = VP[tuplei.state_end][0];
+        V = VP[tuplei.state_ini][0];
         sigma = tuplei.reward + gamma * V_prim  - V
         if (gamma>0):
             VP[tuplei.state_ini] = [V + alpha * gamma, True]
         else:
             VP[tuplei.state_ini] = [V + alpha * (V_prim - V), False]
+    cnt = cnt + 1
+    print(cnt,sigma)
     if (sigma<1e-3):
         break
         
 cur.close()
 
+## write result of value iteration to database
+con = psycopg2.connect("dbname='postgres' user='postgres'")   
+cur = con.cursor()
+
+#current size
+cur.execute("SELECT COUNT(*) FROM ecoracer_learning_ps_value_table; ")
+vtable_size = cur.fetchall()[0][0]
+
+#Append those new items to Vaule table
+for count, (state,vp) in enumerate(VP.iteritems(), start=1+vtable_size):
+    cur.execute("INSERT INTO ecoracer_learning_ps_value_table VALUES ( %s, %s, %s, %s, %s, %s, %s )"\
+                , (count,state.speed,state.time,state.slope,state.distance,vp[0],vp[1],))
+
+    
+con.commit()
+cur.close()

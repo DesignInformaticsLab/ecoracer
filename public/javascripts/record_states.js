@@ -236,12 +236,12 @@ function run_game(input, callback){
         $("#timer").show();
 
         // initial states
-        cTime = 0;
+        cTime = 0.0;
         con1 = 0; con2 = 0;
         car_pos = Math.round(chassis.p.x*px2m); //-9.03
         car_pos9 = car_pos-9;
         counter = 0;
-        vehSpeed = 0;
+        vehSpeed = 0.0;
         motor2eff = 0;
         car_posOld = 0;
         var pBar = document.getElementById("pbar");
@@ -271,7 +271,7 @@ function run_game(input, callback){
                 var time_end = timeout-cTime;
                 var ind = Math.floor(car_pos9/10)+1;
                 var slope_end = data[ind+1]>data[ind]? 1:-1;
-                if(data[ind+1] == data[ind]){slope_ini=0;}
+                if(data[ind+1] == data[ind]){slope_end=0;}
                 var reward = -((con1 + con2)/3600./1000./max_batt) + ((car_pos9-900*multitrack)/900>=0); //lower is better
 
                 $.post('/adddata_sars',{
@@ -300,7 +300,7 @@ function run_game(input, callback){
                 var time_end = timeout-cTime;
                 var ind = Math.floor(car_pos9/10)+1;
                 var slope_end = data[ind+1]>data[ind]? 1:-1;
-                if(data[ind+1] == data[ind]){slope_ini=0;}
+                if(data[ind+1] == data[ind]){slope_end=0;}
                 var reward = -((con1 + con2)/3600./1000./max_batt) + ((car_pos9-900*multitrack)/900>=0); //lower is better
 
 
@@ -465,10 +465,10 @@ scene.prototype.update = function (dt) {
         this.space.step(dt);
     }
 
-    cTime = Math.floor(counter/tstep);
-    car_pos = Math.round(chassis.p.x*px2m); //-9.03
+    cTime = (counter/tstep);
+    car_pos = (chassis.p.x*px2m); //-9.03
     car_pos9 = car_pos-9;
-    vehSpeed = Math.round(Math.sqrt(Math.pow(chassis.vx,2)+Math.pow(chassis.vy,2))*px2m*2.23694);
+    vehSpeed = (Math.sqrt(Math.pow(chassis.vx,2)+Math.pow(chassis.vy,2))*px2m*2.23694);
     $("#timer").html(timeout-cTime);
 
     if(chassis.p.y<0){
