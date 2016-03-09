@@ -269,19 +269,6 @@ router.post('/adddata_sars', function(req, res) {
 
     pg.connect(connection, function(err, client, done) {
         if(err) res.send("Could not connect to DB: " + err);
-        //id SERIAL,
-        //    speed_ini REAL,
-        //    time_ini REAL,
-        //    slope_ini REAL,
-        //    distance_ini REAL,
-        //    act INTEGER,
-        //    reward REAL,
-        //    speed_end REAL,
-        //    time_end REAL,
-        //    slope_end REAL,
-        //    distance_end REAL,
-        //    winning boolean,
-        //    used boolean,
         var insert_query = client.query('INSERT INTO '+database+' (speed_ini, time_ini, slope_ini, distance_ini,' +
             'act, reward, speed_end, time_end, slope_end, distance_end, winning, used, initial, playID) VALUES ($1, $2, $3, $4,' +
             '$5, $6, $7, $8, $9, $10, $11, $12, $13, $14)',
@@ -301,7 +288,7 @@ router.post('/get_action', function(req, res) {
     pg.connect(connection, function(err, client, done) {
         var distance = req.body.distance;
         var time = req.body.time;
-        client.query('SELECT * FROM '+database+' WHERE @(distance_ini - $1)<5 AND @(time_ini -$2)<1',
+        client.query('SELECT * FROM '+database+' WHERE @(distance_ini - $1)<5 AND @(time_ini -$2)<1 AND winning=true AND used=true',
             [distance, time], function(err, result) {
             done();
             if (err)
