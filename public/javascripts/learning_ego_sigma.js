@@ -40,7 +40,7 @@ var multitrack = 1;
 // NOTE: Thurston's files have gear ratio as the last element, this code assumes that it's the first
 // so I changed all the following files manually when necessary.
 var basis_url = "/data/p2_ICA_transform.json"; // from all players
-var parameter_url = "/data/p2_slsqp_sigma.json"; // from best player 2
+var parameter_url = "/data/p2_bfgs_sigma_alpha10.0.json"; // from best player 2
 var range_url = "data/p2_range_transform.json"; // from best player 2
 var initial_guess_url = "data/mix_scaled_p2_init.txt"; // from best player 2
 

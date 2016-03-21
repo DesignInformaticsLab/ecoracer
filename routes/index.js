@@ -246,13 +246,13 @@ router.post('/getperformance', function(req, res) {
 
 /* POST machine data. */
 router.post('/adddata_learning', function(req, res) {
-	var database = "ecoracer_learning_ga_table";
-	
+	var database = "ecoracer_learning_ego_table";
+
     pg.connect(connection, function(err, client, done) {
         if(err) res.send("Could not connect to DB: " + err);
         
-        var insert_query = client.query('INSERT INTO '+database+' (score, keys, finaldrive, iteration) VALUES ($1, $2, $3, $4)',
-            [req.body.score, req.body.keys, req.body.finaldrive, req.body.iteration]);
+        var insert_query = client.query('INSERT INTO '+database+' (score, keys, finaldrive, iteration, method) VALUES ($1, $2, $3, $4, $5)',
+            [req.body.score, req.body.keys, req.body.finaldrive, req.body.iteration, req.body.method]);
        
         insert_query.on('err', handle_error.bind(this, err));
         insert_query.on('end', function(result){res.status(202).send("Accepted data");});
