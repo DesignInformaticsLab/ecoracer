@@ -194,13 +194,22 @@ function initial(){
     //    sample_set.push(g);
     //}
 
+
+    $.each(sigma_inv, function(i,s){
+        sigma_inv[i] = 1.0; // assign unit sigma
+    });
+
     // use a given initial guess from recorded plays
     $.ajax({
         url: initial_guess_url,
         dataType: "text",
         success: function(data) {
-            data = JSON.parse(data);
-            sanmple_set.push([0].concat(data));
+            var res = data.split(" ");
+            $.each(res, function(i,e){
+                res[i] = Number(e);
+            });
+            sample_set.push(res.slice(0,res.length/2));
+            sample_set.push(res.slice(res.length/2,res.length));
 
             $.ajax({
                 url: basis_url,
@@ -548,84 +557,88 @@ function run_game(input, callback){
             }
             else{
                 SCORE =  -((Math.round(1000-(consumption/3600/1000/max_batt*1000))/10)*(car_pos9-900*multitrack>=0) + (car_pos9-900*multitrack)/9); //lower is better
-//            $.post('/adddata_learning',{
-//                    'score':-SCORE,
-//                    'keys':JSON.stringify(w),
-//                    'finaldrive':fr,
-//                    'iteration':iter,
-////				   'method':'user_model_1_1',
-//                    'method':'original_learned_sigma_1', // ego: normal ego algoirthm;  player_parameter: to rerun all players using the parametric control model
-//                    // user_model_1 is based on plays with performance better than 0, and uses the 9 control parameter fit, one-class svm,
-//                    // plays with negative simulated scores are removed, so as those with parameter values greater than 10
-//
-//                    // inverse_data_no_user is a new game (inverse track) without using user model
-//                    // inverse_data_user_model is a new game (inverse track) with user model
-//
-//                    // hill_data_no_user is a new game (hill track) without using user model
-//                    // hill_data_user_model is a new game (hill track) with user model
-//
-//                    // zigzag_data_no_user is a new game (zigzag track) without using user model
-//                    // zigzag_data_user_model is a new game (zigzag track) with user model
-//
-//                    // longtrack_data_no_user is a new game (long track) without using user model
-//                    // longtrack_data_user_model is a new game (long track) with using user model
-//                    // longtrack_data_user_model500 is a new game (long track) with using user model trained with the first 500 plays
-//                    // longtrack_data_EGO use EGO results from the original game to play longtrack
-//
-//
-//                    // original_learned_sigma is the original track with learned sigma from DETC2016 paper
-//
-//                    //NOTE for all future runs, change the last method digit to indicate the experiment ID!!!
-//
-//                    'database':'ecoracer_learning_ego_table'},
-//                function(){
-                if (typeof(callback) == 'function') {
-                    callback();
-                }
-//                }
-//            );
+                $.post('/adddata_learning',{
+                        'score':-SCORE,
+                        'keys':JSON.stringify(w),
+                        'finaldrive':fr,
+                        'iteration':iter,
+    //				   'method':'user_model_1_1',
+                        'method':'original_learned_sigma_player2_02132016_10', // ego: normal ego algoirthm;  player_parameter: to rerun all players using the parametric control model
+                        // user_model_1 is based on plays with performance better than 0, and uses the 9 control parameter fit, one-class svm,
+                        // plays with negative simulated scores are removed, so as those with parameter values greater than 10
+
+                        // inverse_data_no_user is a new game (inverse track) without using user model
+                        // inverse_data_user_model is a new game (inverse track) with user model
+
+                        // hill_data_no_user is a new game (hill track) without using user model
+                        // hill_data_user_model is a new game (hill track) with user model
+
+                        // zigzag_data_no_user is a new game (zigzag track) without using user model
+                        // zigzag_data_user_model is a new game (zigzag track) with user model
+
+                        // longtrack_data_no_user is a new game (long track) without using user model
+                        // longtrack_data_user_model is a new game (long track) with using user model
+                        // longtrack_data_user_model500 is a new game (long track) with using user model trained with the first 500 plays
+                        // longtrack_data_EGO use EGO results from the original game to play longtrack
+
+
+                        // original_learned_sigma is the original track with learned sigma from DETC2016 paper
+                        // original_unit_sigma is the original track with learned sigma from DETC2016 paper
+
+                        //NOTE for all future runs, change the last method digit to indicate the experiment ID!!!
+
+                        'database':'ecoracer_learning_ego_table'},
+                        function(){
+                            if (typeof(callback) == 'function') {
+                                callback();
+                            }
+                        }
+                );
             }
         };
         step(0);
     }
     else{
         SCORE =  -((Math.round(1000-(consumption/3600/1000/max_batt*1000))/10)*(-900*multitrack>=0) + (-900*multitrack)/9); //lower is better
-//            $.post('/adddata_learning',{
-//                    'score':-SCORE,
-//                    'keys':JSON.stringify(w),
-//                    'finaldrive':fr,
-//                    'iteration':iter,
-////				   'method':'user_model_1_1',
-//                    'method':'original_learned_sigma_1', // ego: normal ego algoirthm;  player_parameter: to rerun all players using the parametric control model
-//                    // user_model_1 is based on plays with performance better than 0, and uses the 9 control parameter fit, one-class svm,
-//                    // plays with negative simulated scores are removed, so as those with parameter values greater than 10
-//
-//                    // inverse_data_no_user is a new game (inverse track) without using user model
-//                    // inverse_data_user_model is a new game (inverse track) with user model
-//
-//                    // hill_data_no_user is a new game (hill track) without using user model
-//                    // hill_data_user_model is a new game (hill track) with user model
-//
-//                    // zigzag_data_no_user is a new game (zigzag track) without using user model
-//                    // zigzag_data_user_model is a new game (zigzag track) with user model
-//
-//                    // longtrack_data_no_user is a new game (long track) without using user model
-//                    // longtrack_data_user_model is a new game (long track) with using user model
-//                    // longtrack_data_user_model500 is a new game (long track) with using user model trained with the first 500 plays
-//                    // longtrack_data_EGO use EGO results from the original game to play longtrack
-//
-//
-//                    // original_learned_sigma is the original track with learned sigma from DETC2016 paper
-//
-//                    //NOTE for all future runs, change the last method digit to indicate the experiment ID!!!
-//
-//                    'database':'ecoracer_learning_ego_table'},
-//                function(){
-        if (typeof(callback) == 'function') {
-            callback();
-        }
-        //                }
-//            );
+            $.post('/adddata_learning',{
+                    'score':-SCORE,
+                    'keys':JSON.stringify(w),
+                    'finaldrive':fr,
+                    'iteration':iter,
+//				   'method':'user_model_1_1',
+                    'method':'original_learned_sigma_player2_02132016_10', // ego: normal ego algoirthm;  player_parameter: to rerun all players using the parametric control model
+                    // user_model_1 is based on plays with performance better than 0, and uses the 9 control parameter fit, one-class svm,
+                    // plays with negative simulated scores are removed, so as those with parameter values greater than 10
+
+                    // inverse_data_no_user is a new game (inverse track) without using user model
+                    // inverse_data_user_model is a new game (inverse track) with user model
+
+                    // hill_data_no_user is a new game (hill track) without using user model
+                    // hill_data_user_model is a new game (hill track) with user model
+
+                    // zigzag_data_no_user is a new game (zigzag track) without using user model
+                    // zigzag_data_user_model is a new game (zigzag track) with user model
+
+                    // longtrack_data_no_user is a new game (long track) without using user model
+                    // longtrack_data_user_model is a new game (long track) with using user model
+                    // longtrack_data_user_model500 is a new game (long track) with using user model trained with the first 500 plays
+                    // longtrack_data_EGO use EGO results from the original game to play longtrack
+
+
+                    // DETC2016
+                    // original_learned_sigma is the original track with learned sigma from DETC2016 paper
+                    // original_learned_nosigma is the original track without learned sigma from DETC2016 paper
+                    // both uses ICA basis
+
+                    //NOTE for all future runs, change the last method digit to indicate the experiment ID!!!
+
+                    'database':'ecoracer_learning_ego_table'},
+                    function(){
+                        if (typeof(callback) == 'function') {
+                            callback();
+                        }
+                    }
+            );
     }
 }
 function not_gonna_run(){
