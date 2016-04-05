@@ -10,7 +10,7 @@ $("#wrapper").height(scene_height);
 var __ENVIRONMENT__ = defineSpace("canvas1", scene_width, scene_heightx);
 
 /****************************************** ALGORITHM **********************************************************/
-var sample_size = 2;
+var sample_size = 1;
 var sample_set = [];
 
 var basis = []; // learned principal components from all players
@@ -272,7 +272,7 @@ function run_game(input, callback){
                 var ind = Math.floor(car_pos9/10)+1;
                 var slope_end = data[ind+1]>data[ind]? 1:-1;
                 if(data[ind+1] == data[ind]){slope_end=0;}
-                var reward = -((con1 + con2)/3600./1000./max_batt) + ((car_pos9-900*multitrack)/900>=0); //lower is better
+                var reward = (900-distance_end)/900/multitrack - ((con1 + con2)/3600./1000./max_batt) + ((car_pos9-900*multitrack)/900>=0); //lower is better
 
                 $.post('/adddata_sars',{
                         'speed_ini':speed_ini,
@@ -301,7 +301,7 @@ function run_game(input, callback){
                 var ind = Math.floor(car_pos9/10)+1;
                 var slope_end = data[ind+1]>data[ind]? 1:-1;
                 if(data[ind+1] == data[ind]){slope_end=0;}
-                var reward = -((con1 + con2)/3600./1000./max_batt) + ((car_pos9-900*multitrack)/900>=0); //lower is better
+                var reward = (distance_ini-distance_end)/900/multitrack - ((con1 + con2)/3600./1000./max_batt) + ((car_pos9-900*multitrack)/900>=0); //lower is better
 
 
                 $.post('/adddata_sars',{

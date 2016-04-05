@@ -47,10 +47,10 @@ class VI:
     def __init__(self, ctr_para):
         self.d = ctr_para
         # parameters for value iteration
-        self.alpha = self.d[0]  # discount rate
-        self.gamma = self.d[1]  # learning rate
+        self.alpha = self.d[0]  # learning rate 
+        self.gamma = self.d[1]  # discount rate
         self.state_width = self.d[2]  # four elements in each state
-        self.k = self.d[3]  # four elements in each state
+        self.k = self.d[3]  # number of nearest neighbor
         self.cvg = self.d[4]  # four elements in each state
         self.maxitr = self.d[5]  # four elements in each state
         self.VP = {}    # value table and policy table
@@ -80,7 +80,10 @@ class VI:
         # transfer database into tuples
         psdb = self.read_db()
         tuples = self.tuples
+        cnt = 0
         for dbdata in psdb:
+            cnt += 1
+            assert cnt == dbdata[0], "error in reading database"
             tuples.append(Tuple(dbdata))
 
         # store in list for kd tree search
@@ -108,15 +111,14 @@ class VI:
         for idx, statei in enumerate(self.states_tp):
             VP[statei] = [0, False]
 
-        # for idx, statei in enumerate(self.states):
-        #     VP[statei] = [0, False]
-
     def vptest(self, state_tp, VP, plott):
         y = np.zeros(len(state_tp))
+        yy = np.zeros(len(state_tp))
         x = np.linspace(1, len(y), len(y))
         for idx, statei in enumerate(state_tp):
                 y[idx] = VP[statei][0]
-        np.savetxt('x.txt', y)
+                yy[idx] = VP[statei][1]
+        np.savetxt('x.txt', zip(y, yy))
         if plott:
             plt.figure()
             plt.semilogy(x, np.abs(y), '*-')
@@ -128,7 +130,7 @@ class VI:
 
     def intp_v(self, si):
         VP = self.VP
-        search_dis = 0.001
+        search_dis = 0.002
         k = self.k    # should specify number of points instead of distance?
         sum_v = 0
         nb_idx = self.kdtree.query_ball_point(si, search_dis)  # search points inside hyper-sphere with r
@@ -152,18 +154,15 @@ class VI:
         cnt = 0
         convergence = 1
         tuples = self.tuples
+
         print("starting value iteration...")
         while cnt < self.maxitr:
-        # while True:
 
             for idx, tuplei in enumerate(tuples):
                 try:
                     si = tuple(tuplei.state_end.d)
                     V_prim = intp_v(si)  # end state is the same with next ini state
                 except:
-                    # try:
-                    #     V_prim = intp_v(tuples[idx].state_end)  # end state in the end of the trajectory
-                    # except:
                     print(idx)
                 si = tuple(tuplei.state_ini.d)
                 V = intp_v(si)
@@ -177,10 +176,10 @@ class VI:
                     VP[si] = [vi + alpha * (V - vi), False]
 
             if cnt == 0:
-                y = vptest(self.states_tp, VP, 1)
+                y = vptest(self.states_tp, VP, 0)
             else:
                 y_pre = y
-                y = vptest(self.states_tp, VP, 1)
+                y = vptest(self.states_tp, VP, 0)
                 convergence = np.sum((y_pre-y)**2)/np.sum(y**2)
                 convergence = np.sqrt(convergence)
 
@@ -210,7 +209,15 @@ class VI:
         con.commit()
         cur.close()
 
-ctr_para = [1, 0.1, 4, 10, 1e-3, 100]
+
+# self.alpha = self.d[0]  # learning rate
+# self.gamma = self.d[1]  # discount rate
+# self.state_width = self.d[2]  # four elements in each state
+# self.k = self.d[3]  # number of nearest neighbor
+# self.cvg = self.d[4]  # four elements in each state
+# self.maxitr = self.d[5]  # four elements in each state
+
+ctr_para = [0.1, 0.5, 4, 10, 1e-3, 100]
 vi = VI(ctr_para)
 vi.init()
 vi.iterating()
