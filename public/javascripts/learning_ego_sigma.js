@@ -20,7 +20,7 @@ var n_var = 30+1; // 30 pcs for control + 1 design
 var iter = 0;
 var max_iter = 200;
 var obj_set = [];
-var sample_size = 2;
+var sample_size = 11;
 var sample_set = [];
 
 var sigma_inv = []; // learning a covariance of the solution space
@@ -39,7 +39,7 @@ var multitrack = 1;
 
 // NOTE: Thurston's files have gear ratio as the last element
 var basis_url = "/data/p2_ICA_transform.json"; // from all players
-var parameter_url = "/data/p2_bfgs_sigma_alpha10.0TRUNCATED_5.json"; // from best player 2
+var parameter_url = "/data/p2_bfgs_sigma_alpha10.0TRUNCATED.json"; // from best player 2
 var range_url = "data/p2_range_transform.json"; // from best player 2
 var initial_guess_url = "data/mix_scaled_p2_all.txt"; // from best player 2
 
@@ -50,11 +50,13 @@ var initial_guess_url = "data/mix_scaled_p2_all.txt"; // from best player 2
 // PROGRESS
 // 31 plays, sigma from 31 plays, DONE
 // 31 plays, unit sigma,
-// 11 plays, sigma from 11 plays, DONE
+// 11 plays, sigma from 11 plays, RUNNING
 // 11 plays, unit sigma, DONE
 // 11 plays, sigma from 5 plays,?
-// 5 plays, sigma from 5 plays, DONE
+// 5 plays, sigma from 5 plays,
 // 5 plays, unit sigma, DONE
+// NOTE - On 04042016, I figured that there was an error in the kernel function, so now redoing learned sigmas
+
 
 
 function generate_policy(x){ // in DETC2016, this is a one-time calculation for each play
@@ -576,104 +578,102 @@ function run_game(input, callback){
             }
             else{
                 SCORE =  -((Math.round(1000-(consumption/3600/1000/max_batt*1000))/10)*(car_pos9-900*multitrack>=0) + (car_pos9-900*multitrack)/9); //lower is better
-                //$.post('/adddata_learning',{
-                //        'score':-SCORE,
-                //        'keys':JSON.stringify(w),
-                //        'finaldrive':fr,
-                //        'iteration':iter,
-                //        //				   'method':'user_model_1_1',
-                //        'method':'original_unit_sigma_from_5_player2_03252016_19',
-                //
-                //        // ego: normal ego algoirthm;  player_parameter: to rerun all players using the parametric control model
-                //        // user_model_1 is based on plays with performance better than 0, and uses the 9 control parameter fit, one-class svm,
-                //        // plays with negative simulated scores are removed, so as those with parameter values greater than 10
-                //
-                //        // inverse_data_no_user is a new game (inverse track) without using user model
-                //        // inverse_data_user_model is a new game (inverse track) with user model
-                //
-                //        // hill_data_no_user is a new game (hill track) without using user model
-                //        // hill_data_user_model is a new game (hill track) with user model
-                //
-                //        // zigzag_data_no_user is a new game (zigzag track) without using user model
-                //        // zigzag_data_user_model is a new game (zigzag track) with user model
-                //
-                //        // longtrack_data_no_user is a new game (long track) without using user model
-                //        // longtrack_data_user_model is a new game (long track) with using user model
-                //        // longtrack_data_user_model500 is a new game (long track) with using user model trained with the first 500 plays
-                //        // longtrack_data_EGO use EGO results from the original game to play longtrack
-                //
-                //
-                //        // original_learned_sigma is the original track with learned sigma from DETC2016 paper
-                //        // original_learned_sigma_fullplayer2 original track with learned sigma from all player 2 data, tested with all player 2 data
-                //
-                //        // original_learned_sigma_from_all_plays_from_all_player2 original track, learned sigma from all plays of player 2, starts with all plays from player 2
-                //        // original_learned_sigma_from_5_plays_from_5_player2 original track, learned sigma from first 5 plays of player 2, starts with first 5 plays from player 2
-                //        // original_learned_sigma_from_11_plays_from_11_player2 original track, learned sigma from first 11 plays of player 2, starts with first 11 plays from player 2
-                //        // original_unit_sigma_from_11_player2 original track, unit sigma, starts with first 11 plays from player 2
-                //        // original_unit_sigma_from_5_player2 original track, unit sigma, starts with first 5 plays from player 2
-                //
-                //        //NOTE for all future runs, change the last method digit to indicate the experiment ID!!!
-                //
-                //        'database':'ecoracer_learning_ego_table'},
-                //    function(){
-                //
-                //
-                //        if (typeof(callback) == 'function') {
+                $.post('/adddata_learning',{
+                        'score':-SCORE,
+                        'keys':JSON.stringify(w),
+                        'finaldrive':fr,
+                        'iteration':iter,
+                        'method':'original_learned_sigma_from_11_plays_from_11_player2_04042016_1',
+
+                        // ego: normal ego algoirthm;  player_parameter: to rerun all players using the parametric control model
+                        // user_model_1 is based on plays with performance better than 0, and uses the 9 control parameter fit, one-class svm,
+                        // plays with negative simulated scores are removed, so as those with parameter values greater than 10
+
+                        // inverse_data_no_user is a new game (inverse track) without using user model
+                        // inverse_data_user_model is a new game (inverse track) with user model
+
+                        // hill_data_no_user is a new game (hill track) without using user model
+                        // hill_data_user_model is a new game (hill track) with user model
+
+                        // zigzag_data_no_user is a new game (zigzag track) without using user model
+                        // zigzag_data_user_model is a new game (zigzag track) with user model
+
+                        // longtrack_data_no_user is a new game (long track) without using user model
+                        // longtrack_data_user_model is a new game (long track) with using user model
+                        // longtrack_data_user_model500 is a new game (long track) with using user model trained with the first 500 plays
+                        // longtrack_data_EGO use EGO results from the original game to play longtrack
+
+
+                        // original_learned_sigma is the original track with learned sigma from DETC2016 paper
+                        // original_learned_sigma_fullplayer2 original track with learned sigma from all player 2 data, tested with all player 2 data
+
+                        // original_learned_sigma_from_all_plays_from_all_player2 original track, learned sigma from all plays of player 2, starts with all plays from player 2
+                        // original_learned_sigma_from_5_plays_from_5_player2 original track, learned sigma from first 5 plays of player 2, starts with first 5 plays from player 2
+                        // original_learned_sigma_from_11_plays_from_11_player2 original track, learned sigma from first 11 plays of player 2, starts with first 11 plays from player 2
+                        // original_unit_sigma_from_11_player2 original track, unit sigma, starts with first 11 plays from player 2
+                        // original_unit_sigma_from_5_player2 original track, unit sigma, starts with first 5 plays from player 2
+
+                        //NOTE for all future runs, change the last method digit to indicate the experiment ID!!!
+
+                        'database':'ecoracer_learning_ego_table'},
+                    function(){
+
+
+                        if (typeof(callback) == 'function') {
                             callback();
-                //        }
-                //    }
-                //);
+                        }
+                    }
+                );
             }
         };
         step(0);
     }
     else{
         SCORE =  -((Math.round(1000-(consumption/3600/1000/max_batt*1000))/10)*(-900*multitrack>=0) + (-900*multitrack)/9); //lower is better
-        //$.post('/adddata_learning',{
-        //        'score':-SCORE,
-        //        'keys':JSON.stringify(w),
-        //        'finaldrive':fr,
-        //        'iteration':iter,
-        //        //				   'method':'user_model_1_1',
-        //        'method':'original_unit_sigma_from_5_player2_03252016_19',
-        //
-        //        // ego: normal ego algoirthm;  player_parameter: to rerun all players using the parametric control model
-        //        // user_model_1 is based on plays with performance better than 0, and uses the 9 control parameter fit, one-class svm,
-        //        // plays with negative simulated scores are removed, so as those with parameter values greater than 10
-        //
-        //        // inverse_data_no_user is a new game (inverse track) without using user model
-        //        // inverse_data_user_model is a new game (inverse track) with user model
-        //
-        //        // hill_data_no_user is a new game (hill track) without using user model
-        //        // hill_data_user_model is a new game (hill track) with user model
-        //
-        //        // zigzag_data_no_user is a new game (zigzag track) without using user model
-        //        // zigzag_data_user_model is a new game (zigzag track) with user model
-        //
-        //        // longtrack_data_no_user is a new game (long track) without using user model
-        //        // longtrack_data_user_model is a new game (long track) with using user model
-        //        // longtrack_data_user_model500 is a new game (long track) with using user model trained with the first 500 plays
-        //        // longtrack_data_EGO use EGO results from the original game to play longtrack
-        //
-        //
-        //        // original_learned_sigma is the original track with learned sigma from DETC2016 paper
-        //        // original_learned_sigma_fullplayer2 original track with learned sigma from all player 2 data, tested with all player 2 data
-        //
-        //        // original_learned_sigma_from_all_plays_from_all_player2 original track, learned sigma from all plays of player 2, starts with all plays from player 2
-        //        // original_learned_sigma_from_5_plays_from_5_player2 original track, learned sigma from first 5 plays of player 2, starts with first 5 plays from player 2
-        //        // original_learned_sigma_from_11_plays_from_11_player2 original track, learned sigma from first 11 plays of player 2, starts with first 11 plays from player 2
-        //        // original_unit_sigma_from_11_player2 original track, unit sigma, starts with first 11 plays from player 2
-        //        // original_unit_sigma_from_5_player2 original track, unit sigma, starts with first 5 plays from player 2
-        //
-        //        //NOTE for all future runs, change the last method digit to indicate the experiment ID!!!
-        //
-        //        'database':'ecoracer_learning_ego_table'},
-        //    function(){
-        //        if (typeof(callback) == 'function') {
+        $.post('/adddata_learning',{
+                'score':-SCORE,
+                'keys':JSON.stringify(w),
+                'finaldrive':fr,
+                'iteration':iter,
+                'method':'original_learned_sigma_from_11_plays_from_11_player2_04042016_1',
+
+                // ego: normal ego algoirthm;  player_parameter: to rerun all players using the parametric control model
+                // user_model_1 is based on plays with performance better than 0, and uses the 9 control parameter fit, one-class svm,
+                // plays with negative simulated scores are removed, so as those with parameter values greater than 10
+
+                // inverse_data_no_user is a new game (inverse track) without using user model
+                // inverse_data_user_model is a new game (inverse track) with user model
+
+                // hill_data_no_user is a new game (hill track) without using user model
+                // hill_data_user_model is a new game (hill track) with user model
+
+                // zigzag_data_no_user is a new game (zigzag track) without using user model
+                // zigzag_data_user_model is a new game (zigzag track) with user model
+
+                // longtrack_data_no_user is a new game (long track) without using user model
+                // longtrack_data_user_model is a new game (long track) with using user model
+                // longtrack_data_user_model500 is a new game (long track) with using user model trained with the first 500 plays
+                // longtrack_data_EGO use EGO results from the original game to play longtrack
+
+
+                // original_learned_sigma is the original track with learned sigma from DETC2016 paper
+                // original_learned_sigma_fullplayer2 original track with learned sigma from all player 2 data, tested with all player 2 data
+
+                // original_learned_sigma_from_all_plays_from_all_player2 original track, learned sigma from all plays of player 2, starts with all plays from player 2
+                // original_learned_sigma_from_5_plays_from_5_player2 original track, learned sigma from first 5 plays of player 2, starts with first 5 plays from player 2
+                // original_learned_sigma_from_11_plays_from_11_player2 original track, learned sigma from first 11 plays of player 2, starts with first 11 plays from player 2
+                // original_unit_sigma_from_11_player2 original track, unit sigma, starts with first 11 plays from player 2
+                // original_unit_sigma_from_5_player2 original track, unit sigma, starts with first 5 plays from player 2
+
+                //NOTE for all future runs, change the last method digit to indicate the experiment ID!!!
+
+                'database':'ecoracer_learning_ego_table'},
+            function(){
+                if (typeof(callback) == 'function') {
                     callback();
-        //        }
-        //    }
-        //);
+                }
+            }
+        );
     }
 }
 function not_gonna_run(){
