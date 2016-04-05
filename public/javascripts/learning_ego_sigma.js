@@ -20,7 +20,7 @@ var n_var = 30+1; // 30 pcs for control + 1 design
 var iter = 0;
 var max_iter = 200;
 var obj_set = [];
-var sample_size = 2;
+var sample_size = 11;
 var sample_set = [];
 
 var sigma_inv = []; // learning a covariance of the solution space
@@ -37,19 +37,36 @@ var model = {'R':[],'b':[],'X':[],'y':[], 'r':[], 'R_y':[], 'y_b':[]};
 var user_model = {'X':[], 'n':0, 'w':[], 'b':0, 'gamma':0};
 var multitrack = 1;
 
-// NOTE: Thurston's files have gear ratio as the last element, this code assumes that it's the first
-// so I changed all the following files manually when necessary.
+// NOTE: Thurston's files have gear ratio as the last element
 var basis_url = "/data/p2_ICA_transform.json"; // from all players
-var parameter_url = "/data/p2_bfgs_sigma_alpha10.0.json"; // from best player 2
+var parameter_url = "/data/p2_bfgs_sigma_alpha10.0TRUNCATED.json"; // from best player 2
 var range_url = "data/p2_range_transform.json"; // from best player 2
-var initial_guess_url = "data/mix_scaled_p2_init.txt"; // from best player 2
+var initial_guess_url = "data/mix_scaled_p2_all.txt"; // from best player 2
+
+//p2_bfgs_sigma_alpha10.0.json is from all plays of player 2
+//p2_bfgs_sigma_alpha10.0TRUNCATED is the sigma learned from the first 11 plays of player 2
+//p2_bfgs_sigma_alpha10.0TRUNCATED_5 is from the first 5 plays of player 2
+
+// PROGRESS
+// 31 plays, sigma from 31 plays, DONE
+// 31 plays, unit sigma,
+// 11 plays, sigma from 11 plays, RUNNING
+// 11 plays, unit sigma, DONE
+// 11 plays, sigma from 5 plays,?
+// 5 plays, sigma from 5 plays,
+// 5 plays, unit sigma, DONE
+// NOTE - On 04042016, I figured that there was an error in the kernel function, so now redoing learned sigmas
+
+
 
 function generate_policy(x){ // in DETC2016, this is a one-time calculation for each play
     // x is the low-dim control
     // AI*x is the control signal in the distance space
 
-    var y = transform(x.slice(1,31)); // inverse transform the variables before applying to the basis
-    fr = Math.floor((x[0]+1)/2*30)+10; // fr ranges from -1 to 1
+    var y = transform(x); // inverse transform the variables before applying to the basis
+    fr = Math.round(y[30]);
+    y = y.slice(0,30);
+    //fr = Math.floor((x[0]+1)/2*30)+10; // fr ranges from -1 to 1
 
     // create a zero vector
     control_signal = Array(basis.length);
@@ -59,7 +76,7 @@ function generate_policy(x){ // in DETC2016, this is a one-time calculation for 
     $.each(basis, function(i,row){ // i = 0..~18k
         $.each(row, function(j,e){ // j = 0..29
             //if (sigma_inv[j]>0) { // only consider non-zero sigma_inv related variables
-                control_signal[i] += e*y[j];
+            control_signal[i] += e*y[j];
             //}
         });
         if (control_signal[i]>=0.5){
@@ -83,8 +100,8 @@ function transform(x){ // inverse transform from [-1,1] to original reduced spac
 }
 
 function run(){
-    //initial();
-    initial_with_learned_sigma();
+    initial();
+    //initial_with_learned_sigma();
 }
 function initial_with_learned_sigma(){
     $.ajax({
@@ -94,9 +111,9 @@ function initial_with_learned_sigma(){
             data = JSON.parse(data); // in Thurston's data, data[0] is the obj, data[1] is the solution
             sigma_inv = data[1];
             $.each(sigma_inv, function(i,s){
-               if (s<1e-6){
-                   sigma_inv[i] = 0; // remove small values
-               }
+                if (s<1e-6){
+                    sigma_inv[i] = 0; // remove small values
+                }
             });
 
             //// random initial sample set
@@ -150,13 +167,17 @@ function initial_with_learned_sigma(){
                 url: initial_guess_url,
                 dataType: "text",
                 success: function(data) {
-                    var res = data.split(" ");
+                    var res = data.split(/ |\n/);
+                    var temp = [];
                     $.each(res, function(i,e){
-                       res[i] = Number(e);
+                        if (i%n_var==0 &&i>0){
+                            sample_set.push(temp);// move gear ratio to the beginning
+                            //[temp[temp.length-1]].concat(temp.slice(0,temp.length-1)));
+                            temp = [];
+                        }
+                        temp[i%n_var] = Number(e);
                     });
-                    sample_set.push(res.slice(0,res.length/2));
-                    sample_set.push(res.slice(res.length/2,res.length));
-
+                    sample_set = sample_set.slice(0,sample_size);
                     $.ajax({
                         url: basis_url,
                         dataType: "text",
@@ -194,22 +215,27 @@ function initial(){
     //    sample_set.push(g);
     //}
 
-
-    $.each(sigma_inv, function(i,s){
-        sigma_inv[i] = 1.0; // assign unit sigma
-    });
+    //sigma_inv = [];
+    //for (var i=0;i<n_var;i++){
+    //    sigma_inv.push(1); // unit sigma
+    //}
 
     // use a given initial guess from recorded plays
     $.ajax({
         url: initial_guess_url,
         dataType: "text",
         success: function(data) {
-            var res = data.split(" ");
+            var res = data.split(/ |\n/);
+            var temp = [];
             $.each(res, function(i,e){
-                res[i] = Number(e);
+                if (i%n_var==0 &&i>0){
+                    sample_set.push(temp);// move gear ratio to the beginning
+                    //[temp[temp.length-1]].concat(temp.slice(0,temp.length-1)));
+                    temp = [];
+                }
+                temp[i%n_var] = Number(e);
             });
-            sample_set.push(res.slice(0,res.length/2));
-            sample_set.push(res.slice(res.length/2,res.length));
+            sample_set = sample_set.slice(0,sample_size);
 
             $.ajax({
                 url: basis_url,
@@ -302,13 +328,8 @@ function regression(){
 function kernel(v1,v2,sigma_inv){
     var f = 0;
     $.each(v1, function(i,d){
-        if (i==0){
-            f+= (v1[i]-v2[i])*(v1[i]-v2[i]); // for the final drive ratio
-        }
-        else{
-            if (sigma_inv[i-1]>0){
-                f+= sigma_inv[i-1]*(v1[i]-v2[i])*(v1[i]-v2[i]);
-            }
+        if (sigma_inv[i]>0){
+            f+= sigma_inv[i]*(v1[i]-v2[i])*(v1[i]-v2[i]);
         }
     });
     f = Math.exp(-f);
@@ -562,8 +583,9 @@ function run_game(input, callback){
                         'keys':JSON.stringify(w),
                         'finaldrive':fr,
                         'iteration':iter,
-    //				   'method':'user_model_1_1',
-                        'method':'original_learned_sigma_player2_02132016_10', // ego: normal ego algoirthm;  player_parameter: to rerun all players using the parametric control model
+                        'method':'original_learned_sigma_from_11_plays_from_11_player2_04042016_1',
+
+                        // ego: normal ego algoirthm;  player_parameter: to rerun all players using the parametric control model
                         // user_model_1 is based on plays with performance better than 0, and uses the 9 control parameter fit, one-class svm,
                         // plays with negative simulated scores are removed, so as those with parameter values greater than 10
 
@@ -583,16 +605,24 @@ function run_game(input, callback){
 
 
                         // original_learned_sigma is the original track with learned sigma from DETC2016 paper
-                        // original_unit_sigma is the original track with learned sigma from DETC2016 paper
+                        // original_learned_sigma_fullplayer2 original track with learned sigma from all player 2 data, tested with all player 2 data
+
+                        // original_learned_sigma_from_all_plays_from_all_player2 original track, learned sigma from all plays of player 2, starts with all plays from player 2
+                        // original_learned_sigma_from_5_plays_from_5_player2 original track, learned sigma from first 5 plays of player 2, starts with first 5 plays from player 2
+                        // original_learned_sigma_from_11_plays_from_11_player2 original track, learned sigma from first 11 plays of player 2, starts with first 11 plays from player 2
+                        // original_unit_sigma_from_11_player2 original track, unit sigma, starts with first 11 plays from player 2
+                        // original_unit_sigma_from_5_player2 original track, unit sigma, starts with first 5 plays from player 2
 
                         //NOTE for all future runs, change the last method digit to indicate the experiment ID!!!
 
                         'database':'ecoracer_learning_ego_table'},
-                        function(){
-                            if (typeof(callback) == 'function') {
-                                callback();
-                            }
+                    function(){
+
+
+                        if (typeof(callback) == 'function') {
+                            callback();
                         }
+                    }
                 );
             }
         };
@@ -600,45 +630,50 @@ function run_game(input, callback){
     }
     else{
         SCORE =  -((Math.round(1000-(consumption/3600/1000/max_batt*1000))/10)*(-900*multitrack>=0) + (-900*multitrack)/9); //lower is better
-            $.post('/adddata_learning',{
-                    'score':-SCORE,
-                    'keys':JSON.stringify(w),
-                    'finaldrive':fr,
-                    'iteration':iter,
-//				   'method':'user_model_1_1',
-                    'method':'original_learned_sigma_player2_02132016_10', // ego: normal ego algoirthm;  player_parameter: to rerun all players using the parametric control model
-                    // user_model_1 is based on plays with performance better than 0, and uses the 9 control parameter fit, one-class svm,
-                    // plays with negative simulated scores are removed, so as those with parameter values greater than 10
+        $.post('/adddata_learning',{
+                'score':-SCORE,
+                'keys':JSON.stringify(w),
+                'finaldrive':fr,
+                'iteration':iter,
+                'method':'original_learned_sigma_from_11_plays_from_11_player2_04042016_1',
 
-                    // inverse_data_no_user is a new game (inverse track) without using user model
-                    // inverse_data_user_model is a new game (inverse track) with user model
+                // ego: normal ego algoirthm;  player_parameter: to rerun all players using the parametric control model
+                // user_model_1 is based on plays with performance better than 0, and uses the 9 control parameter fit, one-class svm,
+                // plays with negative simulated scores are removed, so as those with parameter values greater than 10
 
-                    // hill_data_no_user is a new game (hill track) without using user model
-                    // hill_data_user_model is a new game (hill track) with user model
+                // inverse_data_no_user is a new game (inverse track) without using user model
+                // inverse_data_user_model is a new game (inverse track) with user model
 
-                    // zigzag_data_no_user is a new game (zigzag track) without using user model
-                    // zigzag_data_user_model is a new game (zigzag track) with user model
+                // hill_data_no_user is a new game (hill track) without using user model
+                // hill_data_user_model is a new game (hill track) with user model
 
-                    // longtrack_data_no_user is a new game (long track) without using user model
-                    // longtrack_data_user_model is a new game (long track) with using user model
-                    // longtrack_data_user_model500 is a new game (long track) with using user model trained with the first 500 plays
-                    // longtrack_data_EGO use EGO results from the original game to play longtrack
+                // zigzag_data_no_user is a new game (zigzag track) without using user model
+                // zigzag_data_user_model is a new game (zigzag track) with user model
+
+                // longtrack_data_no_user is a new game (long track) without using user model
+                // longtrack_data_user_model is a new game (long track) with using user model
+                // longtrack_data_user_model500 is a new game (long track) with using user model trained with the first 500 plays
+                // longtrack_data_EGO use EGO results from the original game to play longtrack
 
 
-                    // DETC2016
-                    // original_learned_sigma is the original track with learned sigma from DETC2016 paper
-                    // original_learned_nosigma is the original track without learned sigma from DETC2016 paper
-                    // both uses ICA basis
+                // original_learned_sigma is the original track with learned sigma from DETC2016 paper
+                // original_learned_sigma_fullplayer2 original track with learned sigma from all player 2 data, tested with all player 2 data
 
-                    //NOTE for all future runs, change the last method digit to indicate the experiment ID!!!
+                // original_learned_sigma_from_all_plays_from_all_player2 original track, learned sigma from all plays of player 2, starts with all plays from player 2
+                // original_learned_sigma_from_5_plays_from_5_player2 original track, learned sigma from first 5 plays of player 2, starts with first 5 plays from player 2
+                // original_learned_sigma_from_11_plays_from_11_player2 original track, learned sigma from first 11 plays of player 2, starts with first 11 plays from player 2
+                // original_unit_sigma_from_11_player2 original track, unit sigma, starts with first 11 plays from player 2
+                // original_unit_sigma_from_5_player2 original track, unit sigma, starts with first 5 plays from player 2
 
-                    'database':'ecoracer_learning_ego_table'},
-                    function(){
-                        if (typeof(callback) == 'function') {
-                            callback();
-                        }
-                    }
-            );
+                //NOTE for all future runs, change the last method digit to indicate the experiment ID!!!
+
+                'database':'ecoracer_learning_ego_table'},
+            function(){
+                if (typeof(callback) == 'function') {
+                    callback();
+                }
+            }
+        );
     }
 }
 function not_gonna_run(){
@@ -952,7 +987,7 @@ var drawLandscape = function(){
 };
 
 $(document).on("pageinit",function(event){
-//	run();
+    run();
 });
 
 $(window).resize(function(){
@@ -1105,10 +1140,6 @@ GA.prototype.crossover = function(){
 GA.prototype.mutation = function(){
     var mutation_rate = 1.0/Math.sqrt(Math.sqrt(this.iter+1));
     for(var i=0;i<this.n_mutate;i++){
-        //if(Math.random()<mutation_rate){
-        //    this.mutate_pop[i][0] += (Math.random()-0.5)*0.2;
-        //    this.mutate_pop[i][0] = Math.min(Math.max(this.mutate_pop[i][0], 0), 1);
-        //}
         for(var j=0;j<n_var;j++){
             if(Math.random()<mutation_rate){
                 this.mutate_pop[i][j] += (Math.random()-0.5)*0.2;
