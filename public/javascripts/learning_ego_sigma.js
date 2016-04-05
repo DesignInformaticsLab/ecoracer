@@ -100,8 +100,8 @@ function transform(x){ // inverse transform from [-1,1] to original reduced spac
 }
 
 function run(){
-    initial();
-    //initial_with_learned_sigma();
+    //initial();
+    initial_with_learned_sigma();
 }
 function initial_with_learned_sigma(){
     $.ajax({
@@ -583,7 +583,7 @@ function run_game(input, callback){
                         'keys':JSON.stringify(w),
                         'finaldrive':fr,
                         'iteration':iter,
-                        'method':'original_learned_sigma_from_11_plays_from_11_player2_04042016_1',
+                        'method':'original_learned_sigma_from_11_plays_from_11_player2_04042016_20',
 
                         // ego: normal ego algoirthm;  player_parameter: to rerun all players using the parametric control model
                         // user_model_1 is based on plays with performance better than 0, and uses the 9 control parameter fit, one-class svm,
@@ -635,7 +635,7 @@ function run_game(input, callback){
                 'keys':JSON.stringify(w),
                 'finaldrive':fr,
                 'iteration':iter,
-                'method':'original_learned_sigma_from_11_plays_from_11_player2_04042016_1',
+                'method':'original_learned_sigma_from_11_plays_from_11_player2_04042016_20',
 
                 // ego: normal ego algoirthm;  player_parameter: to rerun all players using the parametric control model
                 // user_model_1 is based on plays with performance better than 0, and uses the 9 control parameter fit, one-class svm,

@@ -3,7 +3,7 @@ var bcrypt = require('bcrypt-nodejs');
 var router = express.Router();
 var pg = require('pg');
 
-var connection = process.env.DATABASE_URL || "postgres://postgres:54093960@localhost:5432/postgres";
+var connection = process.env.DATABASE_URL || "postgres://postgres:GWC464doi@localhost:5432/postgres";
 function handle_error(res, err) {
 	  console.error(err);
 	  res.status(500).send("Error " + err);
